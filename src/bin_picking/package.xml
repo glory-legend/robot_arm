@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>bin_picking</name>
+  <version>0.1.0</version>
+  <description>FR3 M8 볼트 빈피킹 데모 (ROS2 Jazzy + Gazebo Harmonic).
+    비전 인식 → 볼트 선택 → MoveIt 파지/이동/놓기 파이프라인.</description>
+  <maintainer email="slfkalstks@gmail.com">slfkalstks</maintainer>
+  <license>Apache-2.0</license>
+
+  <!-- 파이썬 노드 실행 의존 -->
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>moveit_msgs</depend>
+  <depend>shape_msgs</depend>
+  <depend>control_msgs</depend>
+  <depend>tf2_msgs</depend>
+  <depend>tf_transformations</depend>
+  <depend>tf2_ros</depend>
+  <depend>visualization_msgs</depend>
+
+  <!-- 시뮬레이션/실행 스택 (launch 가 참조) -->
+  <depend>franka_description</depend>
+  <depend>franka_fr3_moveit_config</depend>
+  <depend>franka_gazebo_bringup</depend>
+  <depend>ros_gz_sim</depend>
+  <depend>ros_gz_bridge</depend>
+  <depend>controller_manager</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>moveit_ros_move_group</depend>
+  <depend>rviz2</depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

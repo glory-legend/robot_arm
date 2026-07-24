@@ -1,0 +1,117 @@
+<?xml version="1.0" ?>
+<!--
+  근사 M8 육각 볼트: Ø8mm 샤프트 × 40mm + Ø13mm 머리 × 5mm.
+  표준 자세: 볼트 축이 +X 방향(즉 '눕혀짐') → identity 자세로 스폰하면 수평.
+  머리는 +X 끝에 위치. 링크 원점은 샤프트 중심.
+  (육각 머리는 이 스케일에서 원기둥으로 근사 — 충돌/시각상 충분)
+
+  ⚠ 이 지오메트리/포즈는 robot_arm_tutorials/bolt_scene.py 의 BOLT_* 상수
+    (MoveIt planning-scene 충돌)와 짝을 이룬다. 수정 시 함께 맞출 것.
+-->
+<sdf version="1.8">
+  <model name="m8_bolt">
+    <link name="bolt">
+      <inertial>
+        <!-- 강철 M8×40 ≈ 25g. 관성은 길이 45mm 봉 근사. -->
+        <mass>0.025</mass>
+        <inertia>
+          <ixx>2.0e-7</ixx>
+          <iyy>4.5e-6</iyy>
+          <izz>4.5e-6</izz>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyz>0</iyz>
+        </inertia>
+      </inertial>
+
+      <!-- 샤프트: 원기둥 기본 축(+Z)을 Y로 +90° 회전 → +X 정렬 -->
+      <collision name="shaft_collision">
+        <pose>0 0 0 0 1.5708 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.004</radius>
+            <length>0.040</length>
+          </cylinder>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.8</mu>
+              <mu2>0.8</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="shaft_visual">
+        <pose>0 0 0 0 1.5708 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.004</radius>
+            <length>0.040</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.50 0.50 0.55 1</ambient>
+          <diffuse>0.60 0.60 0.65 1</diffuse>
+          <specular>0.40 0.40 0.40 1</specular>
+        </material>
+      </visual>
+
+      <!-- 머리: +X 끝 (샤프트 끝 0.020 + 머리 두께 0.005의 절반) -->
+      <collision name="head_collision">
+        <pose>0.0225 0 0 0 1.5708 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.0065</radius>
+            <length>0.005</length>
+          </cylinder>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.8</mu>
+              <mu2>0.8</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="head_visual">
+        <pose>0.0225 0 0 0 1.5708 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.0065</radius>
+            <length>0.005</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.35 0.35 0.40 1</ambient>
+          <diffuse>0.45 0.45 0.50 1</diffuse>
+        </material>
+      </visual>
+    </link>
+
+    <!-- 모델 자신의 월드 자세를 /model/<모델이름>/pose 로 발행.
+         ⚠ 왜 SceneBroadcaster(/world/<w>/pose/info)를 안 쓰는가:
+           SceneBroadcaster 는 엔티티 식별을 gz 메시지의 name/id 필드로만 싣고
+           header.data 의 'frame_id'/'child_frame_id' 항목은 채우지 않는다.
+           그런데 ros_gz_bridge 의 Pose_V→TFMessage 변환은 오직 그 header.data
+           키에서만 프레임 이름을 읽는다 → 브리지된 TF 가 전부 이름 빈 채로 도착해
+           볼트를 하나도 식별할 수 없었다(정규식을 넓혀도 해결 불가).
+           PosePublisher 는 두 키를 모두 채우므로 이름이 정상적으로 실려 온다.
+         use_pose_vector_msg=true → gz.msgs.Pose_V 로 발행(브리지 타입과 일치).
+         static_publisher=false → 볼트가 멈춰 있어도 계속 /pose 로 발행된다
+           (true 면 정지한 자세는 별도 /pose_static 토픽으로 새 나간다). -->
+    <plugin filename="gz-sim-pose-publisher-system"
+            name="gz::sim::systems::PosePublisher">
+      <publish_link_pose>false</publish_link_pose>
+      <publish_visual_pose>false</publish_visual_pose>
+      <publish_collision_pose>false</publish_collision_pose>
+      <publish_sensor_pose>false</publish_sensor_pose>
+      <publish_model_pose>true</publish_model_pose>
+      <publish_nested_model_pose>false</publish_nested_model_pose>
+      <use_pose_vector_msg>true</use_pose_vector_msg>
+      <static_publisher>false</static_publisher>
+      <update_frequency>30</update_frequency>
+    </plugin>
+  </model>
+</sdf>

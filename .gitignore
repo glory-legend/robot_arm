@@ -1,0 +1,28 @@
+# ROS2 / colcon 빌드 산출물
+build/
+install/
+log/
+*.egg-info/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# 학습 상태·로그 (커밋 금지 — 실행 머신의 ~/pick_place_logs 에 별도 존재)
+*.pkl
+*.jsonl
+*.log
+pick_place_logs/
+
+# 런타임 산출물 (스폰↔데모 공유 IPC)
+bolt_layout.json
+
+# 편집기 / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Windows 탐색기 다운로드 흔적(ADS)
+*:Zone.Identifier
+*Zone.Identifier
