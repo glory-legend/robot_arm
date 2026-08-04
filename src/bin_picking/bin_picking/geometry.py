@@ -18,6 +18,8 @@ import rclpy
 import tf_transformations
 from rclpy.action import ActionClient
 from rclpy.node import Node
+
+from bin_picking import protocol
 from rclpy.parameter import Parameter
 from rclpy.parameter_client import AsyncParameterClient
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
@@ -308,15 +310,13 @@ class GeometryMixin:
         return achieved_z <= target_z + cls.GRASP_Z_TOL
 
     def _joint_margin(self, joint_dict):
-        """관절해가 한계에서 얼마나 떨어졌나(최솟값, rad). 클수록 안전."""
-        if not joint_dict:
-            return 0.0
-        ms = []
-        for j, v in joint_dict.items():
-            lo, hi = self.JOINT_LIMITS.get(j, (None, None))
-            if lo is not None:
-                ms.append(min(v - lo, hi - v))
-        return min(ms) if ms else 0.0
+        """관절해가 한계에서 얼마나 떨어졌나(최솟값, rad). 클수록 안전.
+
+        구현은 protocol.py 로 옮겨졌다(desktop_bridge.py 의 텔레메트리용
+        joint_margins 리스트 함수와 로직을 공유해 드리프트를 막기 위함) —
+        여기는 위임 래퍼만 남긴다.
+        """
+        return protocol.joint_margin(joint_dict, self.JOINT_LIMITS)
 
     # =========================================================
     # Pose 헬퍼

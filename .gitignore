@@ -26,3 +26,7 @@ bolt_layout.json
 # Windows 탐색기 다운로드 흔적(ADS)
 *:Zone.Identifier
 *Zone.Identifier
+
+# 로컬 에이전트 도구 상태 (머신별 설정/세션 상태 — 커밋 금지)
+.claude/
+.omc/

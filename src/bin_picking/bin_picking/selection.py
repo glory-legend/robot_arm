@@ -48,7 +48,7 @@ from moveit_msgs.srv import (
 )
 from sensor_msgs.msg import JointState
 from shape_msgs.msg import SolidPrimitive
-from std_msgs.msg import ColorRGBA, Empty
+from std_msgs.msg import ColorRGBA, Empty, String
 from tf2_msgs.msg import TFMessage
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from visualization_msgs.msg import Marker, MarkerArray
@@ -445,7 +445,8 @@ class SelectionMixin:
             self.get_logger().info('[학습선택기] 통과 후보 없음 — 휴리스틱 폴백')
         return self._select_topmost_bolt()
 
-    def _log_attempt(self, bolt, feat, ok, reason, fraction=None, dur=None):
+    def _log_attempt(self, bolt, feat, ok, reason, fraction=None, dur=None,
+                     metrics=None, retries=0):
         """[R4] 파지 시도 1건을 attempts.jsonl 에 append + 온라인 학습.
 
         모든 _pick 종결 지점에서 호출된다. 기록/학습 실패는 데모를 막지 않게
@@ -454,14 +455,40 @@ class SelectionMixin:
 
         USE_LEARNED_SELECTOR=False 면 데이터 기록·학습을 통째로 건너뛴다 —
         선택기를 끄면 파일 생성/학습을 포함해 '완전히 기존 동작'으로 돌아간다.
+
+        [데스크톱 통신] 모든 _pick 종결 지점을 지나가는 이 단일 입구에, 결과를
+        desktop_bridge 노드로 흘려보내는 발행 훅 하나를 얹는다(부작용만 추가,
+        반환값·제어흐름 불변). 실패해도 데모를 막지 않도록 통째로 흡수한다.
+
+        `metrics`(dict|None): 성공/`empty_after_lift` 종결점에서만 채워지는
+        지상진실 측정값(`bolt_rise_m`, `gripper_width_m`) — grasp_result 로 나간다.
+        `retries`(int): 호출자(pick_place_node.py `_pick()`)가 이미 계산해 넘기는
+        가공된 값 — 여기서는 그대로 실어 보낼 뿐 재계산하지 않는다(호출자가
+        _note_attempt_failed 의 증가/pop 순서를 알고 있어야만 정확히 계산되므로).
         """
+        try:
+            if not hasattr(self, '_cycle_result_pub'):
+                from bin_picking.desktop_bridge import CYCLE_RESULT_TOPIC
+                self._cycle_result_pub = self.create_publisher(String, CYCLE_RESULT_TOPIC, 10)
+            # cycle_id 발급 — 시스템 전체에서 이 카운터 하나만 cycle_id 를 발급한다
+            # (desktop_bridge 는 절대 스스로 cycle_id 를 지어내지 않고 echo 만 한다).
+            self._cycle_seq += 1
+            rec = String()
+            rec.data = json.dumps({
+                'bolt_id': bolt, 'success': bool(ok), 'reason': reason, 'dur': dur,
+                'cycle_id': self._cycle_seq, 'origin': self._pick_origin,
+                'retries': retries, 'metrics': metrics,
+            })
+            self._cycle_result_pub.publish(rec)
+        except Exception:                       # noqa: BLE001
+            pass
         if not self.USE_LEARNED_SELECTOR:
             return
         try:
             rec = {'t': round(time.time(), 3), 'bolt': bolt,
                    'epoch': self._pick_epoch, 'feat': feat,
                    'ok': int(bool(ok)), 'reason': reason,
-                   'out': {'fraction': fraction, 'dur': dur}}
+                   'out': {'fraction': fraction, 'dur': dur, 'metrics': metrics}}
             os.makedirs(os.path.dirname(self.ATTEMPTS_PATH), exist_ok=True)
             with open(self.ATTEMPTS_PATH, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(rec) + '\n')

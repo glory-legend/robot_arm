@@ -72,6 +72,7 @@ robotarm_main/
 | `bolt_scene.py` | 통/볼트 자산 치수(스폰과 planning-scene 공유 단일 소스) |
 | `grasp_selector.py` | 학습형 파지 선택기(sklearn SGD, ROS 무의존) |
 | `train_selector.py` | 누적 attempts 로그로 선택기 오프라인 학습 |
+| `desktop_bridge.py` | **독립 노드**: 데스크톱앱 통신(REST+WebSocket 하이브리드+토큰인증, `docs/desktop_protocol.md` §4) |
 
 의존 방향은 `config ← geometry ← grasp_planning ← (ROS mixin들) ← node` 로
 단방향입니다. 자세한 그래프는 [`docs/architecture.md`](docs/architecture.md).
@@ -83,13 +84,20 @@ robotarm_main/
 ```bash
 # 사전: ROS2 Jazzy + Gazebo Harmonic + MoveIt2, 그리고
 #       pip install scikit-learn numpy   (학습형 선택기용)
+#       pip install aiohttp              (데스크톱앱 통신 브릿지용)
 cd robotarm_main
-source /opt/ros/jazzy/setup.bash
+source /opt/ros/jazzy/setup.bash   # 쉘이 zsh면 setup.zsh (예: source /opt/ros/jazzy/setup.zsh)
 colcon build --symlink-install
-source install/setup.bash
+source install/setup.bash          # 쉘이 zsh면 install/setup.zsh
 ```
 
-## 실행 (터미널 5개)
+> **zsh 사용자 주의:** `setup.bash`를 zsh에서 그대로 source하면
+> `setup.bash:.:11: 그런 파일이나 디렉터리가 없습니다: .../setup.sh` 에러가 날 수 있습니다
+> (`$BASH_SOURCE`로 자기 위치를 찾는데 zsh에는 이게 없어서 `$PWD` 기준으로 잘못 찾음).
+> `.bash` 대신 `.zsh` 확장자 버전을 source하면 해결됩니다 — `/opt/ros/jazzy/`와
+> `install/` 아래 둘 다 있습니다. 기본 쉘이 뭔지 모르겠으면 `echo $SHELL`로 확인.
+
+## 실행 (터미널 6개, 비전 포함 전체 파이프라인)
 
 ```bash
 ros2 launch bin_picking franka_gazebo_moveit.launch.py   # 1) 로봇 + 카메라
@@ -97,6 +105,7 @@ ros2 launch bin_picking spawn_bolts.launch.py            # 2) 통 + 볼트 스�
 ros2 launch bin_picking vision_pipeline.launch.py        # 3) (선택) 카메라 브릿지
 ros2 run   bin_picking bolt_vision                       # 4) (선택) 비전 인식
 ros2 run   bin_picking integrated_pick_place --auto      # 5) 데모 (연속 자동)
+ros2 run   bin_picking desktop_bridge                    # 6) (선택) 데스크톱앱 통신 브릿지
 ```
 
 `--auto` 를 빼면 사이클마다 수동 진행:
@@ -104,6 +113,38 @@ ros2 run   bin_picking integrated_pick_place --auto      # 5) 데모 (연속 자
 
 **RViz**: Fixed Frame `fr3_link0`, PointCloud2(`/bin_camera/points`,
 Reliability=**Best Effort**), MarkerArray(`/pick_place_markers`).
+
+---
+
+## 데스크톱앱 통신 (검증용)
+
+데스크톱앱은 별도 팀이 만들 예정입니다. 로봇쪽 통신 종단점(`desktop_bridge`
+노드, REST+WebSocket 하이브리드+토큰인증)만 먼저 준비해 뒀습니다 — 데이터 계약과
+설계 근거는 [`docs/desktop_protocol.md`](docs/desktop_protocol.md), **접속 방법·검증
+절차·트러블슈팅**은 [`docs/desktop_connection_guide.md`](docs/desktop_connection_guide.md)
+참고.
+
+**범위:** 비전(카메라→포인트클라우드→볼트 인식)은 데스크톱 앱과 직접 통신하는
+별개 파이프라인입니다(다른 팀 담당). 여기서 검증하는 건 **로봇팔 ↔ 데스크톱
+통신**뿐이라, 아래 명령엔 비전 노드(`vision_pipeline`/`bolt_vision`)가 없습니다.
+
+### 명령 한 줄로 전체 기동 (권장)
+```bash
+pip install --user --break-system-packages aiohttp   # 최초 1회
+ros2 launch bin_picking desktop_integration_demo.launch.py
+```
+Gazebo+MoveIt → 볼트 스폰 → `desktop_bridge` → `integrated_pick_place` 를
+순서대로(지연 기동으로) 한 번에 띄운다. 옵션: `rviz:=true`(뷰어 표시),
+`auto:=false`(수동 진행), `bolts_delay:=25.0`/`apps_delay:=30.0`(느린 컴퓨터라
+기본 지연시간으로 부족하면 늘리기).
+
+### 통신 프로토콜만 (Gazebo 없이, 가장 가벼움)
+```bash
+ros2 run bin_picking desktop_bridge --ros-args -p api_token:=<토큰>   # Gazebo 없이도 켜짐(토큰 안 주면 로그에 임의생성값 출력)
+python3 src/bin_picking/tools/mock_desktop_client.py --token <토큰>   # 데스크톱 대역 목 클라이언트(ROS 무의존)
+```
+
+실전 사용법(오류 대처·주의사항 등)은 Notion "실전 사용 가이드" 문서 참고.
 
 ---
 

@@ -315,6 +315,15 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         self._attempt_count = 0            # 온라인 update 누적 횟수(주기 재적합 트리거)
         # 학습 선택으로 정해진 계획을 _pick 에 넘길 임시 슬롯(재계산 방지).
         self._pending_plan = None
+        # [데스크톱 통신] 이번 사이클 대상의 출처. get_next_optimal_bolt_pose()
+        # 가 매 _pick() 호출 직전 항상 갱신하므로 여기 초기값은 첫 사이클 전
+        # 미바인딩을 막는 용도일 뿐(안전한 기본값 'ROBOT').
+        self._pick_origin = 'ROBOT'
+        # [데스크톱 통신] cycle_id 발급 카운터 — _log_attempt 가 매 호출마다
+        # 1씩 올려 시스템 전체에서 유일하게 이 값을 발급한다(명시 초기화 —
+        # 발행 훅이 예외를 통째로 삼키므로 hasattr 지연초기화면 미바인딩 시
+        # 진단 없이 조용히 죽는다).
+        self._cycle_seq = 0
         self.selector = None
         if self.USE_LEARNED_SELECTOR and GraspSelector is not None:
             self.selector = GraspSelector()
@@ -370,10 +379,15 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
                 bid = self._match_sensed_bolt(pos)
                 self.get_logger().info(
                     f'외부 비전 6D 자세 수신 → 파지 (매칭 {bid or "없음"})')
+                # [데스크톱 통신] 이 사이클의 대상이 desktop_bridge 의 PICK_BOLT
+                # 재발행(EXT_POSE_TOPIC)에서 왔음을 기록 — _log_attempt 가 결과를
+                # RESULT(데스크톱 상관관계 있음) 대 grasp_result(없음) 로 가를 때 쓴다.
+                self._pick_origin = 'DESKTOP'
                 return (bid, pos, quat)
             rclpy.spin_once(self, timeout_sec=0.05)
         # 외부 자세가 안 오면 자체 선택으로 폴백. 학습 선택기가 준비됐으면 랭킹,
         # 아니면 기존 휴리스틱(_select_topmost_bolt). (R3)
+        self._pick_origin = 'ROBOT'
         return self._select_fallback()
 
     def _spin_sleep(self, duration):
@@ -408,6 +422,18 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         axis = self.bolt_axis_from_quat(quat)
         # 실패 집계 키 — 볼트 id 가 없는 외부 pose 경로도 상한을 갖도록 합성한다
         fail_key = bolt_id or f'ext_{round(pos[0], 3)}_{round(pos[1], 3)}'
+        # [데스크톱 통신] retries 필드 값 — "이번 시도 이전의" 연속 실패수를
+        # _pick() 시작 시점에 딱 한 번만 읽어 이번 호출 내 모든 _log_attempt
+        # 지점에 동일한 기준으로 쓴다(호출마다 다른 시점에 self._attempts 를
+        # 읽으면 _note_attempt_failed 의 증가/성공 시 pop 순서에 따라 성공·
+        # 실패 레코드의 의미가 서로 달라져 버린다). _note_attempt_failed 와
+        # 동일하게 epoch 불일치 시 0으로 리셋한다(그 사이 다른 볼트가 성공해
+        # 무더기가 바뀌었다는 뜻 — _note_progress 는 _attempts 를 안 비우므로
+        # 이 리셋이 없으면 무효화된 낡은 스트릭이 유령처럼 남는다).
+        _epoch_at_start, _retries_before = self._attempts.get(
+            fail_key, (self._pick_epoch, 0))
+        if _epoch_at_start != self._pick_epoch:
+            _retries_before = 0
         if self.grasp_quat_for_axis(axis) is None:
             self.get_logger().warn(
                 f'[{label}] 볼트가 거의 수직으로 서 있어 옆에서 감쌀 수 없음 — 건너뜀')
@@ -416,8 +442,11 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
             #   (축이 접근방향과 이루는 각은 기울기 후보로도 바뀌지 않는다 —
             #    _grasp_frame 주석의 불변식 참고 → 기울여봐도 소용없다)
             self._blacklist.add(fail_key)
-            self._log_attempt(fail_key, None, 0, 'abort',
-                              dur=round(time.time() - t0, 2))
+            # [데스크톱 통신] 이 분기는 _note_attempt_failed 를 거치지 않으므로
+            # (영구 포기라 스트릭 집계 자체가 무의미) retries 는 미조정 값 그대로.
+            self._log_attempt(fail_key, None, 0, 'axis_unreachable',
+                              dur=round(time.time() - t0, 2),
+                              retries=_retries_before)
             return False
 
         tx, ty = pos[0], pos[1]
@@ -469,8 +498,11 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
                 self.get_logger().warn(
                     f'[{label}] 남은 새 접근 자세 없음(실패한 자세 {sorted(tried)}°) '
                     f'— 동일 자세 반복 대신 즉시 포기, 다음 볼트로')
-                self._log_attempt(fail_key, None, 0, 'no_aperture',
-                                  dur=round(time.time() - t0, 2))
+                # [데스크톱 통신] 여기도 _note_attempt_failed 를 안 거치는
+                # 블랙리스트 분기 — retries 미조정.
+                self._log_attempt(fail_key, None, 0, 'no_aperture_exhausted',
+                                  dur=round(time.time() - t0, 2),
+                                  retries=_retries_before)
                 return False
             if sel is None:
                 self.get_logger().warn(
@@ -482,8 +514,13 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
                 #   블랙리스트로 보내 루프를 끝낸다.
                 self._deferred.add(fail_key)
                 self._note_attempt_failed(fail_key, '개구 확보 실패')
+                # [데스크톱 통신] 위에서 _note_attempt_failed 가 이미 스트릭을
+                # 증가시켰으므로 +1 — 문서가 정의하는 "이번 실패까지 포함한
+                # 연속 실패수"와 로봇의 MAX_NO_PROGRESS 블랙리스트 트리거가
+                # 보는 카운트를 일치시킨다.
                 self._log_attempt(fail_key, None, 0, 'no_aperture',
-                                  dur=round(time.time() - t0, 2))
+                                  dur=round(time.time() - t0, 2),
+                                  retries=_retries_before + 1)
                 return False
             tilt_deg, approach, aperture, wall_cap = sel
             plan_app_joints = None       # 롤아웃 경로가 아니면 접근자세 고정 없음
@@ -498,8 +535,9 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         ori = self.grasp_quat_for_axis(axis, approach)
         if ori is None:                     # 방어: 위 검사를 통과했으면 안 나온다
             self._note_attempt_failed(fail_key, '파지 자세 생성 실패')
-            self._log_attempt(fail_key, feat, 0, 'abort',
-                              dur=round(time.time() - t0, 2))
+            self._log_attempt(fail_key, feat, 0, 'orientation_fail',
+                              dur=round(time.time() - t0, 2),
+                              retries=_retries_before + 1)
             return False
         self.get_logger().info(
             f'[{label}] 개구 {self.GRIPPER_OPEN * 1000:.1f}mm → '
@@ -509,7 +547,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         # 접근/하강 '전에' 미리 좁혀 둔다(pre-grasp aperture).
         self.move_gripper(aperture)
 
-        def fail(msg, reason='abort'):
+        def fail(msg, reason='abort', metrics=None):
             self.get_logger().error(f'[{label}] {msg}')
             # 이 (위치, 접근 자세) 조합은 실패 — 재시도 시 같은 자세를 다시 쓰지
             # 않도록 기억한다(볼트가 움직이거나 무더기가 바뀌면 자동 리셋).
@@ -551,8 +589,10 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
             self._note_attempt_failed(fail_key, msg)
             self._attached_src_id = None
             # [R4] 실패 라벨(0)로 학습 데이터 기록 + 온라인 갱신.
+            # [데스크톱 통신] 위에서 _note_attempt_failed 가 이미 증가시켰으므로 +1.
             self._log_attempt(fail_key, feat, 0, reason,
-                              dur=round(time.time() - t0, 2))
+                              dur=round(time.time() - t0, 2),
+                              metrics=metrics, retries=_retries_before + 1)
             return False
 
         def abort(msg):
@@ -570,8 +610,10 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
             self._skip_ready = True
             self._note_attempt_failed(fail_key, '시도 취소')
             # [R4] 취소도 '실패한 시도'로 기록(라벨 0, reason=abort).
+            # [데스크톱 통신] 위에서 _note_attempt_failed 가 이미 증가시켰으므로 +1.
             self._log_attempt(fail_key, feat, 0, 'abort',
-                              dur=round(time.time() - t0, 2))
+                              dur=round(time.time() - t0, 2),
+                              retries=_retries_before + 1)
             return False
 
         approach_pose = Pose()
@@ -717,6 +759,12 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         self.get_logger().info(
             f'[{label}] 닫힘 후 손가락 {(w0 or 0.0) * 1000:.2f}mm(참고) — '
             f'실제 파지는 리프트 후 볼트 상승으로 확정')
+        # [데스크톱 통신] grasp_result/RESULT 로 나갈 지상진실 지표. 리프트
+        # 재검증 분기(아래)에서 값이 채워지고, 그 전에 실패하면 None 그대로
+        # 나간다(측정 자체가 안 됐으므로) — 두 분기 모두 항상 바인딩되게
+        # 여기서 미리 초기화해 둔다.
+        bolt_rise_m = None
+        gripper_width_m = None
         # 파지 전 볼트 높이(지상진실 기준점). 볼트는 부착돼도 Gazebo pose 발행이
         # 계속되므로 _bolt_sensed 로 실제 위치를 추적할 수 있다.
         z_before = (self._bolt_sensed[bolt_id][0][2]
@@ -736,21 +784,26 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         if z_before is not None and bolt_id in self._bolt_sensed:
             z_after = self._bolt_sensed[bolt_id][0][2]
             rose = z_after - z_before
+            bolt_rise_m = rose
+            gripper_width_m = w0     # 이 분기는 폭 폴백을 안 타므로 닫힘 직후 참고값
             if rose < 0.10:            # 10cm 이상 안 올라왔으면 빈손(볼트 바닥에 남음)
                 return fail(
                     f'리프트 후 볼트 미상승({rose * 1000:+.0f}mm, '
                     f'{z_before:.3f}→{z_after:.3f}) — 실제로 못 물었음',
-                    'empty_after_lift')
+                    'empty_after_lift',
+                    metrics={'bolt_rise_m': bolt_rise_m, 'gripper_width_m': gripper_width_m})
             self.get_logger().info(
                 f'[{label}] 파지 확정 — 볼트가 그리퍼 따라 상승 '
                 f'{z_before:.3f}→{z_after:.3f} (+{rose * 1000:.0f}mm)')
         else:
             # 볼트 id 센싱 불가(외부 pose 등) → 손끝 폭 폴백
             w = self._sample_finger(settle_sec=0.2)
+            gripper_width_m = w
             if not self._finger_width_is_grasp(w):
                 return fail(
                     f'리프트 후 빈손(손가락 {(w or 0.0) * 1000:.2f}mm, '
-                    f'볼트 추적 불가)', 'empty_after_lift')
+                    f'볼트 추적 불가)', 'empty_after_lift',
+                    metrics={'bolt_rise_m': bolt_rise_m, 'gripper_width_m': gripper_width_m})
             self.get_logger().info(
                 f'[{label}] (볼트 추적 불가) 손끝 폭 폴백 통과 {w * 1000:.2f}mm')
         if bolt_id:
@@ -760,8 +813,12 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         # 무효화하고, 이웃에 막혀 보류했던 볼트를 전부 재검토 대상으로 되돌린다.
         self._note_progress()
         # [R4] 성공 라벨(1) — 리프트 후 재검증까지 통과한 '진짜 파지'만 여기 온다.
+        # [데스크톱 통신] 여기는 _note_attempt_failed 를 안 거치므로(방금 성공)
+        # retries 는 미조정 값 — "이번 성공 직전까지의" 연속 실패수라는 뜻.
         self._log_attempt(fail_key, feat, 1, 'success',
-                          dur=round(time.time() - t0, 2))
+                          dur=round(time.time() - t0, 2),
+                          metrics={'bolt_rise_m': bolt_rise_m, 'gripper_width_m': gripper_width_m},
+                          retries=_retries_before)
         return True
 
     def _drop(self):

@@ -53,6 +53,8 @@ setup(
             'bolt_vision = bin_picking.bolt_vision:main',
             # 누적된 attempts.jsonl 로 파지 선택기 오프라인 학습
             'train_selector = bin_picking.train_selector:main',
+            # 데스크톱앱 ↔ 로봇 통신 브릿지 (REST+WebSocket 하이브리드, docs/desktop_protocol.md)
+            'desktop_bridge = bin_picking.desktop_bridge:main',
         ],
     },
 )
