@@ -6,6 +6,7 @@
 이유는 desktop_bridge.py 뿐 아니라 pytest 에서도 Gazebo/rclpy 없이 이 파일
 하나만으로 전체 fail_reason 매핑·검증 로직을 검증할 수 있어야 하기 때문이다.
 """
+import math
 
 # v2->v3(2026-08-04): 전송 계층을 단일 WebSocket 봉투에서 REST(명령)+WebSocket(텔레메
 # 트리 전용) 하이브리드로 전환 + Bearer 토큰 인증 도입. v1->v2 전례와 동일하게 아직
@@ -14,6 +15,9 @@
 # 바뀌었다(desktop_protocol.md §4).
 PROTOCOL_VERSION = 3
 
+# ⚠ 이 표의 왼쪽 문자열 일부는 커밋 bf7aff0 에서 이름이 바뀌었다 — attempts.jsonl
+# 의 과거/현재 레코드가 같은 사건에 다른 reason 을 쓴다(PROGRESS.md "reason 문자열
+# 개명" 항목 참고). reason 으로 그룹핑해 분석할 때 반드시 확인할 것.
 # 내부 reason 문자열 -> (부록D 코드, retry_suggested)
 # 로봇 파이프라인(pick_place_node.py `_pick()`)이 실제로 발행하는 문자열만 왼쪽에
 # 둔다. 오른쪽 부록D 코드 중 REACH_FILTERED/COLLISION_ABORT/JOINT_LIMIT/TIMEOUT
@@ -54,6 +58,22 @@ def map_fail_reason(reason):
 _REQUIRED_PICK_BOLT_FIELDS = ('bolt_id', 'rank', 'stamp', 'frame')
 
 
+def _is_finite_number(v):
+    """JSON 숫자로서 실제로 쓸 수 있는 유한 실수인가.
+
+    `isinstance(v, (int, float))` 만으로는 두 구멍이 남는다:
+    ① `bool` 은 `int` 의 서브클래스라 `True` 가 숫자로 통과한다.
+    ② `float('nan')`/`inf` 는 JSON 에는 없지만 `json.loads` 가 `NaN`/`Infinity`
+       리터럴을 받아 준다 — 그대로 PoseStamped 로 흘러가면 하위 계획 단이 조용히
+       망가진다.
+    """
+    if isinstance(v, bool):
+        return False
+    if not isinstance(v, (int, float)):
+        return False
+    return math.isfinite(v)
+
+
 def validate_pick_bolt(args):
     """PICK_BOLT.args 가 부록F 필수 필드를 갖췄는지 검사.
 
@@ -72,13 +92,17 @@ def validate_pick_bolt(args):
 
     pos = pose.get('position')
     if not (isinstance(pos, list) and len(pos) == 3
-            and all(isinstance(v, (int, float)) for v in pos)):
+            and all(_is_finite_number(v) for v in pos)):
         errors.append('missing/invalid required field: pose.position (f64[3])')
 
     quat = pose.get('orientation')
     if not (isinstance(quat, list) and len(quat) == 4
-            and all(isinstance(v, (int, float)) for v in quat)):
+            and all(_is_finite_number(v) for v in quat)):
         errors.append('missing/invalid required field: pose.orientation (f64[4])')
+    elif abs(sum(v * v for v in quat) - 1.0) >= 1e-3:
+        # 비단위 쿼터니언은 PoseStamped 에 그대로 실려 나가 하위 계획 단에서
+        # 조용히 회전을 왜곡시킨다 — 여기서 거부해 원인을 드러낸다.
+        errors.append('pose.orientation not a unit quaternion')
 
     return errors
 
@@ -92,6 +116,34 @@ def is_stale(stamp_ns, deadline_ns, now_ns):
     if deadline_ns is None:
         return False
     return now_ns > deadline_ns
+
+
+def build_pick_bolt_pose(args, reference_frame, now_ns):
+    """PICK_BOLT.args 를 검증하고 발행 가능한 float 좌표로 변환.
+
+    ROS 무의존이라 rclpy.init() 없이 pytest 로 검증할 수 있다 — desktop_bridge 쪽
+    `_pick_bolt_core` 는 이 함수 결과를 PoseStamped 에 담아 발행하기만 한다.
+
+    반환: `(errors, pos, quat)`. `errors` 가 비어 있지 않으면 `pos`/`quat` 는 None.
+    """
+    errors = validate_pick_bolt(args)
+    frame = args.get('frame')
+    if frame is not None and frame != reference_frame:
+        errors.append(f'frame must be {reference_frame!r}, got {frame!r}')
+    if errors:
+        return errors, None, None
+
+    if is_stale(args.get('stamp'), args.get('deadline'), now_ns):
+        return ['stale: deadline exceeded'], None, None
+
+    pose = args['pose']       # validate_pick_bolt 가 이미 모양을 확인함
+    # ⚠ float() 로 명시 변환 필수: JSON 은 int/float 을 구분 안 해서 값이 정확히
+    # 0 이나 1 같은 정수형이면 json.loads() 가 Python int 로 파싱한다. rclpy 생성
+    # 바인딩은 float64 필드에 int 가 들어오면 catch 가능한 예외가 아니라 C 단
+    # assert 로 프로세스 전체를 abort 시킨다(실측: 실제로 브릿지를 통째로 죽임) —
+    # validate_pick_bolt 는 int 도 유효한 숫자로 통과시키므로(부록F 는 "숫자"만
+    # 요구), 이 방어는 여기서 해야 한다.
+    return [], [float(v) for v in pose['position']], [float(v) for v in pose['orientation']]
 
 
 def joint_margin(q_dict, limits):

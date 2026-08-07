@@ -83,6 +83,20 @@ FR3 M8 볼트 빈피킹 — **컴퓨터비전 → 데스크톱앱 → 로봇암*
   PICK_BOLT/heartbeat/arm_state 전체 왕복 실측 검증. **완료** — 단, PICK_BOLT 를 뺀 나머지
   명령은 ACK 골격만(로봇 동작 미반영, 의도된 범위 제한).
 
+### ⚠ `reason` 문자열 개명 — `attempts.jsonl` 분석 시 주의 (2026-08-07)
+- **무슨 일:** 커밋 `bf7aff0` 에서 `_pick()` 이 발행하는 내부 `reason` 문자열 3개가 바뀌었다.
+  - `abort` → **`axis_unreachable`** (볼트 축이 거의 수직 — 옆에서 못 감싸 영구 포기)
+  - `no_aperture` → **`no_aperture_exhausted`** (시도할 새 접근 자세 소진 → 블랙리스트)
+  - `abort` → **`orientation_fail`** (파지 자세 생성 실패)
+  - `abort`/`no_aperture` 자체는 **다른 의미로 계속 쓰인다**(각각 하강 직전 볼트 이동으로 시도
+    취소 / 이번 무더기에서만 보류) — 사라진 게 아니라 의미가 좁아졌다.
+- **왜 중요한가:** 이 문자열은 `selection.py._log_attempt()` 가 `attempts.jsonl` 에 그대로 기록한다.
+  즉 **커밋 전후 레코드가 같은 물리적 사건에 서로 다른 `reason` 을 쓴다.** `train_selector` 등
+  `reason` 으로 그룹핑해 분석하면 한 사건이 두 그룹으로 쪼개지거나, `abort` 그룹에 의미가 다른
+  구·신 레코드가 섞인다.
+- **어떻게 할 것:** 개명 이전 로그를 함께 볼 때는 위 매핑으로 정규화한 뒤 집계할 것. 매핑표
+  자체는 `protocol.py` 의 `FAIL_REASON_MAP` (부록D 코드 변환) 참고.
+
 ---
 
 ## 🔜 앞으로 할 일 / 해야 할 것

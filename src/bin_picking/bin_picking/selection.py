@@ -467,9 +467,8 @@ class SelectionMixin:
         _note_attempt_failed 의 증가/pop 순서를 알고 있어야만 정확히 계산되므로).
         """
         try:
-            if not hasattr(self, '_cycle_result_pub'):
-                from bin_picking.desktop_bridge import CYCLE_RESULT_TOPIC
-                self._cycle_result_pub = self.create_publisher(String, CYCLE_RESULT_TOPIC, 10)
+            # _cycle_result_pub 은 __init__ 에서 미리 만들어 둔다(디스커버리 유예
+            # 시간 확보 — 지연 생성하면 첫 사이클의 결과가 조용히 유실된다).
             # cycle_id 발급 — 시스템 전체에서 이 카운터 하나만 cycle_id 를 발급한다
             # (desktop_bridge 는 절대 스스로 cycle_id 를 지어내지 않고 echo 만 한다).
             self._cycle_seq += 1

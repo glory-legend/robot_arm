@@ -54,10 +54,10 @@ import json
 import os
 import secrets
 import ssl
+import sys
 import threading
 import time
 import uuid
-from queue import SimpleQueue
 
 import rclpy
 from rclpy.node import Node
@@ -91,7 +91,7 @@ GRIPPER_JOINT = PickPlaceConfig.GRIPPER_JOINT
 TCP_LINK = PickPlaceConfig.END_EFFECTOR_LINK
 JOINT_LIMITS = PickPlaceConfig.JOINT_LIMITS
 # selection.py `_log_attempt` 훅이 사이클 결과를 얹어 발행하는 토픽.
-CYCLE_RESULT_TOPIC = '/bin_picking/cycle_result'
+CYCLE_RESULT_TOPIC = PickPlaceConfig.CYCLE_RESULT_TOPIC
 
 # 실제 로봇 동작 연동 없이 ACK 만 돌려주는 "골격만" 명령 — §2A 전체 명령 표 중
 # PICK_BOLT/GET_STATUS/ESTOP 을 뺀 나머지. `POST /api/v1/command` 하나로 받는다.
@@ -118,6 +118,9 @@ class DesktopBridgeNode(Node):
         # 겪은 버그). 기본은 벽시계, Gazebo 스택과 같이 띄울 때만 launch 인자로
         # use_sim_time:=true 를 넘겨 나머지 노드들과 시계를 맞춘다.
         super().__init__('desktop_bridge')
+        # ⚠ 이 가드가 클래스 정의 시점보다 먼저 돌아야 한다 — 그래서 `_auth_middleware`
+        # 는 클래스 본문에서 `@web.middleware` 로 감싸지 않고, `web` 이 None 이 아님이
+        # 보장된 서버 기동 시점(`_serve_forever`)에 감싼다.
         if web is None:
             raise RuntimeError(
                 f'aiohttp 패키지가 없습니다 ({_AIOHTTP_IMPORT_ERR}). '
@@ -130,6 +133,11 @@ class DesktopBridgeNode(Node):
         self.declare_parameter('api_token', '')
         self.declare_parameter('tls_cert', '')
         self.declare_parameter('tls_key', '')
+        self.declare_parameter('require_tls', False)
+        self.declare_parameter('allow_insecure_nonloopback', False)
+        self._require_tls = bool(self.get_parameter('require_tls').value)
+        self._allow_insecure_nonloopback = bool(
+            self.get_parameter('allow_insecure_nonloopback').value)
         self._host = self.get_parameter('host').value
         self._port = int(self.get_parameter('port').value)
         arm_state_hz = float(self.get_parameter('arm_state_hz').value)
@@ -165,6 +173,20 @@ class DesktopBridgeNode(Node):
                 '[desktop_bridge] tls_cert/tls_key 미설정 — 평문 HTTP/WS로 기동합니다. '
                 '신뢰된 사설망 밖에 노출하지 마세요(desktop_protocol.md §5).')
 
+        # 평문인데 loopback 밖으로 바인딩하면 Bearer 토큰이 네트워크에 그대로
+        # 노출된다 — 경고만 남기고 그냥 열어 주던 걸 기동 거부로 바꾼다.
+        if self._ssl_context is None:
+            if self._require_tls:
+                raise RuntimeError(
+                    'require_tls:=true 인데 tls_cert/tls_key 가 없습니다. '
+                    '인증서를 지정하거나 require_tls:=false 로 내리세요.')
+            if (self._host not in ('127.0.0.1', 'localhost', '::1')
+                    and not self._allow_insecure_nonloopback):
+                raise RuntimeError(
+                    f'TLS가 설정되지 않은 상태로 loopback이 아닌 host({self._host})에 '
+                    f'바인딩할 수 없습니다 — tls_cert/tls_key 를 주거나 '
+                    f'allow_insecure_nonloopback:=true 로 우회하세요.')
+
         # --- 로봇 상태 구독 (arm_state 스트림 재료) ---
         self._joint_state = None
         self._prev_q = None
@@ -181,6 +203,7 @@ class DesktopBridgeNode(Node):
         # --- 명령 상태 (ACK-only 명령들의 최근값 — GET_STATUS 조회용) ---
         self._cmd_state = {}
         self._estop = False
+        self._estop_lock = threading.Lock()  # 서버 스레드가 쓰고 rclpy 타이머가 읽는다
         self._pending_pick = None      # {'id':.., 'ts':.., 'bolt_id':..} 단일 슬롯
         self._pending_lock = threading.Lock()
         self._seq = 0
@@ -194,7 +217,9 @@ class DesktopBridgeNode(Node):
         self._arm_state_stall_alerted = False
 
         # --- HTTP/WS 서버: 별도 스레드에서 자체 이벤트루프 실행 ---
-        self._outbox = SimpleQueue()          # 다른 스레드(rclpy)→서버 스레드로 브로드캐스트할 메시지
+        # `_outbox`(rclpy 스레드→서버 스레드 브로드캐스트 큐)는 asyncio.Queue 라
+        # 이벤트루프가 생긴 뒤 서버 스레드에서 만든다(_run_server).
+        self._outbox = None
         self._ws_clients = set()
         self._loop = None
         self._server_thread = threading.Thread(target=self._run_server, daemon=True)
@@ -216,7 +241,8 @@ class DesktopBridgeNode(Node):
     def _run_server(self):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        self._loop = loop
+        self._outbox = asyncio.Queue(maxsize=500)
+        self._loop = loop   # _send 의 가드가 보는 값 — _outbox 다음에 세팅한다
         try:
             loop.run_until_complete(self._serve_forever())
         except Exception as exc:                   # noqa: BLE001
@@ -226,62 +252,109 @@ class DesktopBridgeNode(Node):
             # 시 stderr 트레이스백 한 줄만 남고 ROS 로그는 "대기 중"이라고 계속
             # 보고해 운영자가 못 알아챈다). 그래서 조용히 넘어가지 않고 크게
             # 실패시킨다.
-            self.get_logger().fatal(
-                f'[desktop_bridge] HTTP/WS 서버 기동 실패 ({self._host}:{self._port}): '
-                f'{exc!r} — 포트 충돌이면 다른 desktop_bridge 프로세스가 이미 떠 있는지 '
-                f'확인하세요(`ss -ltnp | grep {self._port}` 또는 `pkill -f desktop_bridge`). '
-                f'절반만 동작하는 상태로 두지 않고 노드를 즉시 종료합니다.')
-            # rclpy.shutdown()/SIGINT 로 정상 종료 경로를 태우는 방식은 메인
-            # 스레드가 ROS 내부 C 대기 중일 때 신호 처리가 간헐적으로 지연·유실되어
-            # 프로세스가 안 죽는 걸 실측으로 확인했다(스레드 간 신호 타이밍 레이스).
-            # 바인드 실패는 시작 시점의 치명적 오류라 정리할 런타임 상태가 없으므로,
-            # 스레드/신호 타이밍에 기대지 않는 즉시·확실한 종료(os._exit)를 쓴다.
-            os._exit(1)
+            self._fatal_exit(
+                f'HTTP/WS 서버 기동 실패 ({self._host}:{self._port}) — 포트 충돌이면 '
+                f'다른 desktop_bridge 프로세스가 이미 떠 있는지 확인하세요'
+                f'(`ss -ltnp | grep {self._port}` 또는 `pkill -f desktop_bridge`)',
+                exc)
         finally:
             loop.close()
 
+    def _fatal_exit(self, context, exc):
+        """절반만 동작하는 상태로 남지 않도록 즉시·확실하게 프로세스를 끝낸다."""
+        self.get_logger().fatal(
+            f'[desktop_bridge] {context}: {exc!r} — 절반만 동작하는 상태로 두지 않고 '
+            f'노드를 즉시 종료합니다.')
+        # rclpy.shutdown()/SIGINT 로 정상 종료 경로를 태우는 방식은 메인 스레드가
+        # ROS 내부 C 대기 중일 때 신호 처리가 간헐적으로 지연·유실되어 프로세스가
+        # 안 죽는 걸 실측으로 확인했다(스레드 간 신호 타이밍 레이스). 여기 오는
+        # 실패들은 정리할 런타임 상태가 없으므로 os._exit 를 쓰되, 그 전에 로그가
+        # 실제로 나가도록 flush 한다(os._exit 는 버퍼를 안 비운다).
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(1)
+
     async def _serve_forever(self):
-        app = web.Application(middlewares=[self._auth_middleware])
+        # `web.middleware` 적용은 여기서 — 클래스 정의 시점엔 aiohttp 임포트 실패로
+        # `web` 이 None 일 수 있고, 그러면 __init__ 의 친절한 가드보다 먼저 죽는다.
+        # 바운드 메서드에는 직접 못 씌운다(`web.middleware` 가 함수 객체에 마커
+        # 속성을 다는데 메서드 객체는 속성 대입을 거부한다) — 얇은 함수로 감싼다.
+        @web.middleware
+        async def auth_middleware(request, handler):
+            return await self._auth_middleware(request, handler)
+
+        app = web.Application(middlewares=[auth_middleware])
         app.router.add_post('/api/v1/pick_bolt', self._http_pick_bolt)
         app.router.add_post('/api/v1/estop', self._http_estop)
         app.router.add_post('/api/v1/command', self._http_command)
         app.router.add_get('/api/v1/status', self._http_status)
         app.router.add_get('/ws/telemetry', self._ws_telemetry)
 
-        runner = web.AppRunner(app)
+        # access_log=None: aiohttp 기본 액세스 로그는 요청 URL 을 통째로 찍어
+        # `/ws/telemetry?token=<API 토큰>` 의 토큰이 로그 파일에 평문으로 남는다.
+        # 의미 있는 이벤트는 이 파일이 self.get_logger() 로 따로 남긴다.
+        runner = web.AppRunner(app, access_log=None)
         await runner.setup()
         site = web.TCPSite(runner, self._host, self._port, ssl_context=self._ssl_context)
         await site.start()   # 바인드 실패 시 여기서 OSError — _run_server 가 잡는다
 
-        asyncio.create_task(self._broadcaster())
+        # 예외를 done-callback 으로 받는다 — 안 그러면 브로드캐스터가 죽어도
+        # 텔레메트리만 조용히 멈춘 채 서버는 계속 살아 있다(침묵은 버그다).
+        broadcaster_task = asyncio.create_task(self._broadcaster())
+        broadcaster_task.add_done_callback(self._on_broadcaster_done)
         await asyncio.Future()   # 서버가 닫힐 때까지 무한 대기
+
+    def _on_broadcaster_done(self, task):
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc is not None:
+            self._fatal_exit('broadcaster 태스크 실패', exc)
 
     async def _broadcaster(self):
         """rclpy 스레드가 `_outbox` 에 넣은 메시지를 연결된 모든 WS 클라이언트에 브로드캐스트."""
         while True:
-            text = await asyncio.get_event_loop().run_in_executor(None, self._outbox.get)
+            text = await self._outbox.get()
             if not self._ws_clients:
                 continue
             await asyncio.gather(
-                *(ws.send_str(text) for ws in list(self._ws_clients)), return_exceptions=True)
+                *(self._send_to_client(ws, text) for ws in list(self._ws_clients)),
+                return_exceptions=True)
+
+    async def _send_to_client(self, ws, text):
+        """느린 클라이언트 하나가 나머지 브로드캐스트를 막지 않게 타임아웃을 건다."""
+        try:
+            await asyncio.wait_for(ws.send_str(text), timeout=2.0)
+        except asyncio.TimeoutError:
+            self.get_logger().warn(
+                '[desktop_bridge] WS 클라이언트 송신 타임아웃(2s) — 연결을 닫습니다.')
+            await ws.close()
 
     # =========================================================
     # 인증
     # =========================================================
-    @web.middleware
+    def _token_matches(self, token):
+        # hmac.compare_digest 는 str 인자가 ASCII 밖이면 TypeError 를 던진다 —
+        # 비ASCII 토큰을 보내는 클라이언트가 401 대신 500 을 받는 걸 막는다.
+        if not isinstance(token, str) or not token.isascii():
+            return False
+        return hmac.compare_digest(token, self._api_token)
+
     async def _auth_middleware(self, request, handler):
         # `/api/*` 만 검사한다 — `/ws/telemetry` 는 핸드셰이크에 커스텀 헤더를 못
         # 붙이는 클라이언트도 있어 쿼리스트링 토큰으로 핸들러 안에서 따로 검사한다.
         if request.path.startswith('/api/'):
             auth = request.headers.get('Authorization', '')
-            token = auth[len('Bearer '):] if auth.startswith('Bearer ') else ''
-            if not hmac.compare_digest(token, self._api_token):
+            # RFC 7235: auth-scheme 은 대소문자 구분 없음("bearer" 도 유효).
+            scheme, _, token = auth.partition(' ')
+            if scheme.lower() != 'bearer':
+                token = ''
+            if not self._token_matches(token):
                 return web.json_response({'error': 'unauthorized'}, status=401)
         return await handler(request)
 
     def _check_ws_token(self, request):
-        token = request.query.get('token', '')
-        return hmac.compare_digest(token, self._api_token)
+        return self._token_matches(request.query.get('token', ''))
 
     # =========================================================
     # 명령 처리 (§2A, REST) — 동기, 빠른 연산만 (asyncio 루프를 막지 않는다)
@@ -290,7 +363,8 @@ class DesktopBridgeNode(Node):
         return web.json_response(self._status_args())
 
     async def _http_estop(self, request):
-        self._estop = True
+        with self._estop_lock:
+            self._estop = True
         self.get_logger().warn(
             '[desktop_bridge] ESTOP 수신 — 소프트 플래그만 설정됨. '
             '실제 정지는 물리 E-STOP/로봇 안전컨트롤러가 담당(§5).')
@@ -330,34 +404,29 @@ class DesktopBridgeNode(Node):
         `RESULT.corr` 와 같은 값이다 — `_cycle_result_cb` 는 이 값을 그대로
         echo 하므로, PICK_BOLT 가 어느 채널로 들어왔는지는 신경 쓰지 않는다.
         """
-        # 부록F 필수 필드 검증 — 근거 없는 'BAD_ARGS' 대신, 어떤 필드가 문제인지
-        # 명시하는 {accepted:false, errors} 로 응답한다.
-        errors = protocol.validate_pick_bolt(args)
-        frame = args.get('frame')
-        if frame is not None and frame != REFERENCE_FRAME:
-            errors.append(f'frame must be {REFERENCE_FRAME!r}, got {frame!r}')
+        # ESTOP 이 걸린 동안은 새 파지를 로봇으로 흘려보내지 않는다 — 소프트
+        # 플래그지만 "정지 요청 후에도 명령이 계속 나가는" 상태보다는 정직하다.
+        with self._estop_lock:
+            if self._estop:
+                return {'accepted': False, 'errors': ['estop active']}
+
+        # 부록F 필수 필드 검증 + frame/deadline 확인 + float 강제변환 — 전부
+        # protocol.py 의 순수 함수가 담당한다(rclpy 없이 pytest 로 검증 가능).
+        errors, pos, quat = protocol.build_pick_bolt_pose(args, REFERENCE_FRAME, _now_ns())
         if errors:
+            # deadline 초과는 조용히 흘려보내지 않고 ALERT 까지 띄운다.
+            if errors == ['stale: deadline exceeded']:
+                self._send(self._envelope('ALERT', {
+                    'severity': 'warn', 'code': 'STALE_COMMAND',
+                    'msg': f'PICK_BOLT {cmd_id} deadline exceeded',
+                    'context': {'bolt_id': args.get('bolt_id')},
+                }))
             return {'accepted': False, 'errors': errors}
 
-        # deadline(옵션) 시행 — 지났으면 조용히 흘려보내지 않고 거부 + ALERT.
-        if protocol.is_stale(args.get('stamp'), args.get('deadline'), _now_ns()):
-            self._send(self._envelope('ALERT', {
-                'severity': 'warn', 'code': 'STALE_COMMAND',
-                'msg': f'PICK_BOLT {cmd_id} deadline exceeded',
-                'context': {'bolt_id': args.get('bolt_id')},
-            }))
-            return {'accepted': False, 'errors': ['stale: deadline exceeded']}
-
-        pose = args['pose']       # validate_pick_bolt 가 이미 모양을 확인함
-        # ⚠ float() 로 명시 변환 필수: JSON 은 int/float 을 구분 안 해서 값이 정확히
-        # 0 이나 1 같은 정수형이면 json.loads() 가 Python int 로 파싱한다. rclpy 생성
-        # 바인딩은 float64 필드에 int 가 들어오면 catch 가능한 예외가 아니라 C 단
-        # assert 로 프로세스 전체를 abort 시킨다(실측: 실제로 이 브릿지를 통째로
-        # 죽임) — validate_pick_bolt 는 int 도 유효한 숫자로 통과시키므로(부록F 는
-        # "숫자"만 요구), 이 방어는 여기서 해야 한다.
-        pos = [float(v) for v in pose['position']]
-        quat = [float(v) for v in pose['orientation']]
-
+        # ⚠ 이 메서드는 aiohttp 서버 스레드에서 돈다(rclpy spin 스레드가 아니다).
+        # 아래 rclpy Node API 들은 내부적으로 스레드 세이프하므로 그대로 호출해도
+        # 된다 — publish 는 rcl_publish 가 락을 잡고, 시계 읽기/로깅도 rclpy·rcutils
+        # 단에서 보호된다. 큐로 rclpy 스레드에 넘기는 식으로 "고치지" 말 것.
         msg = PoseStamped()
         msg.header.frame_id = REFERENCE_FRAME
         msg.header.stamp = self.get_clock().now().to_msg()
@@ -365,11 +434,13 @@ class DesktopBridgeNode(Node):
         (msg.pose.orientation.x, msg.pose.orientation.y,
          msg.pose.orientation.z, msg.pose.orientation.w) = quat
 
-        # 결과 상관관계: 이번 데모는 "한 번에 한 사이클"만 처리하므로 단일 슬롯이면
-        # 충분하다. 동시에 여러 PICK_BOLT 가 날아드는 경우는 다음 단계 과제.
+        # 결과 상관관계 슬롯은 하나뿐이라, 앞선 파지가 끝나기 전에 들어온 두 번째
+        # PICK_BOLT 는 거부한다 — 덮어쓰면 먼저 온 명령의 RESULT 가 영영 안 나간다.
         # axis(옵션)는 예전엔 조용히 버려졌다 — 로그에 남겨 실제로 쓰였는지
         # 확인 가능하게만 해 둔다(로봇 정렬에 참고용, 필수 아님).
         with self._pending_lock:
+            if self._pending_pick is not None:
+                return {'accepted': False, 'errors': ['pick already in progress']}
             self._pending_pick = {
                 'id': cmd_id, 'ts': time.time(), 'bolt_id': args.get('bolt_id'),
                 'axis': args.get('axis')}
@@ -396,11 +467,22 @@ class DesktopBridgeNode(Node):
         try:
             # 재연결 시 즉시 스냅샷 — §4 "재연결 시 스냅샷+델타" 최소 구현.
             await ws.send_str(json.dumps(self._status_envelope()))
-            async for _ in ws:
-                # 순수 스트림이라 클라이언트가 보내는 메시지는 더 이상 명령으로
-                # 처리하지 않는다(명령은 REST 로 분리, §4). 연결 유지를 위해 그냥
-                # 드레인만 한다 — 끊기면 이 루프가 자연 종료된다.
-                pass
+            # 순수 스트림이라 클라이언트가 보내는 메시지는 더 이상 명령으로 처리하지
+            # 않는다(명령은 REST 로 분리, §4). 다만 v2 클라이언트가 WS 로 명령을
+            # 보내면 예전엔 완전 무음이라 "먹혔는지 씹혔는지" 구분이 안 됐다 —
+            # 연결당 딱 한 번 ALERT 로 알려 준다(§4 "침묵은 버그다").
+            warned = False
+            async for msg in ws:
+                if warned or not msg.data:
+                    continue
+                warned = True
+                self.get_logger().warn(
+                    '[desktop_bridge] WS 로 들어온 메시지를 무시했습니다 — v3부터 명령은 '
+                    'REST(/api/v1/*) 전용입니다.')
+                await ws.send_str(json.dumps(self._envelope('ALERT', {
+                    'severity': 'warn', 'code': 'WS_COMMANDS_DEPRECATED',
+                    'msg': 'v3부터 WS로 명령을 보낼 수 없습니다. REST API를 사용하세요.',
+                })))
         except Exception as exc:                 # noqa: BLE001
             self.get_logger().warn(f'[desktop_bridge] WS 연결 오류: {exc!r}')
         finally:
@@ -503,6 +585,16 @@ class DesktopBridgeNode(Node):
             self._note_arm_state_stall('TF_STALE', f'tf lookup 실패 ({REFERENCE_FRAME}→{TCP_LINK})')
             return
 
+        joint_margin_vals = protocol.joint_margins(lookup, JOINT_LIMITS, ARM_JOINTS)
+        if any(v is None for v in joint_margin_vals):
+            # 부록F 는 joint_margin 을 `f32[7]` 로 스펙한다 — null 이 섞인 배열을
+            # 보내면 계약 위반이라 데스크톱 파서가 깨진다. 프레임을 통째로 거르고
+            # 스톨로 집계해 원인이 드러나게 한다. (스톨 카운터 리셋보다 위에 둬야
+            # 연속 실패가 실제로 누적돼 ≥3회 ALERT 까지 간다.)
+            self._note_arm_state_stall(
+                'JOINT_LIMITS_INCOMPLETE', 'JOINT_LIMITS 에 없는 팔 관절이 있어 joint_margin 미완성')
+            return
+
         # 스톨에서 회복 — 다음에 다시 끊기면 새로 3회부터 센다(반복 알림 방지는
         # _arm_state_stall_alerted 가 already-alerted 상태일 때만 억제하는 걸로 충분).
         self._arm_state_stall_count = 0
@@ -512,7 +604,7 @@ class DesktopBridgeNode(Node):
         args = {
             'q': q, 'tcp': tcp, 'tcp_quat': tcp_quat,
             'gripper_width': (2.0 * finger) if finger is not None else None,
-            'joint_margin': protocol.joint_margins(lookup, JOINT_LIMITS, ARM_JOINTS),
+            'joint_margin': joint_margin_vals,
             'moving': moving,
             'last_cycle_id': self._last_cycle_id,   # heartbeat 와 동일 정의(§2B)
         }
@@ -534,8 +626,10 @@ class DesktopBridgeNode(Node):
             }))
 
     def _tick_heartbeat(self):
+        with self._estop_lock:
+            estop = self._estop
         self._send(self._envelope('heartbeat', {
-            'state': 'SAFE_STOP' if self._estop else 'IDLE',
+            'state': 'SAFE_STOP' if estop else 'IDLE',
             'moveit_ok': self._joint_state is not None,
             # 사이클에 종속된 값이 아니라 "가장 최근에 관측된 cycle_id"다(nullable
             # — 아직 사이클이 한 번도 안 돌았으면 None). 실시간 진행 중인 사이클을
@@ -545,8 +639,10 @@ class DesktopBridgeNode(Node):
         }))
 
     def _status_args(self):
+        with self._estop_lock:
+            estop = self._estop
         return {
-            'estop': self._estop,
+            'estop': estop,
             'connected_clients': self._connected,
             'joint_state_recv': self._joint_state is not None,
             'cmd_state': self._cmd_state,
@@ -575,8 +671,24 @@ class DesktopBridgeNode(Node):
         }
 
     def _send(self, envelope):
-        """rclpy 스레드에서 호출 — 서버 스레드의 브로드캐스터로 넘긴다(스레드-세이프 큐)."""
-        self._outbox.put(json.dumps(envelope))
+        """rclpy 스레드에서 호출 — 서버 스레드의 이벤트루프로 넘긴다."""
+        loop = self._loop
+        if loop is None:
+            # 서버 스레드가 아직 루프를 못 만든 기동 직후 — 텔레메트리는 유실 허용
+            # (§2B)이라 조용히 버린다. 어차피 붙은 WS 클라이언트도 아직 없다.
+            return
+        loop.call_soon_threadsafe(self._outbox_put_nowait_safe, json.dumps(envelope))
+
+    def _outbox_put_nowait_safe(self, text):
+        """서버 스레드(이벤트루프) 위에서 실행 — 큐가 가득 차면 버리고 알린다.
+
+        무한 큐로 두면 WS 클라이언트가 하나도 없거나 전부 느릴 때 20Hz arm_state 가
+        메모리를 무한정 먹는다. 텔레메트리는 유실 허용이므로 드롭이 정답이다.
+        """
+        try:
+            self._outbox.put_nowait(text)
+        except asyncio.QueueFull:
+            self.get_logger().warn('[desktop_bridge] outbox full, dropping telemetry frame')
 
 
 def main(args=None):

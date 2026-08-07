@@ -275,6 +275,7 @@ class PickPlaceConfig:
     # 기울임은 수직이 아예 불가능한(벽에 딱 붙은) 볼트에서만 채택된다.
     TILT_PRIOR_PENALTY = 0.02
     EXT_POSE_TOPIC = '/next_bolt_pose'   # 외부 비전이 최적 볼트 6D 자세를 던지는 곳
+    CYCLE_RESULT_TOPIC = '/bin_picking/cycle_result'   # 사이클 결과(selection.py 훅 → desktop_bridge)
     EXT_POSE_WAIT = 3.0              # 외부 자세 대기 시간(초). 없으면 자체 선택
     STEP_BY_STEP = True              # True면 사이클마다 /next_step 대기(수동 진행)
                                      # False면 연속 자동 운전

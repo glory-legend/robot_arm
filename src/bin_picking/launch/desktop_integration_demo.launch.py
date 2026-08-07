@@ -36,6 +36,7 @@ from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -46,6 +47,10 @@ def generate_launch_description():
     apps_delay = LaunchConfiguration('apps_delay')
     bridge_host = LaunchConfiguration('bridge_host')
     bridge_port = LaunchConfiguration('bridge_port')
+    api_token = LaunchConfiguration('api_token')
+    tls_cert = LaunchConfiguration('tls_cert')
+    tls_key = LaunchConfiguration('tls_key')
+    require_tls = LaunchConfiguration('require_tls')
 
     declare_rviz = DeclareLaunchArgument(
         'rviz', default_value='false',
@@ -60,11 +65,23 @@ def generate_launch_description():
         'apps_delay', default_value='23.0',
         description='Gazebo/MoveIt 기동 후 desktop_bridge+integrated_pick_place 시작까지 대기 시간(초)')
     declare_bridge_host = DeclareLaunchArgument(
-        'bridge_host', default_value='0.0.0.0',
-        description='desktop_bridge WebSocket 바인드 주소')
+        'bridge_host', default_value='127.0.0.1',
+        description='desktop_bridge 바인드 주소 (기본은 로컬 전용 — 외부에 열려면 TLS 설정 필요)')
     declare_bridge_port = DeclareLaunchArgument(
         'bridge_port', default_value='8765',
         description='desktop_bridge WebSocket 포트')
+    declare_api_token = DeclareLaunchArgument(
+        'api_token', default_value='',
+        description='desktop_bridge Bearer 인증 토큰 (비우면 기동 시 임의 생성 후 로그 출력)')
+    declare_tls_cert = DeclareLaunchArgument(
+        'tls_cert', default_value='',
+        description='desktop_bridge TLS 인증서 경로 (tls_key 와 함께 주면 HTTPS/WSS)')
+    declare_tls_key = DeclareLaunchArgument(
+        'tls_key', default_value='',
+        description='desktop_bridge TLS 개인키 경로 (tls_cert 와 함께 주면 HTTPS/WSS)')
+    declare_require_tls = DeclareLaunchArgument(
+        'require_tls', default_value='false',
+        description='true 면 TLS 미설정 시 desktop_bridge 기동을 거부')
 
     # 1) Gazebo + MoveIt — 기존 launch 그대로 재사용(중복 정의 없음)
     gazebo_moveit = IncludeLaunchDescription(
@@ -99,6 +116,12 @@ def generate_launch_description():
             'use_sim_time': True,
             'host': bridge_host,
             'port': bridge_port,
+            # 토큰/경로는 str 로 못박는다 — 안 그러면 launch 가 값을 yaml 로 해석해
+            # 숫자만으로 된 토큰이 int 파라미터가 되고 인증이 조용히 전부 실패한다.
+            'api_token': ParameterValue(api_token, value_type=str),
+            'tls_cert': ParameterValue(tls_cert, value_type=str),
+            'tls_key': ParameterValue(tls_key, value_type=str),
+            'require_tls': ParameterValue(require_tls, value_type=bool),
         }],
     )
 
@@ -123,5 +146,6 @@ def generate_launch_description():
     return LaunchDescription([
         declare_rviz, declare_auto, declare_bolts_delay, declare_apps_delay,
         declare_bridge_host, declare_bridge_port,
+        declare_api_token, declare_tls_cert, declare_tls_key, declare_require_tls,
         gazebo_moveit, spawn_bolts, apps,
     ])

@@ -6,7 +6,7 @@
 desktop_bridge 노드(`ros2 run bin_picking desktop_bridge`)가 문서
 (`docs/desktop_protocol.md`) 그대로 동작하는지 확인하는 용도다.
 
-ROS 의존성이 전혀 없다 — 이게 핵심이다. `pip install websockets` 만으로
+ROS 의존성이 전혀 없다 — 이게 핵심이다. `pip install -r tools/requirements.txt` 만으로
 아무 컴퓨터에서나 이 스크립트를 돌려 브릿지에 붙을 수 있다(데스크톱 개발자가
 ROS2/roslib를 설치할 필요가 없다는 게 이 통신 방식을 고른 이유, §4 참고).
 REST 호출은 표준 라이브러리 `urllib` 만 쓴다 — 새 의존성을 안 늘린다.
@@ -41,8 +41,16 @@ import urllib.error
 import urllib.request
 
 import websockets
+import websockets.exceptions
 
 _id_seq = itertools.count(1)
+
+_ws_status_exceptions = tuple(
+    exc_type for exc_type in (
+        getattr(websockets.exceptions, 'InvalidStatus', None),
+        getattr(websockets.exceptions, 'InvalidStatusCode', None),
+    ) if exc_type is not None
+)
 
 
 def _to_ws_url(http_url):
@@ -85,7 +93,8 @@ async def _print_incoming(ws):
         tag = msg['type']
         if tag == 'arm_state':
             q = msg['args'].get('q')
-            print(f'  <- arm_state  q0={q[0]:+.3f} tcp={msg["args"].get("tcp")}')
+            q0 = f'{q[0]:+.3f}' if q else 'N/A'
+            print(f'  <- arm_state  q0={q0} tcp={msg["args"].get("tcp")}')
         elif tag == 'heartbeat':
             print(f'  <- heartbeat  state={msg["args"].get("state")}')
         else:
@@ -137,8 +146,11 @@ async def run_assertions(http_url, token):
     try:
         async with websockets.connect(f'{_to_ws_url(http_url)}/ws/telemetry?token=wrong'):
             check('WS: 틀린 토큰 -> 핸드셰이크 거부', False)
-    except websockets.exceptions.InvalidStatus as exc:
-        check('WS: 틀린 토큰 -> 핸드셰이크 거부(401)', exc.response.status_code == 401)
+    except _ws_status_exceptions as exc:
+        status = getattr(getattr(exc, 'response', None), 'status_code', None)
+        if status is None:
+            status = getattr(exc, 'status_code', None)
+        check('WS: 틀린 토큰 -> 핸드셰이크 거부(401)', status == 401)
 
     ws_url = f'{_to_ws_url(http_url)}/ws/telemetry?token={token}'
     async with websockets.connect(ws_url) as ws:

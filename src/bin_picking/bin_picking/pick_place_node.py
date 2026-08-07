@@ -125,7 +125,7 @@ from moveit_msgs.srv import (
 )
 from sensor_msgs.msg import JointState
 from shape_msgs.msg import SolidPrimitive
-from std_msgs.msg import ColorRGBA, Empty
+from std_msgs.msg import ColorRGBA, Empty, String
 from tf2_msgs.msg import TFMessage
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from visualization_msgs.msg import Marker, MarkerArray
@@ -324,6 +324,13 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         # 발행 훅이 예외를 통째로 삼키므로 hasattr 지연초기화면 미바인딩 시
         # 진단 없이 조용히 죽는다).
         self._cycle_seq = 0
+        # [데스크톱 통신] cycle_result 퍼블리셔도 같은 이유로 여기서 미리 만든다 —
+        # 첫 _pick() 종결 직전에야 지연 생성하면, 새 퍼블리셔가 desktop_bridge 의
+        # 구독과 디스커버리를 마치기 전에 바로 publish() 가 일어나 RELIABLE/
+        # VOLATILE QoS 하에서 첫 사이클의 결과가 그냥 유실된다(구독자가 아직
+        # 안 보이는 상태로 publish 하면 조용히 버려짐). __init__ 시점에 만들어
+        # 두면 첫 PICK_BOLT 가 실제로 처리될 때까지 디스커버리가 끝날 여유가 생긴다.
+        self._cycle_result_pub = self.create_publisher(String, self.CYCLE_RESULT_TOPIC, 10)
         self.selector = None
         if self.USE_LEARNED_SELECTOR and GraspSelector is not None:
             self.selector = GraspSelector()
