@@ -1,0 +1,150 @@
+<?xml version="1.0"?>
+<!--
+  UR5e + Robotiq 2F-85 결합 모델 (Gazebo Sim / gz_ros2_control)
+
+  이 파일은 **등록 입력물**이다. 로봇 하나를 등록할 때 사람이 한 번 쓰는 얇은
+  결합 xacro이고, 파이프라인 코드는 이 파일을 전혀 모른다 — 프로파일
+  (`robot_profiles/data/ur5e_robotiq85.yaml`)이 여기를 가리킬 뿐이다.
+
+  [왜 벤더 매크로를 자동으로 조립하지 못하나]
+    xacro 는 `xacro:call` 로 매크로를 이름으로 호출할 수는 있지만, 매크로마다
+    **인자 이름이 다르고**(UR: tf_prefix/joint_limits_parameters_file…,
+    Robotiq: prefix/sim_ignition…, Franka: robot_type/ee_id…) `*origin` 같은
+    블록 인자까지 있어서, 임의의 벤더 매크로를 데이터만으로 호출할 수 없다.
+    그래서 로봇당 이 파일 하나가 필요하다. 대신 파일은 얇게 유지하고, 값의
+    검증은 전부 `binpick_model verify` 가 맡는다.
+
+  구성:
+    world → ur_robot(UR5e) → tool0 → ur_to_robotiq 어댑터 → Robotiq 2F-85
+                                                          → grasp_tcp (파지 기준)
+    base_link → camera_link (빈피킹 eye-to-hand RGB-D)
+
+  [gz_ros2_control 주의] Robotiq 쪽은 `sim_ignition:=true` 일 때
+  `ign_ros2_control/IgnitionSystem` 을 내보내는데, Jazzy 의 gz_ros2_control 이
+  이 이름을 **하위호환 별칭으로 등록**해 두었으므로 Gazebo Harmonic 에서 그대로
+  로드된다(gz_hardware_plugins.xml 확인). 팔 쪽은 gz_ros2_control/GazeboSimSystem.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="$(arg name)">
+
+  <xacro:arg name="name" default="ur5e_robotiq85"/>
+  <xacro:arg name="ur_type" default="ur5e"/>
+  <xacro:arg name="tf_prefix" default=""/>
+
+  <!-- gz_ros2_control 이 읽을 컨트롤러 설정 -->
+  <xacro:arg name="simulation_controllers"
+             default="$(find bin_picking)/config/ur5e_robotiq_controllers.yaml"/>
+
+  <!-- 파지 기준(TCP) 프레임을 그리퍼 베이스에서 얼마나 띄울지.
+       [유도] robotiq_85_base_link 기준, 손끝 패드 안쪽면 중앙의 z 위치.
+       ⚠ Robotiq 2F-85 는 4절 링크라 손끝이 **호를 그리며** 닫힌다. 프랑카처럼
+         직선으로 미끄러지지 않아서, 패드 중앙 z 가 개구에 따라 움직인다:
+             θ=0(만개) 120.85mm → θ=0.79(닫힘) 134.37mm  (13.5mm 이동)
+         파이프라인은 TCP 가 파지면에 대해 고정이라고 보므로, **실제 작업 구간**
+         에서 그 가정이 성립하는 지점을 골라야 한다. 다행히 링크가 닫힘 쪽에서
+         평평해져 pre-grasp(θ=0.6262, 반개구 10mm)부터 완전폐쇄까지의 z 이동은
+         0.01mm 에 불과하다 → pre-grasp 시점의 패드 중앙(134.38mm)을 TCP 로 잡는다. -->
+  <xacro:arg name="grasp_tcp_z" default="0.13438"/>
+
+  <xacro:arg name="joint_limit_params"
+             default="$(find ur_description)/config/$(arg ur_type)/joint_limits.yaml"/>
+  <xacro:arg name="kinematics_params"
+             default="$(find ur_description)/config/$(arg ur_type)/default_kinematics.yaml"/>
+  <xacro:arg name="physical_params"
+             default="$(find ur_description)/config/$(arg ur_type)/physical_parameters.yaml"/>
+  <xacro:arg name="visual_params"
+             default="$(find ur_description)/config/$(arg ur_type)/visual_parameters.yaml"/>
+
+  <xacro:include filename="$(find ur_description)/urdf/ur_macro.xacro"/>
+  <xacro:include filename="$(find ur_simulation_gz)/urdf/ur_gz.ros2_control.xacro"/>
+  <xacro:include filename="$(find robotiq_description)/urdf/ur_to_robotiq_adapter.urdf.xacro"/>
+  <xacro:include filename="$(find robotiq_description)/urdf/robotiq_2f_85_macro.urdf.xacro"/>
+
+  <link name="world"/>
+
+  <!-- ================== 팔 ================== -->
+  <xacro:ur_robot
+    name="$(arg name)"
+    tf_prefix="$(arg tf_prefix)"
+    parent="world"
+    joint_limits_parameters_file="$(arg joint_limit_params)"
+    kinematics_parameters_file="$(arg kinematics_params)"
+    physical_parameters_file="$(arg physical_params)"
+    visual_parameters_file="$(arg visual_params)"
+    safety_limits="false"
+    force_abs_paths="true">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:ur_robot>
+
+  <xacro:ur_ros2_control name="$(arg name)" tf_prefix="$(arg tf_prefix)"/>
+
+  <!-- ================== 그리퍼 ================== -->
+  <!-- UR 손목 플랜지(tool0) ↔ Robotiq 사이의 실제 물리 어댑터 -->
+  <xacro:ur_to_robotiq prefix="$(arg tf_prefix)" connected_to="$(arg tf_prefix)tool0"/>
+
+  <xacro:robotiq_gripper
+    name="RobotiqGripperHardwareInterface"
+    prefix="$(arg tf_prefix)"
+    parent="$(arg tf_prefix)ur_to_robotiq_link"
+    sim_ignition="true"
+    include_ros2_control="true">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:robotiq_gripper>
+
+  <!-- ================== 파지 기준 프레임 ==================
+    파이프라인은 END_EFFECTOR_LINK 를 '파지 패드 중앙'으로 다룬다(FR3 의
+    fr3_hand_tcp 와 같은 역할). Robotiq 에는 그런 링크가 없으므로 여기서 만든다.
+    ⚠ visual/collision 없는 순수 프레임 — MoveIt 이 이걸 충돌체로 잡으면
+      통 위 자세가 전부 막힌다(FR3 카메라에서 겪은 문제와 같다).            -->
+  <link name="$(arg tf_prefix)grasp_tcp"/>
+  <joint name="$(arg tf_prefix)grasp_tcp_joint" type="fixed">
+    <parent link="$(arg tf_prefix)robotiq_85_base_link"/>
+    <child link="$(arg tf_prefix)grasp_tcp"/>
+    <origin xyz="0 0 $(arg grasp_tcp_z)" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ================== 빈피킹 비전 카메라 (eye-to-hand) ==================
+    FR3 래퍼와 같은 배치: 집는 통(base 기준 x=0.40) 위 0.60m 에서 내려다본다.
+    base 에 고정이라 카메라↔base TF 가 robot_state_publisher 로 자동 발행된다. -->
+  <link name="camera_link">
+    <inertial>
+      <mass value="0.01"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
+    </inertial>
+  </link>
+  <joint name="camera_joint" type="fixed">
+    <parent link="$(arg tf_prefix)base_link"/>
+    <child link="camera_link"/>
+    <origin xyz="0.40 0.0 0.60" rpy="0 1.5708 0"/>
+  </joint>
+  <link name="camera_optical_link"/>
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_optical_link"/>
+    <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+  </joint>
+
+  <gazebo reference="camera_link">
+    <sensor name="bin_camera" type="rgbd_camera">
+      <camera>
+        <horizontal_fov>1.05</horizontal_fov>
+        <image><width>640</width><height>480</height></image>
+        <clip><near>0.1</near><far>2.0</far></clip>
+        <optical_frame_id>camera_optical_link</optical_frame_id>
+      </camera>
+      <always_on>1</always_on>
+      <update_rate>10</update_rate>
+      <visualize>true</visualize>
+      <topic>bin_camera</topic>
+      <gz_frame_id>camera_link</gz_frame_id>
+    </sensor>
+  </gazebo>
+
+  <!-- ================== gz_ros2_control ================== -->
+  <gazebo>
+    <plugin filename="gz_ros2_control-system"
+            name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(arg simulation_controllers)</parameters>
+    </plugin>
+  </gazebo>
+
+</robot>

@@ -1,0 +1,252 @@
+# =====================================================================
+#  Universal Robots UR5e + Robotiq 2F-85  —  두 번째 등록 모델
+# =====================================================================
+# FR3 와 **제조사가 완전히 다른** 팔이다. 이 프로파일이 존재하는 이유는 등록
+# 계층이 실제로 벤더 중립인지 증명하기 위해서다 — 실제로 이 모델을 붙이면서
+# 프랑카 가정이 남아 있던 곳(그리퍼 개폐 방향, 단위 혼용, 툴 프레임 축 규약,
+# 벤더 커스텀 YAML 태그, planner_configs 부재)이 전부 드러나 수정됐다.
+#
+# status 는 **안전 게이트**다(값이 실제 모델/런타임과 대조됐는가).
+# task_validated 는 **작업 성능**이다(이 팔로 실제 빈피킹을 성공시켜 봤는가).
+# 둘은 별개 축이다 — 자세한 근거는 robot_profiles/schema.py 의 STATUSES 주석 참조.
+# ---------------------------------------------------------------------
+name: ur5e_robotiq85
+display_name: UR5e + Robotiq 2F-85
+vendor: Universal Robots / Robotiq
+status: verified
+# 안전검증(status)과 별개 축. 파지 실동작 확인 시 true 로 올린다.
+task_validated: false
+notes: >-
+  이름·관절한계·개구 곡선·툴프레임 회전·손끝 기하는 벤더 URDF/메시에서 유도 확정.
+  workspace 는 2026-08-10 Gazebo 에서 compute_ik 격자로 실측했다.
+  손끝 기하는 통 안에 들어가는 구간만 잘라 실측했다(브래킷 제외).
+
+# ---------------------------------------------------------------------
+# 팔 — UR5e (6축)
+# ---------------------------------------------------------------------
+arm:
+  # ⚠ 벤더 그룹 `ur_manipulator` 가 아니다. 그쪽은 tip 이 tool0(손목 플랜지)라
+  #   파지 깊이가 그리퍼 길이만큼 통째로 어긋난다. srdf/ur5e_robotiq85.srdf.xacro
+  #   에서 grasp_tcp 를 tip 으로 하는 그룹을 따로 정의했다.
+  planning_group: bin_picking_arm
+  base_frame: base_link
+  tcp_frame: grasp_tcp
+  controller: ur_arm_controller
+  home_state: ready
+
+  joints:
+    - shoulder_pan_joint
+    - shoulder_lift_joint
+    - elbow_joint
+    - wrist_1_joint
+    - wrist_2_joint
+    - wrist_3_joint
+
+  # ur_description/config/ur5e/joint_limits.yaml 실측(!degrees → rad 변환).
+  # elbow 만 ±180°, 나머지는 ±360°.
+  # ⚠ 자릿수를 줄이지 말 것. 반올림으로 URDF 보다 조금이라도 **넓어지면**
+  #   '한계 근접' 경고가 침묵한 채 계획이 거부된다(verify 가 경고로 잡는다).
+  joint_limits:
+    shoulder_pan_joint: [-6.283185307179586, 6.283185307179586]
+    shoulder_lift_joint: [-6.283185307179586, 6.283185307179586]
+    elbow_joint: [-3.141592653589793, 3.141592653589793]
+    wrist_1_joint: [-6.283185307179586, 6.283185307179586]
+    wrist_2_joint: [-6.283185307179586, 6.283185307179586]
+    wrist_3_joint: [-6.283185307179586, 6.283185307179586]
+
+  limit_margin: 0.10
+
+# ---------------------------------------------------------------------
+# 그리퍼 — Robotiq 2F-85 (각도 구동, 프랑카와 개폐 방향이 반대)
+# ---------------------------------------------------------------------
+gripper:
+  kind: angular
+  command_joint: robotiq_85_left_knuckle_joint
+  # [실측 확인] Gazebo 기동 후 /joint_states 를 확인한 결과, 발행되는 그리퍼
+  # 관절은 구동 관절 **하나뿐**이다(mimic 4개는 gz 가 내부에서만 처리하고
+  # 발행하지 않는다). 없는 이름을 적어 두면 Cartesian 충돌검사 start_state 에서
+  # 조용히 빠지므로 실제로 오는 것만 적는다.
+  state_joints:
+    - robotiq_85_left_knuckle_joint
+
+  action_type: GripperCommand
+  action_name: /robotiq_gripper_controller/gripper_cmd
+  controller: robotiq_gripper_controller
+
+  # ★ 프랑카와 반대다: 0 rad 에서 만개(85mm), 0.7929 rad 에서 완전 폐쇄.
+  #   (0.7929 는 robotiq_gripper.ros2_control.xacro 의 gripper_closed_position)
+  open_cmd: 0.0
+  closed_cmd: 0.7929
+
+  # 관절각 → 손가락 하나의 중심 이격(m). URDF 링크 기하에서 직접 계산했다:
+  #   base→knuckle(0.0306,0,0.0549) → finger(0.0315,0,-0.0038)
+  #        → tip(0.0056,0,0.0472), 회전축 (0,-1,0)
+  #   손끝 패드 안쪽면은 left_finger_tip.stl 바운딩박스의 x=-0.02526.
+  # 검산: θ=0 → 42.50mm (총 85mm, 카탈로그와 정확히 일치)
+  #       θ=0.7929 → 0.48mm (거의 완전 폐쇄)
+  # ⚠ 선형 1차식으로 근사하면 최대 0.94mm 어긋난다. M8 샤프트 반경이 4mm 인데
+  #   파지 판정 경계가 그만큼 밀리므로, 반드시 곡선을 쓴다.
+  halfwidth_curve:
+    - [0.0000, 0.04250]
+    - [0.1000, 0.03798]
+    - [0.2000, 0.03313]
+    - [0.3000, 0.02801]
+    - [0.4000, 0.02266]
+    - [0.5000, 0.01713]
+    - [0.6000, 0.01149]
+    - [0.7000, 0.00579]
+    - [0.7929, 0.00048]
+
+  # 파지 자세 규약 보정.
+  #   파이프라인 규약: z_tool = 접근방향, y_tool = 손가락 닫힘축
+  #   grasp_tcp(=robotiq_85_base_link 축 배치): +z 가 접근방향은 맞지만
+  #                                            닫힘축은 **x** 다(손가락이 ±x 로 갈린다)
+  # 필요한 보정은 "TCP 의 x 축이 y_tool 에 오도록" → z 축 둘레 +90°.
+  #   R_offset[:,0] = e_y, R_offset[:,2] = e_z  ⟹  R_z(+π/2)
+  tool_frame_rpy: [0.0, 0.0, 1.5708]
+
+  touch_links:
+    - robotiq_85_base_link
+    - robotiq_85_left_knuckle_link
+    - robotiq_85_right_knuckle_link
+    - robotiq_85_left_finger_link
+    - robotiq_85_right_finger_link
+    - robotiq_85_left_inner_knuckle_link
+    - robotiq_85_right_inner_knuckle_link
+    - robotiq_85_left_finger_tip_link
+    - robotiq_85_right_finger_tip_link
+    - grasp_tcp
+
+  geometry:
+    # TCP(패드 중앙) → 손끝(패드 끝) 거리. 패드가 강체라 개구와 무관하게 일정하다.
+    #   패드끝 z 162.88mm − 패드중앙 z 134.38mm = 28.50mm  (pre-grasp 자세 기준)
+    tcp_to_fingertip: 0.0285
+
+    # [실측] left_finger_tip.stl 중 **통 안에 실제로 들어가는 구간**(팁에서 25mm,
+    # = 통 깊이)만 잘라서 잰 값이다.
+    #
+    # ⚠⚠ 이 링크는 z 위치에 따라 두께가 극단적으로 다르다. 바운딩박스를 그대로
+    #   쓰면 안 된다:
+    #     z=0~4mm   → 27~28mm   (마운팅 브래킷 — 접촉면에서 46mm 뒤, 통에 안 들어감)
+    #     z=46~52mm →  6.0~6.2mm (실제 파지 패드 ← 이게 통 안에서 벽/이웃과 만난다)
+    #   전체 bbox 는 31.2mm 지만 그건 브래킷을 잰 것이라 무의미하다.
+    #
+    # FR3 규약(팁 패드 두께의 절반)에 맞춰 6.24 / 2 = 3.12mm.
+    # → 프랑카 핸드(4.40mm)보다 오히려 **얇다**.
+    finger_half_w: 0.0031
+    # 볼트축 방향 반폭. 통 안 구간의 패드 폭 22.00mm → 11.0mm.
+    # (프랑카 핸드 팁 패드도 22mm 라 값이 정확히 같다 — 우연이지만 좋은 교차검증)
+    finger_tip_half_x: 0.011
+
+  aperture:
+    # 이 세 값은 **대상 물체**(M8 볼트, 샤프트 반경 4mm)에서 유도된다 — 그리퍼가
+    # 아니라. `a` 는 파지 중심에서 손가락 안쪽면까지의 거리이므로, 샤프트가 들어갈
+    # 최소치와 pre-grasp 목표는 물체가 같으면 그리퍼가 달라도 같다.
+    # 그래서 FR3 와 동일한 값을 쓰는 것이 맞다(베낀 것이 아니라 같은 유도 결과다).
+    min_open: 0.009
+    pregrasp_open: 0.010
+    step: 0.004
+
+# ---------------------------------------------------------------------
+# 워크스페이스 — Gazebo 실측 (2026-08-10, tools_measure_workspace)
+# ---------------------------------------------------------------------
+# 측정법: 파지 높이(z=GRASP_FLOOR_Z=0.034)에서 통 안쪽 전 영역을 10mm 격자로
+#   훑으며, 파이프라인이 실제로 쓰는 파지 자세 그대로 compute_ik 를 걸었다.
+#   → 24×20 격자가 사실상 전부 도달(한 점만 IK 타임아웃으로 실패).
+#
+# ★ FR3 값을 베껴 두었던 것이 **부당한 제약**이었음이 드러났다:
+#     reach_y_max 0.063 → 실측 0.095 (통 좌우 끝까지 닿는데 막고 있었다)
+#     reach_x_far 0.45  → 실측 0.515 (통 먼쪽 1/3 을 통째로 배제하고 있었다)
+#   UR5e 는 이 작업에서 도달성이 병목이 아니다.
+workspace:
+  # 통 안쪽 반치수가 90mm 이므로 통 전 영역을 덮는다.
+  reach_y_max: 0.095
+  # 통 먼쪽 벽(0.515)까지 도달 확인.
+  reach_x_far: 0.515
+
+  # z=0.15 부터 통 중심 상공에 도달한다. 낮을수록 하강 직선이 짧아 IK 가
+  # 관절 한계/점프에 걸릴 구간이 준다 → 도달하는 가장 낮은 높이를 쓴다.
+  # (통 벽 25mm 대비 6배 여유라 운반에도 충분하다)
+  approach_height: 0.15
+
+  # ⚠ [유도, 미실측] 기울임 허용 최소 볼트중심 z.
+  #   FR3 는 손끝이 TCP 보다 9.5mm 아래라 바닥 볼트를 기울이면 바닥을 1.6~2.9mm
+  #   파고들어, 기준을 바닥볼트 중심(0.009)보다 11mm 위인 0.020 으로 잡았다.
+  #   2F-85 는 그 오프셋이 28.5mm 로 **3배**라 같은 각도에서 3배 깊게 파고든다
+  #   → 여유도 3배로 잡는다: 0.009 + 11mm×3 = 0.042.
+  #   기울임 파지를 실제로 쓰게 되면 이 값부터 실측할 것.
+  tilt_min_center_z: 0.042
+  tilt_candidates_deg: [15.0, 30.0]
+  planner_fallback:
+    - RRTConnectkConfigDefault
+    - RRTkConfigDefault
+    - ESTkConfigDefault
+    - KPIECEkConfigDefault
+    - PRMkConfigDefault
+
+# ---------------------------------------------------------------------
+# 모델 기술 파일
+# ---------------------------------------------------------------------
+description:
+  urdf:
+    package: bin_picking
+    path: urdf/ur5e_robotiq85_gazebo.urdf.xacro
+    args:
+      name: ur5e_robotiq85
+      ur_type: ur5e
+
+  srdf:
+    package: bin_picking
+    path: srdf/ur5e_robotiq85.srdf.xacro
+    args:
+      name: ur5e_robotiq85
+
+  moveit:
+    package: bin_picking
+    files:
+      # 그룹 이름이 bin_picking_arm 이라 벤더 kinematics.yaml 을 못 쓴다
+      kinematics: config/ur5e_robotiq_kinematics.yaml
+      # 가속 한계는 벤더 것을 그대로 쓴다(경로: ur_moveit_config 아님 — 아래 주석)
+      joint_limits: config/ur5e_robotiq_joint_limits.yaml
+      ompl: config/ur5e_robotiq_ompl.yaml
+      controllers: config/ur5e_robotiq_moveit_controllers.yaml
+      rviz: config/ur5e_robotiq_moveit.rviz
+
+    # ⚠ UR 의 ompl_planning.yaml 에는 planner_configs 가 **아예 없다**(어댑터
+    #   선언만 있다). 그대로 두면 planner_fallback 의 이름이 하나도 안 맞아
+    #   MoveIt 이 조용히 기본 플래너로 폴백하고 폴백 로직이 통째로 no-op 이 된다.
+    #   → 여기서 채운다. (`binpick_model verify` 의 planners 검사가 이걸 대조한다)
+    ompl_overlay:
+      planner_configs:
+        RRTConnectkConfigDefault:
+          type: geometric::RRTConnect
+          range: 0.0
+        RRTkConfigDefault:
+          type: geometric::RRT
+          range: 0.0
+          goal_bias: 0.05
+        ESTkConfigDefault:
+          type: geometric::EST
+          range: 0.0
+          goal_bias: 0.05
+        KPIECEkConfigDefault:
+          type: geometric::KPIECE
+          range: 0.0
+          goal_bias: 0.05
+          border_fraction: 0.9
+          failed_expansion_score_factor: 0.5
+          min_valid_path_fraction: 0.5
+        PRMkConfigDefault:
+          type: geometric::PRM
+          max_nearest_neighbors: 10
+      bin_picking_arm:
+        planner_configs:
+          - RRTConnectkConfigDefault
+          - RRTkConfigDefault
+          - ESTkConfigDefault
+          - KPIECEkConfigDefault
+          - PRMkConfigDefault
+
+  gazebo:
+    entity: ur5e_robotiq85
+    resource_package: ur_description

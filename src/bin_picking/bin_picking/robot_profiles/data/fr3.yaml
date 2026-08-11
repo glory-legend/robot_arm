@@ -1,0 +1,200 @@
+# =====================================================================
+#  Franka Research 3 (FR3) + Franka Hand  —  기준 프로파일
+# =====================================================================
+# 이 프로파일은 `config.py` 에 클래스 상수로 굳어 있던 FR3 값을 **한 글자도 바꾸지
+# 않고** 그대로 옮긴 것이다. 값 옆의 유도 주석은 원본 그대로 유지한다 — 이 주석들이
+# "왜 이 값인지"의 자산이고, 다른 업체 팔을 등록할 때 **무엇을 같은 방식으로 다시
+# 실측해야 하는지**를 알려주는 유일한 안내서이기 때문이다.
+#
+# 값이 원본과 완전히 일치함은 `test/test_robot_profiles.py` 의 회귀 테스트가
+# 기계적으로 증명한다(리터럴 하드코딩 대조).
+# ---------------------------------------------------------------------
+name: fr3
+display_name: Franka Research 3
+vendor: Franka Robotics GmbH
+status: verified
+# 이 팔로 실제 빈피킹을 성공시켜 봤는가 (안전검증 status 와 별개 축).
+# 2026-08-10 Gazebo 실행에서 5개 중 3개 파지·운반 성공 확인.
+task_validated: true
+notes: >-
+  시뮬(Gazebo Harmonic)에서 M8 볼트 파지 성공률 ~100%(5/5) 확인된 기준 모델.
+  실물 FR3 전환 시 workspace 값(도달성 한계)은 설치 상태에 맞춰 재실측할 것.
+
+# ---------------------------------------------------------------------
+# 팔
+# ---------------------------------------------------------------------
+arm:
+  planning_group: fr3_arm
+  base_frame: fr3_link0          # 로봇 베이스(= Gazebo 월드 원점)
+  tcp_frame: fr3_hand_tcp        # ⚠ 손끝이 아니라 파지 패드 '정중앙'
+  controller: fr3_arm_controller
+  home_state: ready              # SRDF group_state 이름
+
+  joints:
+    - fr3_joint1
+    - fr3_joint2
+    - fr3_joint3
+    - fr3_joint4
+    - fr3_joint5
+    - fr3_joint6
+    - fr3_joint7
+
+  # FR3 관절 위치 한계 (rad) — 실패 진단용
+  joint_limits:
+    fr3_joint1: [-2.7437, 2.7437]
+    fr3_joint2: [-1.7837, 1.7837]
+    fr3_joint3: [-2.9007, 2.9007]
+    fr3_joint4: [-3.0421, -0.1518]
+    fr3_joint5: [-2.8065, 2.8065]
+    fr3_joint6: [0.5445, 4.5169]
+    fr3_joint7: [-3.0159, 3.0159]
+
+  # 한계로부터 이 이내(rad, ≈5.7°)면 '근접' 경고
+  limit_margin: 0.10
+
+# ---------------------------------------------------------------------
+# 그리퍼 (Franka Hand)
+# ---------------------------------------------------------------------
+gripper:
+  # 관절값이 곧 '손가락 하나의 중심 이격(m)' → 선형. 총 개구폭은 그 2배.
+  kind: linear
+  command_joint: fr3_finger_joint1   # joint2는 mimic — 명령에 넣지 않음
+  # Cartesian 충돌검사의 start_state 에 실어야 하는 전 관절.
+  # ⚠ 이게 빠지면 MoveIt 이 '미리 좁혀 둔 그리퍼'를 못 보고 기본(만개) 폭으로
+  #   판단한다 → 무더기 하강이 이웃과 충돌해 fraction 이 게이트에 못 미쳐 잘린다.
+  state_joints:
+    - fr3_finger_joint1
+    - fr3_finger_joint2
+  action_type: FollowJointTrajectory
+  action_name: /fr3_gripper_controller/follow_joint_trajectory
+  controller: fr3_gripper_controller
+
+  open_cmd: 0.04
+  # 완전 0.0으로 닫으면 시뮬레이션 물리 오차로 finger 관절이 한계를 미세하게
+  # 벗어나(-0.0001 등) 이후 MoveGroup 계획이 즉시 실패할 수 있음.
+  # 0.002 → 0.0015: 볼트(샤프트 반경 4mm)를 문 상태에서 지령-실측 편차가 커질수록
+  # 위치 제어기가 더 세게 조인다 → 더 타이트한 파지(운반 중 미끄럼 방지).
+  # 0 근접의 관절 한계 이탈 문제는 여전히 피한다.
+  # ※ 파지 판정 하한이 이 값에서 유도되므로 판정 경계도 자동 보정된다.
+  closed_cmd: 0.0015
+
+  # 관절 실측값 → 손가락 하나의 중심 이격(m).
+  # 프랑카 핸드는 관절값 자체가 이격이라 항등 변환(scale=1, offset=0)이다.
+  # 각도 구동 그리퍼(Robotiq 2F 등)를 등록할 때는 여기에 실측 선형근사를 넣는다.
+  halfwidth_scale: 1.0
+  halfwidth_offset: 0.0
+
+  # 볼트를 부착(attach)할 때 충돌을 허용할 링크들
+  touch_links:
+    - fr3_hand
+    - fr3_leftfinger
+    - fr3_rightfinger
+    - fr3_hand_tcp
+
+  geometry:
+    # ★★ [근본원인 수정 — 서브에이전트 냉정 분석으로 확정] ★★
+    # fr3_hand_tcp(TCP)는 손끝이 아니라 손끝(고무패드 최저면)보다 9.5mm '위'다.
+    # URDF franka_hand.xacro 추적: finger_joint origin(0.0584) + rubber-tip 박스
+    # 중심(0.04525) + 박스반높이(0.00925) = 손끝 0.1129 vs tcp_xyz 0.1034 → 0.0095.
+    # 예전 코드는 'TCP=손끝'으로 착각해 목표 z 를 바닥 아래로 잡았고(물리 불가),
+    # 물리 바닥이 손끝을 막아 TCP 가 늘 목표보다 9.5mm 위에서 멈췄다.
+    tcp_to_fingertip: 0.0095
+
+    # [SRDF/URDF 준수] 손끝 팁 반폭(닫힘축 Y 방향). URDF franka_hand.xacro 의
+    # 팁 패드 collision box(22e-3 x 8.8e-3 x 3.8e-3)에서 닫힘축=8.8mm → 반 4.4mm.
+    # 임의 튜닝값(6/10mm)이 아니라 실제 모델 치수를 그대로 쓴다.
+    finger_half_w: 0.0044
+
+    # ---------- 사각(평면) 손가락 팁 기하 (R2) ----------
+    # 실제 Franka Hand 팁은 중심선(선분)이 아니라 '사각/직사각 평면'이다. 닫힘축
+    # (y_tool)뿐 아니라 볼트 축 방향(x_tool)으로도 폭이 있어(팁 약 18mm), 그 모서리가
+    # 벽/이웃에 먼저 스치면 하강 Cartesian 달성률이 떨어진다.
+    # [SRDF/URDF 준수] URDF 팁 패드 축방향(X)=22mm → 반 11mm.
+    finger_tip_half_x: 0.011
+
+  aperture:
+    # 개구 하한. 손가락 팁 반폭 + 샤프트 반경을 감안한 최소 —
+    # 이보다 좁으면 샤프트를 밀어낸다.
+    min_open: 0.009
+    # 파지 '목표' 개구(pre-grasp). 벽/이웃이 더 좁히라고 강제하지 않는 한, 항상
+    # 이 타이트한 폭으로 내려간다. 예전엔 벽/이웃에 '처음 닿는' 폭(최대 40mm)을
+    # 그대로 썼는데, 그러면 빽빽한 무더기에서 손가락이 이웃과 부딪혀 하강
+    # Cartesian 이 중간(≈93%)에서 잘렸다.
+    # 18→12→10mm 로 더 조였다: 손가락 팁 반폭 6mm 기준, 개구 10mm 면 손가락
+    # 안쪽면이 파지점에서 4mm(=샤프트 반경)로 샤프트에 딱 붙어 내려간다.
+    pregrasp_open: 0.010
+    # 이웃 회피용 개구 하향 탐색 간격 (4mm)
+    step: 0.004
+
+# ---------------------------------------------------------------------
+# 워크스페이스 — 전부 '이 설치 상태에서의' 실측값. 카탈로그 스펙 금지.
+# ---------------------------------------------------------------------
+workspace:
+  # 수직 파지의 좌우 도달 한계는 |y − 통중심| ≈ 61(성공)~68(실패)mm. 이보다
+  # 좌우로 먼 '구석' 볼트는 어떤 접근으로도 못 잡으므로, 후보 열거 전에 조기
+  # 제외한다(사후 블랙리스트로 볼트당 60초 낭비하던 것을 없앤다).
+  reach_y_max: 0.063
+  # 이보다 앞쪽(x)이면 하강 깊이 부족으로 스킵
+  reach_x_far: 0.45
+
+  # 접근/운반 높이. 0.45 → 0.25 로 낮췄다: 통 벽은 25mm 뿐이라 0.25 로도 여유가
+  # 10배이고, 하강 직선이 0.44m → 0.24m 로 절반이 되어 IK 가 관절 한계/점프에
+  # 걸릴 구간 자체가 줄어든다(길수록 실패 확률만 커진다).
+  approach_height: 0.25
+
+  # 기울임 허용 최소 볼트중심 z. 바닥 볼트(중심 0.010)를 기울이면 손끝이 TCP보다
+  # 9.5mm 아래라 바닥을 1.6~2.9mm 파고든다(θ=15~30°). '다른 볼트 위에 확실히
+  # 얹힌' 볼트(중심 ≥ 0.020)만 기울여야 손끝이 바닥 위에 남는다.
+  tilt_min_center_z: 0.020
+
+  # 크기만. 부호는 '벽 반대쪽'으로 자동 선택
+  tilt_candidates_deg: [15.0, 30.0]
+
+  # ex10: 어려운 구간에서 순차 시도할 OMPL 플래너 후보.
+  # ⚠ planner_id 는 ompl_planning.yaml 의 <group>: planner_configs 에 있는
+  #   '설정 이름'이어야 한다('RRTConnect' 같은 알고리즘 이름이 아님).
+  #   이름이 안 맞으면 MoveIt 이 조용히 기본 플래너로 폴백해 폴백이 no-op 이 된다.
+  planner_fallback:
+    - RRTConnectkConfigDefault
+    - RRTkConfigDefault
+    - ESTkConfigDefault
+    - KPIECEkConfigDefault
+    - PRMkConfigDefault
+
+# ---------------------------------------------------------------------
+# 모델 기술(記述) 파일 — 런치가 이 정보만으로 스택 전체를 세운다
+# ---------------------------------------------------------------------
+description:
+  urdf:
+    # franka_description 원본을 건드리지 않고 Gazebo 전용 조정(중력 off + 빈피킹
+    # 카메라)만 얹은 얇은 래퍼
+    package: bin_picking
+    path: urdf/fr3_gazebo.urdf.xacro
+    args:
+      hand: true
+      ee_id: franka_hand
+      ros2_control: true
+      gazebo: true
+      gazebo_effort: true
+
+  srdf:
+    package: franka_description
+    path: robots/fr3/fr3.srdf.xacro
+    args:
+      hand: true
+      ee_id: franka_hand
+
+  moveit:
+    package: franka_fr3_moveit_config
+    files:
+      kinematics: config/kinematics.yaml
+      joint_limits: config/fr3_joint_limits.yaml
+      ompl: config/ompl_planning.yaml
+      controllers: config/fr3_controllers.yaml
+      rviz: rviz/moveit.rviz
+
+  gazebo:
+    entity: fr3
+    # gz 가 메시를 찾을 수 있게 이 패키지의 '상위' 디렉터리를
+    # GZ_SIM_RESOURCE_PATH 로 잡는다
+    resource_package: franka_description

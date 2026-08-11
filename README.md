@@ -37,6 +37,7 @@ robotarm_main/
 ├─ README.md              ← 지금 이 문서
 ├─ LICENSE / NOTICE       ← Apache-2.0 + 원저작자 표기
 ├─ docs/architecture.md   ← 모듈 의존 그래프 · 상세 설계
+├─ docs/robot_profiles.md ← 로봇팔 모델 등록 · 검증 · 전환 (다른 제조사 팔 붙이기)
 └─ src/
    ├─ bin_picking/                 ★ 이 프로젝트의 코드 (아래 모듈 지도)
    ├─ franka_description/          FR3 모델(URDF/메시) — 통째 포함(자체 완결)
@@ -58,7 +59,10 @@ robotarm_main/
 | 파일 | 책임 (열면 이것만 보임) |
 |---|---|
 | `pick_place_node.py` | **여기서 시작.** 전체 흐름(`run`/`_pick`/`_drop`)을 담은 얇은 오케스트레이터 + `main()` |
-| `config.py` | 모든 상수(파지 깊이·개구·도달성·학습 등)와 "왜 이 값인지" 주석 |
+| `config.py` | 작업 상수(파지 깊이·개구·학습 등)와 "왜 이 값인지" 주석 + 로봇 프로파일 주입 |
+| `robot_profiles/` | **로봇 모델 등록/검증/전환** — 업체마다 다른 값(관절·그리퍼·도달성·설정 위치)을 데이터로 분리 ([`docs/robot_profiles.md`](docs/robot_profiles.md)) |
+| `model_cli.py` | `binpick_model` 명령 — 모델 등록·검증·전환 |
+| `gripper_adapters.py` | 그리퍼 액션 인터페이스 어댑터(FollowJointTrajectory / GripperCommand) |
 | `geometry.py` | 순수 수학: 볼트 축·회전·파지 좌표계·선분거리 (ROS 무의존) |
 | `grasp_planning.py` | 그리퍼 개구·접근 기울기·통 벽/도달성 판정 |
 | `sensing.py` | 볼트 6D 자세 구독·외부 비전 입력 (`_all_bolt_poses` 단일 입구) |
@@ -145,6 +149,33 @@ python3 src/bin_picking/tools/mock_desktop_client.py --token <토큰>   # 데스
 ```
 
 실전 사용법(오류 대처·주의사항 등)은 Notion "실전 사용 가이드" 문서 참고.
+
+---
+
+## 로봇팔 모델 바꾸기
+
+관절 이름·관절 한계·그리퍼 지령 단위·손끝 기하·도달성 한계·MoveIt 설정 위치처럼
+**로봇마다 달라지는 값**은 코드가 아니라 등록된 **프로파일**(YAML)에 있습니다.
+한 번 등록해 검증까지 마치면 명령 하나로 전환됩니다.
+
+```bash
+ros2 run bin_picking binpick_model list            # 등록된 모델과 검증 상태
+ros2 run bin_picking binpick_model new my_arm      # 새 모델 등록 뼈대 생성
+ros2 run bin_picking binpick_model verify my_arm   # URDF/실행 중 시스템과 대조
+ros2 run bin_picking binpick_model use my_arm      # 활성 모델 전환(다음 기동부터)
+
+# 일회성으로 다른 모델 띄우기
+ros2 launch bin_picking desktop_integration_demo.launch.py robot_model:=my_arm
+```
+
+검증되지 않은 모델로는 전환이 **거부**됩니다 — 관절 한계나 그리퍼 지령 단위가
+틀린 채로 움직이면 실물에서 충돌·과주행로 직결되기 때문입니다.
+
+등록 절차와 각 항목을 어디서 얻는지는 [`docs/robot_profiles.md`](docs/robot_profiles.md).
+데스크톱앱에서 전환하는 REST 엔드포인트도 같은 문서에 있습니다.
+
+> 현재 벤더링된 자산은 **FR3 하나**입니다. 다른 제조사 팔을 실제로 띄우려면
+> 그 팔의 description/MoveIt 패키지(+ 그리퍼)를 먼저 확보해야 합니다.
 
 ---
 

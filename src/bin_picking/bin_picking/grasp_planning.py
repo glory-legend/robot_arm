@@ -160,11 +160,15 @@ class GraspPlanningMixin:
         reach = min(min(self._wall_reach_along(c, y_tool),
                         self._wall_reach_along(c, -y_tool))
                     for c in corners)
+        # ⚠ 개구 상한은 '만개의 물리 개구(m)'다. GRIPPER_OPEN 은 컨트롤러 지령값
+        #   이라 각도 구동 그리퍼(Robotiq)에선 만개가 0.0rad → 그대로 상한에 쓰면
+        #   모든 개구가 0 으로 잘려 항상 None 이 된다. 물리 개구로 변환한
+        #   GRIPPER_OPEN_HALFWIDTH 를 쓴다(프랑카는 항등 변환이라 값 동일).
         if not math.isfinite(reach):
-            wall_cap = self.GRIPPER_OPEN     # 벽에 막히지 않음 → 만개까지 허용
+            wall_cap = self.GRIPPER_OPEN_HALFWIDTH   # 벽에 막히지 않음 → 만개까지 허용
         else:
             wall_cap = reach - self.FINGER_HALF_W - self.GRASP_SAFETY
-        wall_cap = min(wall_cap, self.GRIPPER_OPEN)
+        wall_cap = min(wall_cap, self.GRIPPER_OPEN_HALFWIDTH)
         # 1e-9 여유: 하한과 정확히 같은 값이 부동소수 오차로 탈락하지 않게
         # (아래 탐색 루프의 종료 조건과 같은 기준을 쓴다)
         if wall_cap < self.GRASP_MIN_OPEN - 1e-9:
@@ -183,7 +187,12 @@ class GraspPlanningMixin:
             segs.append(self._bolt_segment(npos, nquat))
         need = BOLT_RADIUS + self.SWEEP_SAFETY
         # 닫힘 완료 시 손가락 바깥면 위치(파지 끝점). 스윕의 안쪽 끝이다.
-        s_end = self.GRIPPER_CLOSED + self.FINGER_HALF_W
+        # ⚠ 여기서 더하는 값은 전부 '물리 개구(m)'다. GRIPPER_CLOSED 는 컨트롤러
+        #   지령값이라 각도 구동 그리퍼(Robotiq)에선 rad(0.79) 이므로, 그대로
+        #   더하면 ~0.79m 짜리 스윕이 되어 모든 이웃과 충돌 판정 → 전 후보 탈락.
+        #   반드시 물리 개구로 변환한 GRIPPER_CLOSED_HALFWIDTH 를 쓴다.
+        #   (프랑카 핸드는 항등 변환이라 수치 동일 → 기존 동작 불변.)
+        s_end = self.GRIPPER_CLOSED_HALFWIDTH + self.FINGER_HALF_W
 
         # --- 3) '목표 개구'에서 시작해 한 칸씩 낮추며 이웃까지 통과하는 첫 값 ---
         # 시작점을 벽 상한이 아니라 min(벽 상한, 목표 개구)로 잡는다. 벽이 넉넉해도

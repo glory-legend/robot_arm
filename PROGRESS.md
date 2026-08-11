@@ -32,6 +32,100 @@ FR3 M8 볼트 빈피킹 — **컴퓨터비전 → 데스크톱앱 → 로봇암*
 
 ## ✅ 완료한 태스크
 
+### 두 번째 팔 등록 완료 — UR5e + Robotiq 2F-85 (2026-08-10)
+- **목표:** 등록 계층이 실제로 벤더 중립인지, **다른 제조사 팔을 올릴 수 있는지** 증명.
+- **결과 — 등록·전환·로드 전 과정 동작:**
+  - `binpick_model verify ur5e_robotiq85` → **7개 검사층 전부 통과**(static/files/
+    urdf/srdf/planners/joint_states/controllers), 오류 0.
+  - `binpick_model use ur5e_robotiq85` → 활성 모델 저장.
+  - **`robot_model` 인자 없이** 런치 → UR5e 가 뜸(`status=verified` 표시),
+    `ur_arm_controller`/`robotiq_gripper_controller`/`joint_state_broadcaster` 활성.
+    컨트롤러 이름이 FR3 와 완전히 다른데 런치에는 어느 쪽도 하드코딩돼 있지 않다.
+- **UR5e 를 붙이며 드러난 프랑카 가정(전부 수정):** 그리퍼 개폐 방향(2F-85 는
+  0 rad=만개, 0.79=폐쇄로 **반대**), 관절값/물리개구 단위 혼용, 툴 프레임 축 규약,
+  벤더 커스텀 YAML 태그(`!degrees`), `planner_configs` 부재, `move_gripper` 로그의
+  rad×1000→"mm" 오표기.
+- **`status` 의미 정정:** `verified` 를 '파지 성공'이 아니라 **'verify 통과(값이 실제
+  모델/런타임과 대조됨)'** 로 재정의하고, 작업 성능은 `task_validated` 로 분리했다.
+  둘을 한 축에 묶으면 "안전하게 로드는 되지만 이 작업엔 안 맞는 팔"을 표현할 수
+  없다 — UR5e+2F-85 가 정확히 그 상태다. 전환 게이트는 `status` 만 본다.
+- **`verify --promote` 추가:** 0 오류 통과 시에만 `status` 를 올린다(유일한 승격
+  경로). 주석 보존을 위해 `status:` 한 줄만 치환하고, 빌드 산출물이면 거부한다.
+- **워크스페이스 실측 도구(`measure_workspace`) 추가.** FR3 값을 베껴 뒀던 것이
+  **부당한 제약**이었음이 드러났다 — `reach_y_max` 0.063(실측 **0.095**),
+  `reach_x_far` 0.45(실측 **0.515**). 통의 상당 부분을 이유 없이 배제하고 있었다.
+- **남은 것 ⬜ — 파지는 실패(0/5).** 원인은 등록 계층이나 도달성이 아니라 **그리퍼
+  적합성**이다: 2F-85 손끝 두께 31.2mm(프랑카 핸드 4.4mm의 **7.1배**)라 통 안에서
+  개구 확보가 안 된다. 통 기하로 계산하면 집을 수 있는 영역이 바닥 면적의 32%
+  (FR3 는 70%). 이 작업에는 소형 정밀 그리퍼(예: Robotiq Hand-E)가 맞다 —
+  `robotiq_description` 이 2F-85 만 제공하므로 에셋 확보가 선행돼야 한다.
+
+### ⚠ WSLg + ogre2 렌더러 → 컨트롤러 스포너 연쇄 실패 (2026-08-10)
+- **증상:** Gazebo GUI 로 데모를 띄우면 `joint_state_broadcaster`/`fr3_arm_controller`/
+  `fr3_gripper_controller` 스포너가 **전부** 죽는다. 로그에는
+  `Could not successfully call service /controller_manager/switch_controller after 3 attempts`,
+  `Failed to acquire lock in 20 seconds` 가 반복되고, 이어서 `integrated_pick_place` 가
+  `moveit_io.wait_for_ready()` 에서 예외로 종료된다.
+- **함정:** 이게 코드 버그처럼 보인다. 하지만 **`/clock` 은 553Hz 로 정상 발행**되고
+  있어서 "시뮬은 멀쩡한데 왜 서비스만 안 되지"로 한참 헤맨다.
+- **근본 원인:** WSLg 는 GPU 가속 없이 소프트웨어 렌더링을 한다. 기본 렌더러(**ogre2**)
+  로 GUI 를 띄우면 `gz sim gui` 가 **CPU 277%**(약 3코어)를 먹고, gz 서버 플러그인
+  안에서 도는 `controller_manager` 의 서비스 콜백이 굶어 10초 타임아웃을 넘긴다.
+  스포너 3개가 락을 두고 경합하면서 연쇄 실패한다.
+- **해결:** 가벼운 렌더러로 바꾼다 — `gz_args` 에 `--render-engine ogre` 추가.
+  ```bash
+  ros2 launch bin_picking desktop_integration_demo.launch.py \
+    gz_args:='-r --render-engine ogre <워크스페이스>/install/bin_picking/share/bin_picking/worlds/robot_view.sdf' \
+    bolts_delay:=30.0 apps_delay:=45.0
+  ```
+  바꾼 뒤 컨트롤러 3개가 모두 정상 활성화됐다. 헤드리스(`-s`)로 돌 때는 애초에
+  안 나는 문제라, GUI 를 켤 때만 해당한다.
+- **구분:** 2026-08-06 의 "Gazebo 서버 중복 기동" 과는 **별개 원인**이다. 그쪽은 서버가
+  둘 떠서 났고, 이번 건은 서버 하나에 GUI 가 자원을 뺏는 것이다.
+
+### 리팩터링 후 실동작 검증 (2026-08-10)
+- 모델 등록/전환 계층을 넣은 뒤 **실제 Gazebo 데모로 회귀 확인**. 볼트 5개 중 3개
+  파지·운반 성공, 2개는 서로 인접해 개구 확보 실패로 보류(블랙리스트 0).
+- 전 구간 달성률 100%(접근/하강/리프트/이동/놓기). 특히 **하강 실측 TCP z=0.0150 /
+  목표 0.0150, 초과 +0.0mm** — 이 값은 `apply_profile()` 이 프로파일의
+  `TCP_TO_FINGERTIP` 에서 재계산해 꽂은 `GRASP_FLOOR_Z` 다. 유도 상수 재계산을
+  빼먹었다면 여기서 어긋났을 것이므로, "이름만 새 로봇이고 물리는 옛 로봇" 버그가
+  없다는 실동작 증거가 된다.
+- 학습 선택기 표본 550 → 553 재적합·저장 확인.
+
+### 로봇팔 모델 등록/전환 계층 (2026-08-10)
+- **목표:** 다른 제조사 로봇팔로 갈아끼울 수 있게 하되, **전환 후에도 기능은 완전히
+  동일**해야 한다. 사용자 정정으로 무게중심을 "전환"이 아니라 **"등록"** 으로 옮겼다 —
+  그리퍼를 비롯해 업체마다 다른 값은 자동 추론이 불가능하고 사람이 실측해 넣어야
+  하므로, 핵심 기능은 그 수기 입력을 빠짐없이 받고 **틀리면 시끄럽게 알리는** 것이다.
+- **왜 FR3 가 박혀 있었나(근본원인):** 7개 층에 서로 다른 성격으로 흩어져 있었다 —
+  ① 이름 규약 ② `config.py` 클래스 상수(임포트 시점 고정 + `desktop_bridge` 가
+  모듈 최상단에서 복사) ③ 런치 리터럴 ④ 실측 유도 물리상수(TCP↔손끝 9.5mm 등)
+  ⑤ 제어 인터페이스 규약(FollowJointTrajectory + 선형 관절 전제) ⑥ 툴 프레임 규약
+  ⑦ 벤더 자산(메시가 fr3 뿐). 상위 `franka_description` 은 이미 `robot_type` 으로
+  파라미터화돼 있었는데, **우리 코드가 그 결과 문자열을 최종형태로 복사해 넣어**
+  파라미터화를 무너뜨린 것이 근본원인이었다.
+- **결과:**
+  - `robot_profiles/` 신설 — 스키마(무엇을 채워야 하는가) + 레지스트리(어디에 적힌
+    것을 등록으로 인정하는가) + **검증기**(채운 값이 실제 로봇과 맞는가).
+  - FR3 를 기준 프로파일로 등록. **값 100% 보존**을 회귀 테스트로 기계 증명
+    (리터럴 대조 — 프로파일에서 유도하면 동어반복이라 의미 없으므로 손으로 옮겨 적음).
+  - `config.py` 는 클래스 속성 주입 방식(`apply_profile`)으로 전환. 인스턴스 속성이
+    아니라 **클래스** 속성인 이유는 `_grasp_z_for`/`_finger_width_is_grasp` 같은
+    `@classmethod` 순수 계산이 `cls.X` 를 읽기 때문 — 인스턴스에만 넣으면 그것들이
+    옛 값을 조용히 쓴다.
+  - 그리퍼 어댑터(`gripper_adapters.py`)로 `GripperCommand` 경로 확보. 파지 판정을
+    **물리 개구(m) 단위**로 정규화(프랑카 핸드는 항등 변환이라 수치 완전 동일).
+  - `robot_model:=` 인자 하나로 URDF/SRDF/MoveIt/컨트롤러/엔티티/노드가 모두 전환.
+  - 원클릭 조작면 2종: `binpick_model` 명령 + `desktop_bridge` REST 엔드포인트.
+    **미검증(draft) 모델로의 전환은 양쪽 모두 거부**한다.
+  - 문서 `docs/robot_profiles.md` (등록 절차 + 검증기가 잡는 오류 표).
+- **남은 것 ⬜:** 자산이 벤더링된 모델은 여전히 FR3 뿐 — 다른 팔을 실제로 띄우려면
+  그 팔의 description/MoveIt 패키지(+그리퍼 결합 xacro)를 먼저 확보해야 한다.
+  UR 계열은 `ros-jazzy-ur-description`/`ur-moveit-config`/`ur-simulation-gz` +
+  `robotiq-description` 로 apt 설치 가능함을 확인했다(미설치). `GripperCommand`
+  어댑터와 툴 프레임 축 규약 보정은 실기 검증 전이다.
+
 ### 볼트 파지 근본원인 수정 — TCP↔손끝 오프셋 (2026-07-21~22)
 - **목표:** 시뮬에서 볼트를 안정적으로 파지.
 - **결과:** `fr3_hand_tcp`가 손끝보다 **9.5mm 위**임을 발견 → 목표 z를 바닥 아래로 잡던 버그 수정

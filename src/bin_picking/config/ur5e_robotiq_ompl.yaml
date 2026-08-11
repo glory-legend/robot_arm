@@ -1,0 +1,14 @@
+# UR5e + Robotiq — OMPL 기본 골격.
+# planner_configs 는 프로파일의 description.moveit.ompl_overlay 가 채운다
+# (벤더 ur_moveit_config 도 이 파일에 planner_configs 를 두지 않는다).
+planning_plugins:
+  - ompl_interface/OMPLPlanner
+request_adapters:
+  - default_planning_request_adapters/ResolveConstraintFrames
+  - default_planning_request_adapters/ValidateWorkspaceBounds
+  - default_planning_request_adapters/CheckStartStateBounds
+  - default_planning_request_adapters/CheckStartStateCollision
+response_adapters:
+  - default_planning_response_adapters/AddTimeOptimalParameterization
+  - default_planning_response_adapters/ValidateSolution
+  - default_planning_response_adapters/DisplayMotionPath

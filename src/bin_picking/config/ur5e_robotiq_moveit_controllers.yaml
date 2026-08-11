@@ -1,0 +1,36 @@
+# =====================================================================
+#  UR5e + Robotiq 2F-85 — MoveIt 컨트롤러 매니저 설정
+# =====================================================================
+# 프로파일의 `description.moveit.files.controllers` 가 이 파일을 가리킨다.
+# 런치가 `moveit_simple_controller_manager` 파라미터로 통째로 넘긴다.
+#
+# ⚠ ur_moveit_config 순정 파일을 쓰지 않는 이유: 그쪽은 기본 컨트롤러를
+#   `scaled_joint_trajectory_controller` 로 선언하는데, 우리 Gazebo 구성에는
+#   그 컨트롤러가 없다(speed_scaling 인터페이스 미제공). 이름이 어긋나면 MoveIt
+#   이 실행 단계에서 컨트롤러를 못 찾아 궤적이 조용히 실행되지 않는다.
+#   여기서 실제로 띄우는 컨트롤러와 1:1로 맞춰 둔다.
+controller_names:
+  - ur_arm_controller
+  - robotiq_gripper_controller
+
+ur_arm_controller:
+  action_ns: follow_joint_trajectory
+  type: FollowJointTrajectory
+  default: true
+  joints:
+    - shoulder_pan_joint
+    - shoulder_lift_joint
+    - elbow_joint
+    - wrist_1_joint
+    - wrist_2_joint
+    - wrist_3_joint
+
+robotiq_gripper_controller:
+  action_ns: gripper_cmd
+  type: GripperCommand
+  default: true
+  parallel: true
+  joints:
+    # 구동 관절 + 종동(mimic) 관절. MoveIt 이 그리퍼 그룹으로 인식하는 데 쓴다.
+    - robotiq_85_left_knuckle_joint
+    - robotiq_85_right_knuckle_joint

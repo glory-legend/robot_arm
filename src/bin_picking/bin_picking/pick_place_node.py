@@ -160,6 +160,7 @@ except Exception as _exc:                       # noqa: BLE001
 
 
 from bin_picking.config import PickPlaceConfig
+from bin_picking.gripper_adapters import make_gripper_adapter
 from bin_picking.geometry import GeometryMixin
 from bin_picking.grasp_planning import GraspPlanningMixin
 from bin_picking.robot_state import RobotStateMixin
@@ -206,8 +207,11 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         self._move_client = ActionClient(self, MoveGroup, 'move_action')
         self._execute_client = ActionClient(
             self, ExecuteTrajectory, 'execute_trajectory')
-        self._gripper_client = ActionClient(
-            self, FollowJointTrajectory, self.GRIPPER_ACTION)
+        # 그리퍼는 액션 타입이 업체마다 다르다(FollowJointTrajectory / GripperCommand)
+        # → 프로파일이 고른 어댑터가 액션 클라이언트를 소유한다.
+        self._gripper_adapter = make_gripper_adapter(
+            self, self.ROBOT_PROFILE.gripper)
+        self._gripper_client = self._gripper_adapter.client
         self._fk_client = self.create_client(GetPositionFK, 'compute_fk')
         self._ik_client = self.create_client(GetPositionIK, 'compute_ik')
         self._cart_client = self.create_client(
@@ -547,7 +551,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
                               retries=_retries_before + 1)
             return False
         self.get_logger().info(
-            f'[{label}] 개구 {self.GRIPPER_OPEN * 1000:.1f}mm → '
+            f'[{label}] 개구 {self.GRIPPER_OPEN_HALFWIDTH * 1000:.1f}mm → '
             f'{aperture * 1000:.1f}mm (벽 제약 {wall_cap * 1000:.0f}mm) / '
             f'접근 기울기 {tilt_deg:+.0f}° '
             f'{"(수직)" if abs(tilt_deg) < 1e-9 else "(볼트축 둘레로 기울임 — 벽 회피)"}')

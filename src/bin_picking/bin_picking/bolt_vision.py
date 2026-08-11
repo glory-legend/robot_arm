@@ -39,6 +39,8 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 import tf2_ros
 
+from bin_picking import robot_profiles
+
 try:
     from sklearn.cluster import DBSCAN
     _HAVE_SKLEARN = True
@@ -48,7 +50,10 @@ except ImportError:                                   # 방어: 없으면 노드
 
 class BoltVision(Node):
     # ---- 프레임 ----
-    BASE_FRAME = 'fr3_link0'
+    # 로봇 베이스 프레임 이름은 팔마다 다르다(fr3_link0 / base_link …).
+    # 이 노드는 파지 파이프라인과 별도 프로세스라 config.py 를 안 거치고
+    # 활성 프로파일을 직접 읽는다(무거운 의존을 끌어오지 않기 위함).
+    BASE_FRAME = robot_profiles.active_profile().arm.base_frame
     CLOUD_TOPIC = '/bin_camera/points'
     OUT_TOPIC = '/next_bolt_pose'
     MARKER_TOPIC = '/bolt_vision_markers'

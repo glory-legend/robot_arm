@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  UR5e + Robotiq 2F-85 결합 SRDF (등록 입력물)
+
+  [왜 벤더 SRDF 를 그대로 못 쓰나]
+    `ur_moveit_config` 의 `ur_srdf` 매크로는 **인자가 하나도 없고**, 그룹
+    `ur_manipulator` 의 tip_link 가 `tool0`(손목 플랜지)로 고정돼 있다. 우리
+    파이프라인은 파지 패드 중앙(`grasp_tcp`)을 기준으로 목표 자세를 만들므로,
+    tip 이 플랜지인 그룹으로는 파지 깊이가 그리퍼 길이만큼 통째로 어긋난다.
+    또 벤더 SRDF 에는 그리퍼 그룹도, Robotiq 링크 간 자체충돌 해제도 없다.
+
+  그래서 벤더 매크로는 **충돌 매트릭스와 기존 그룹을 얻기 위해 그대로 부르고**,
+  그 위에 이 파일이 다음을 얹는다:
+    - `bin_picking_arm`  : base_link → grasp_tcp 체인 (파지 기준 그룹)
+    - `bin_picking_hand` : 그리퍼 그룹 + end_effector 선언
+    - Robotiq 링크들의 자체충돌 해제 (없으면 파지 자세가 전부 자기충돌로 거부됨)
+-->
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="$(arg name)">
+
+  <xacro:arg name="name" default="ur5e_robotiq85"/>
+  <xacro:arg name="tf_prefix" default=""/>
+
+  <!-- 벤더 SRDF: UR 자체충돌 매트릭스 + ur_manipulator 그룹 -->
+  <xacro:include filename="$(find ur_moveit_config)/srdf/ur_macro.srdf.xacro"/>
+  <xacro:ur_srdf/>
+
+  <!-- ============ 파지 기준 그룹 ============
+    체인이 grasp_tcp 까지 이어지지만, tool0 이후는 전부 fixed 조인트라
+    가동 관절은 UR 6축 그대로다. -->
+  <group name="bin_picking_arm">
+    <chain base_link="$(arg tf_prefix)base_link"
+           tip_link="$(arg tf_prefix)grasp_tcp"/>
+  </group>
+
+  <!-- Ready 자세. UR 순정 `home` 과 같은 관절값을 쓴다(그룹만 다름). -->
+  <group_state name="ready" group="bin_picking_arm">
+    <joint name="$(arg tf_prefix)shoulder_pan_joint" value="0"/>
+    <joint name="$(arg tf_prefix)shoulder_lift_joint" value="-1.5707"/>
+    <joint name="$(arg tf_prefix)elbow_joint" value="0"/>
+    <joint name="$(arg tf_prefix)wrist_1_joint" value="-1.5707"/>
+    <joint name="$(arg tf_prefix)wrist_2_joint" value="0"/>
+    <joint name="$(arg tf_prefix)wrist_3_joint" value="0"/>
+  </group_state>
+
+  <!-- ============ 그리퍼 ============ -->
+  <group name="bin_picking_hand">
+    <joint name="$(arg tf_prefix)robotiq_85_left_knuckle_joint"/>
+  </group>
+  <end_effector name="robotiq_2f_85"
+                parent_link="$(arg tf_prefix)grasp_tcp"
+                group="bin_picking_hand"
+                parent_group="bin_picking_arm"/>
+
+  <!-- ============ Robotiq 자체충돌 해제 ============
+    벤더가 안 준다. 이게 없으면 손가락끼리/손목과 늘 충돌로 잡혀 계획이 전부
+    실패한다. 인접(Adjacent)한 것과 구조상 절대 안 닿는(Never) 쌍을 푼다. -->
+  <xacro:macro name="rq_nc" params="a b reason">
+    <disable_collisions link1="$(arg tf_prefix)${a}" link2="$(arg tf_prefix)${b}"
+                        reason="${reason}"/>
+  </xacro:macro>
+
+  <xacro:rq_nc a="wrist_3_link" b="ur_to_robotiq_link" reason="Adjacent"/>
+  <xacro:rq_nc a="wrist_3_link" b="robotiq_85_base_link" reason="Never"/>
+  <xacro:rq_nc a="wrist_2_link" b="robotiq_85_base_link" reason="Never"/>
+  <xacro:rq_nc a="ur_to_robotiq_link" b="robotiq_85_base_link" reason="Adjacent"/>
+
+  <xacro:rq_nc a="robotiq_85_base_link" b="robotiq_85_left_knuckle_link" reason="Adjacent"/>
+  <xacro:rq_nc a="robotiq_85_base_link" b="robotiq_85_right_knuckle_link" reason="Adjacent"/>
+  <xacro:rq_nc a="robotiq_85_base_link" b="robotiq_85_left_inner_knuckle_link" reason="Adjacent"/>
+  <xacro:rq_nc a="robotiq_85_base_link" b="robotiq_85_right_inner_knuckle_link" reason="Adjacent"/>
+  <xacro:rq_nc a="robotiq_85_base_link" b="robotiq_85_left_finger_link" reason="Never"/>
+  <xacro:rq_nc a="robotiq_85_base_link" b="robotiq_85_right_finger_link" reason="Never"/>
+  <xacro:rq_nc a="robotiq_85_base_link" b="robotiq_85_left_finger_tip_link" reason="Never"/>
+  <xacro:rq_nc a="robotiq_85_base_link" b="robotiq_85_right_finger_tip_link" reason="Never"/>
+
+  <xacro:rq_nc a="robotiq_85_left_knuckle_link" b="robotiq_85_left_finger_link" reason="Adjacent"/>
+  <xacro:rq_nc a="robotiq_85_left_knuckle_link" b="robotiq_85_left_inner_knuckle_link" reason="Never"/>
+  <xacro:rq_nc a="robotiq_85_left_knuckle_link" b="robotiq_85_left_finger_tip_link" reason="Never"/>
+  <xacro:rq_nc a="robotiq_85_left_finger_link" b="robotiq_85_left_finger_tip_link" reason="Adjacent"/>
+  <xacro:rq_nc a="robotiq_85_left_finger_link" b="robotiq_85_left_inner_knuckle_link" reason="Never"/>
+  <xacro:rq_nc a="robotiq_85_left_inner_knuckle_link" b="robotiq_85_left_finger_tip_link" reason="Adjacent"/>
+
+  <xacro:rq_nc a="robotiq_85_right_knuckle_link" b="robotiq_85_right_finger_link" reason="Adjacent"/>
+  <xacro:rq_nc a="robotiq_85_right_knuckle_link" b="robotiq_85_right_inner_knuckle_link" reason="Never"/>
+  <xacro:rq_nc a="robotiq_85_right_knuckle_link" b="robotiq_85_right_finger_tip_link" reason="Never"/>
+  <xacro:rq_nc a="robotiq_85_right_finger_link" b="robotiq_85_right_finger_tip_link" reason="Adjacent"/>
+  <xacro:rq_nc a="robotiq_85_right_finger_link" b="robotiq_85_right_inner_knuckle_link" reason="Never"/>
+  <xacro:rq_nc a="robotiq_85_right_inner_knuckle_link" b="robotiq_85_right_finger_tip_link" reason="Adjacent"/>
+
+  <!-- 좌우 손가락은 완전히 닫혀야 닿는다. 파지 중에는 늘 물체가 사이에 있으므로
+       충돌로 잡으면 모든 파지가 거부된다. -->
+  <xacro:rq_nc a="robotiq_85_left_knuckle_link" b="robotiq_85_right_knuckle_link" reason="Never"/>
+  <xacro:rq_nc a="robotiq_85_left_finger_link" b="robotiq_85_right_finger_link" reason="Never"/>
+  <xacro:rq_nc a="robotiq_85_left_finger_tip_link" b="robotiq_85_right_finger_tip_link" reason="Never"/>
+  <xacro:rq_nc a="robotiq_85_left_inner_knuckle_link" b="robotiq_85_right_inner_knuckle_link" reason="Never"/>
+
+</robot>

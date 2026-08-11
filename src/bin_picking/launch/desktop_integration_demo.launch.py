@@ -25,11 +25,17 @@ TimerAction 으로 지연 기동한다 — 정교한 이벤트 훅 대신 넉넉
   ros2 launch bin_picking desktop_integration_demo.launch.py
   ros2 launch bin_picking desktop_integration_demo.launch.py rviz:=true auto:=false
   ros2 launch bin_picking desktop_integration_demo.launch.py bolts_delay:=25.0 apps_delay:=30.0
+  ros2 launch bin_picking desktop_integration_demo.launch.py robot_model:=fr3
+
+`robot_model:=` 로 등록된 다른 로봇 모델로 통째로 갈아끼울 수 있다 — 시뮬·MoveIt·
+컨트롤러·브릿지·파지 노드가 모두 같은 모델을 읽는다(등록/전환은
+`docs/robot_profiles.md`, `binpick_model` 명령 참조).
 """
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
+    SetEnvironmentVariable,
     TimerAction,
 )
 from launch.conditions import IfCondition, UnlessCondition
@@ -39,8 +45,11 @@ from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
+from bin_picking import robot_profiles
+
 
 def generate_launch_description():
+    robot_model = LaunchConfiguration('robot_model')
     rviz = LaunchConfiguration('rviz')
     auto = LaunchConfiguration('auto')
     bolts_delay = LaunchConfiguration('bolts_delay')
@@ -52,6 +61,10 @@ def generate_launch_description():
     tls_key = LaunchConfiguration('tls_key')
     require_tls = LaunchConfiguration('require_tls')
 
+    declare_robot_model = DeclareLaunchArgument(
+        'robot_model', default_value=robot_profiles.active_model_name(),
+        description=('사용할 로봇 모델(등록된 프로파일 이름). '
+                     f'현재 등록됨: {robot_profiles.names()}'))
     declare_rviz = DeclareLaunchArgument(
         'rviz', default_value='false',
         description='MoveIt/RViz 뷰어 표시 여부 (통신 검증만 할 땐 기본 false 로 가볍게)')
@@ -91,7 +104,10 @@ def generate_launch_description():
                 'franka_gazebo_moveit.launch.py',
             ])
         ),
-        launch_arguments={'rviz': rviz}.items(),
+        # robot_model 을 그대로 넘긴다 — 이 런치가 띄우는 나머지 노드들도
+        # 하위 런치가 심는 BIN_PICKING_ROBOT_MODEL 환경변수를 물려받아 같은
+        # 모델을 읽는다(시뮬과 파지 노드의 모델이 갈리는 사고 방지).
+        launch_arguments={'rviz': rviz, 'robot_model': robot_model}.items(),
     )
 
     # 2) 통 + 볼트 스폰 — Gazebo 월드가 뜬 뒤에만 성공하므로 지연 기동
@@ -144,6 +160,13 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        declare_robot_model,
+        # 활성 모델을 이 런치 스코프에 못 박는다. 하위 launch 도 같은 변수를
+        # 심지만, 여기서 한 번 더 세우는 이유는 이 보장이 **include 스코프
+        # 의미론에 의존하지 않게** 하기 위함이다. 만약 이게 깨지면 Gazebo 는
+        # 새 모델로 뜨는데 desktop_bridge/integrated_pick_place 는 저장된 옛
+        # 모델의 관절 이름을 읽는다 — 로그상 아무 오류 없이 전패하는 사고다.
+        SetEnvironmentVariable(robot_profiles.ENV_MODEL, robot_model),
         declare_rviz, declare_auto, declare_bolts_delay, declare_apps_delay,
         declare_bridge_host, declare_bridge_port,
         declare_api_token, declare_tls_cert, declare_tls_key, declare_require_tls,

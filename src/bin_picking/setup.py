@@ -28,12 +28,17 @@ setup(
     name=package_name,
     version='0.1.0',
     packages=find_packages(exclude=['test']),
+    # 등록된 로봇 모델 프로파일(YAML)은 파이썬 패키지 안에 산다 — 소스 트리에서
+    # 실행할 때와 colcon 설치 후가 같은 경로로 동작해야 pytest/런치가 갈리지 않는다.
+    package_data={'bin_picking.robot_profiles': ['data/*.yaml']},
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         (share, ['package.xml']),
         (share + '/launch', glob('launch/*.launch.py')),
         (share + '/urdf', glob('urdf/*')),
+        (share + '/srdf', glob('srdf/*')),
+        (share + '/config', glob('config/*')),
         (share + '/worlds', glob('worlds/*')),
         *data_tree(share, 'models'),
     ],
@@ -55,6 +60,10 @@ setup(
             'train_selector = bin_picking.train_selector:main',
             # 데스크톱앱 ↔ 로봇 통신 브릿지 (REST+WebSocket 하이브리드, docs/desktop_protocol.md)
             'desktop_bridge = bin_picking.desktop_bridge:main',
+            # 로봇 모델 등록/검증/전환 (원클릭 전환 조작면 #1)
+            'binpick_model = bin_picking.model_cli:main',
+            # 등록한 모델의 실제 도달 범위 측정 (workspace 값 유도)
+            'measure_workspace = bin_picking.tools_measure_workspace:main',
         ],
     },
 )

@@ -70,6 +70,7 @@ from tf2_ros import LookupException, ConnectivityException, ExtrapolationExcepti
 
 from bin_picking.config import PickPlaceConfig
 from bin_picking import protocol
+from bin_picking import robot_profiles
 
 try:
     from aiohttp import web
@@ -85,11 +86,20 @@ PROTOCOL_VERSION = protocol.PROTOCOL_VERSION
 # pick_place_node 의 "외부 비전 6D 자세" 입력 토픽을 그대로 재사용한다
 # (config.py 단일 소스 — 여기서 문자열을 따로 하드코딩하지 않는다).
 EXT_POSE_TOPIC = PickPlaceConfig.EXT_POSE_TOPIC
+# ⚠ 아래는 전부 '활성 로봇 모델'에 딸린 값이다. config.py 가 임포트 시점에 등록된
+#   프로파일(robot_profiles/)에서 꽂아 주므로 여기서 다시 하드코딩하지 않는다.
+#   즉 이 브릿지는 모델을 바꿔도 코드 변경 없이 새 관절 이름/프레임을 그대로 쓴다.
 REFERENCE_FRAME = PickPlaceConfig.REFERENCE_FRAME
 ARM_JOINTS = PickPlaceConfig.ARM_JOINTS
 GRIPPER_JOINT = PickPlaceConfig.GRIPPER_JOINT
 TCP_LINK = PickPlaceConfig.END_EFFECTOR_LINK
 JOINT_LIMITS = PickPlaceConfig.JOINT_LIMITS
+ROBOT_MODEL = PickPlaceConfig.ROBOT_MODEL
+# 관절 실측값 → 총 개구폭(m) 변환. 프랑카 핸드처럼 관절값이 곧 반개구인 그리퍼는
+# 2배가 맞지만, 각도 구동 그리퍼(Robotiq 2F 등)는 그렇지 않다 → 프로파일에 등록된
+# 변환을 쓴다. 여기서 `2.0 * finger` 를 직접 쓰면 그리퍼를 바꾸는 순간 텔레메트리의
+# gripper_width 가 조용히 엉뚱한 값이 된다.
+_GRIPPER_SPEC = PickPlaceConfig.ROBOT_PROFILE.gripper
 # selection.py `_log_attempt` 훅이 사이클 결과를 얹어 발행하는 토픽.
 CYCLE_RESULT_TOPIC = PickPlaceConfig.CYCLE_RESULT_TOPIC
 
@@ -288,6 +298,9 @@ class DesktopBridgeNode(Node):
         app.router.add_post('/api/v1/estop', self._http_estop)
         app.router.add_post('/api/v1/command', self._http_command)
         app.router.add_get('/api/v1/status', self._http_status)
+        # 로봇 모델 등록 조회 / 전환 (원클릭 전환 조작면 #2 — 데스크톱앱 버튼)
+        app.router.add_get('/api/v1/robot_models', self._http_robot_models)
+        app.router.add_post('/api/v1/robot_model', self._http_set_robot_model)
         app.router.add_get('/ws/telemetry', self._ws_telemetry)
 
         # access_log=None: aiohttp 기본 액세스 로그는 요청 URL 을 통째로 찍어
@@ -380,6 +393,87 @@ class DesktopBridgeNode(Node):
                 {'accepted': False, 'errors': [f'unknown command type: {mtype!r}']})
         self._cmd_state[mtype] = body.get('args') or {}
         return web.json_response({'accepted': True})
+
+    # ---------- 로봇 모델 등록 조회 / 전환 ----------
+    async def _http_robot_models(self, request):
+        """등록된 로봇 모델 목록 — 데스크톱앱이 전환 UI 를 그릴 재료.
+
+        `switchable` 이 false 인 모델은 앱에서 비활성으로 그려야 한다. 등록만
+        돼 있고 아직 검증되지 않은(status: draft) 모델이라 전환이 거부된다.
+        """
+        found = robot_profiles.discover()
+        return web.json_response({
+            'active': robot_profiles.active_model_name(),
+            # 지금 이 프로세스가 실제로 쓰고 있는 모델. `active` 와 다르면 누군가
+            # 전환은 했는데 재기동을 안 한 것이다 — 앱이 그 차이를 보여줘야 한다.
+            'running': ROBOT_MODEL,
+            'models': [{
+                'name': p.name,
+                'display_name': p.display_name,
+                'vendor': p.vendor,
+                'status': p.status,
+                'switchable': p.is_verified,
+                'notes': p.notes,
+            } for _, p in sorted(found.items())],
+            'errors': [{'path': path, 'message': msg}
+                       for path, msg in robot_profiles.discover_errors()],
+        })
+
+    async def _http_set_robot_model(self, request):
+        """SET_ROBOT_MODEL — 활성 로봇 모델을 바꾼다.
+
+        ⚠ **이 호출은 이미 떠 있는 로봇을 갈아끼우지 않는다.** Gazebo/MoveIt/
+          컨트롤러는 URDF 를 기동 시점에 읽으므로 프로세스를 다시 띄워야 실제로
+          바뀐다. 그래서 여기서는 '다음 기동에 쓸 모델'만 저장하고
+          `restart_required: true` 를 돌려준다.
+
+        의도적으로 런치 재기동을 여기서 실행하지 않는다 — 이 브릿지는 네트워크에
+          노출된 엔드포인트이고(그래서 토큰 인증이 붙어 있다), 거기에 프로세스
+          기동 권한까지 주는 것은 별개의 보안 결정이다. 재기동은 상위 운용 도구나
+          사람이 맡는다.
+        """
+        body = await self._read_json(request)
+        if body is None:
+            return web.json_response({'error': 'invalid json'}, status=400)
+        name = (body.get('args') or body).get('model')
+        if not isinstance(name, str) or not name.strip():
+            return web.json_response(
+                {'accepted': False, 'errors': ['args.model (문자열) 이 필요합니다']},
+                status=400)
+
+        try:
+            profile = robot_profiles.set_active(name.strip())
+        except robot_profiles.ProfileNotFound as exc:
+            return web.json_response(
+                {'accepted': False, 'code': 'MODEL_NOT_REGISTERED',
+                 'errors': [str(exc)]}, status=404)
+        except robot_profiles.ProfileError as exc:
+            # 미검증 모델로의 전환 거부. 앱이 사용자에게 "먼저 검증하라"고
+            # 안내할 수 있게 코드를 따로 준다.
+            return web.json_response(
+                {'accepted': False, 'code': 'MODEL_NOT_VERIFIED',
+                 'errors': [str(exc)]}, status=409)
+
+        self.get_logger().warn(
+            f'[desktop_bridge] SET_ROBOT_MODEL → {profile.name} '
+            f'(현재 실행 중인 모델은 {ROBOT_MODEL} — 재기동해야 적용됩니다)')
+        # 텔레메트리로도 알린다. 이 브릿지에 붙은 다른 클라이언트가 "왜 갑자기
+        # 모델이 바뀌었나"를 모른 채 지나가면 안 된다(§4 "침묵은 버그다").
+        self._send(self._envelope('ALERT', {
+            'severity': 'warn',
+            'code': 'ROBOT_MODEL_CHANGED',
+            'msg': (f'활성 로봇 모델이 {profile.name} 로 바뀌었습니다. '
+                    f'실행 중인 스택은 여전히 {ROBOT_MODEL} 입니다 — '
+                    f'재기동해야 적용됩니다.'),
+        }))
+        return web.json_response({
+            'accepted': True,
+            'active': profile.name,
+            'running': ROBOT_MODEL,
+            'restart_required': profile.name != ROBOT_MODEL,
+            'restart_hint': ('ros2 launch bin_picking '
+                             'desktop_integration_demo.launch.py'),
+        })
 
     async def _http_pick_bolt(self, request):
         args = await self._read_json(request)
@@ -603,7 +697,7 @@ class DesktopBridgeNode(Node):
         finger = lookup.get(GRIPPER_JOINT)
         args = {
             'q': q, 'tcp': tcp, 'tcp_quat': tcp_quat,
-            'gripper_width': (2.0 * finger) if finger is not None else None,
+            'gripper_width': _GRIPPER_SPEC.full_width_of(finger),
             'joint_margin': joint_margin_vals,
             'moving': moving,
             'last_cycle_id': self._last_cycle_id,   # heartbeat 와 동일 정의(§2B)
@@ -646,6 +740,10 @@ class DesktopBridgeNode(Node):
             'connected_clients': self._connected,
             'joint_state_recv': self._joint_state is not None,
             'cmd_state': self._cmd_state,
+            # 이 프로세스가 실제로 쓰고 있는 로봇 모델. 저장된 활성 모델과
+            # 다르면(전환 후 재기동 전) 앱이 그 상태를 드러낼 수 있어야 한다.
+            'robot_model': ROBOT_MODEL,
+            'robot_model_pending': robot_profiles.active_model_name(),
         }
 
     def _status_envelope(self, corr=None):
