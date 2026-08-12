@@ -223,8 +223,9 @@ class PickPlaceConfig:
     # 더 이상 유효하지 않으므로 이번 시도를 깨끗이 취소하고 다음 사이클에 재계획.
     POSE_REFRESH_TOL = 0.004
     # 놓기: 놓는 통 '안'의 빈 슬롯 위에서 툭 떨어뜨린다(바닥까지 안 내려감).
-    DROP_Z = 0.040                   # 놓는 순간 TCP 높이 — 통 벽(0.025) 위
-                                     # (너무 높으면 볼트가 튀어 통 밖으로 나감)
+    # ⚠ DROP_Z(놓는 순간 TCP 높이)는 그리퍼 길이에 따라 달라져 프로파일에서
+    #   주입한다(apply_profile). 큰 그리퍼는 이 높이에서 손끝이 통 벽에 닿아
+    #   놓기 직후 자세가 start-in-collision 이 되고 이후 계획이 전부 막힌다.
     DROP_SLOT_DX = 0.070             # 놓는 통 안 슬롯 간격 (x)
     DROP_SLOT_DY = 0.060             # 놓는 통 안 슬롯 간격 (y)
     SLOT_CLEAR_R = 0.055             # 볼트 반길이×2(0.050)+여유 — 이 안에 있으면 '자리 참'
@@ -465,6 +466,7 @@ def apply_profile(profile, cls=PickPlaceConfig):
     cls.TILT_MIN_CENTER_Z = ws.tilt_min_center_z
     cls.TILT_CANDIDATES_DEG = tuple(ws.tilt_candidates_deg)
     cls.PLANNER_FALLBACK = list(ws.planner_fallback)
+    cls.DROP_Z = ws.drop_z
 
     # --- 유도 상수 재계산 (순서 중요: 위 값들이 다 꽂힌 뒤라야 한다) ---
     # 파지 판정 하한 = (허공에서 닫히는 폭 + 대상 샤프트 반경) / 2 — 두 모집단의

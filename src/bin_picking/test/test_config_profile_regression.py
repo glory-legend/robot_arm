@@ -18,8 +18,25 @@ import pytest
 pytest.importorskip('rclpy', reason='config.py 는 ROS 환경이 필요하다')
 pytest.importorskip('moveit_msgs', reason='config.py 는 ROS 환경이 필요하다')
 
-from bin_picking.config import PickPlaceConfig as C   # noqa: E402
-from bin_picking.geometry import GeometryMixin        # noqa: E402
+from bin_picking import config as _config              # noqa: E402
+from bin_picking import robot_profiles as _profiles     # noqa: E402
+from bin_picking.config import PickPlaceConfig as C     # noqa: E402
+from bin_picking.geometry import GeometryMixin          # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _pin_fr3():
+    """이 파일의 모든 검사는 FR3 주입 결과를 본다 → 활성 모델과 무관하게 고정.
+
+    `config.py` 는 import 시점에 '활성 모델'을 꽂는다(머신의
+    ~/.config/bin_picking/active_model 나 BIN_PICKING_ROBOT_MODEL 에 좌우됨).
+    누군가 `binpick_model use <다른모델>` 을 했거나 같은 프로세스의 다른 테스트가
+    프로파일을 갈아끼우면 여기 FR3 리터럴 대조가 엉뚱한 모델을 보고 깨진다.
+    회귀의 대상은 'FR3 프로파일 주입'이므로 매 검사 직전에 FR3 를 되꽂아
+    결정론적으로 만든다.
+    """
+    _config.apply_profile(_profiles.get('fr3'))
+    yield
 
 
 class _Geom(C, GeometryMixin):

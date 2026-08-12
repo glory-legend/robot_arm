@@ -32,14 +32,24 @@
            tip_link="$(arg tf_prefix)grasp_tcp"/>
   </group>
 
-  <!-- Ready 자세. UR 순정 `home` 과 같은 관절값을 쓴다(그룹만 다름). -->
+  <!-- Ready 자세 — 빈피킹 워크스페이스 전용(순정 home 과 다름).
+       [왜 바꿨나] 순정 home(shoulder_lift=-90°, elbow=0)은 픽 통(0.40,0.00)에서
+       멀리 떨어진 일반 대기자세라, 거기서 통 위 접근자세로 가는 관절경로를
+       RRTConnect 가 15s×10 안에 못 찾아(‘Unable to solve’) 접근 자체가 실패했다.
+       (개구·IK 는 정상이었다 — 순수 '두 유효자세 사이 계획' 실패였다.)
+       [값 유도] compute_ik 로 TCP=(0.40,0.00,0.30) '아래로 향함'을 elbow-up 시드로
+       풀어 얻은 해(관절 한계 최소여유 1.36rad)를 주값 범위로 정규화한 것.
+       shoulder_pan≈0 이라 팔이 통 쪽(+X)을 자연스럽게 향하고, 접근자세와 같은
+       IK 분기·근방에 있어 통 위 접근이 작은 관절이동으로 풀린다.
+       ※ 다른 팔 등록 시엔 이 값이 아니라 '그 팔로 통 위를 향하는' 자세를
+         같은 방식(measure_workspace/compute_ik)으로 다시 구해 넣어야 한다. -->
   <group_state name="ready" group="bin_picking_arm">
-    <joint name="$(arg tf_prefix)shoulder_pan_joint" value="0"/>
-    <joint name="$(arg tf_prefix)shoulder_lift_joint" value="-1.5707"/>
-    <joint name="$(arg tf_prefix)elbow_joint" value="0"/>
-    <joint name="$(arg tf_prefix)wrist_1_joint" value="-1.5707"/>
-    <joint name="$(arg tf_prefix)wrist_2_joint" value="0"/>
-    <joint name="$(arg tf_prefix)wrist_3_joint" value="0"/>
+    <joint name="$(arg tf_prefix)shoulder_pan_joint" value="-0.340"/>
+    <joint name="$(arg tf_prefix)shoulder_lift_joint" value="-1.364"/>
+    <joint name="$(arg tf_prefix)elbow_joint" value="1.478"/>
+    <joint name="$(arg tf_prefix)wrist_1_joint" value="1.457"/>
+    <joint name="$(arg tf_prefix)wrist_2_joint" value="1.571"/>
+    <joint name="$(arg tf_prefix)wrist_3_joint" value="1.231"/>
   </group_state>
 
   <!-- ============ 그리퍼 ============ -->

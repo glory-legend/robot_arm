@@ -435,7 +435,8 @@ class WorkspaceSpec:
     """
 
     __slots__ = ('reach_y_max', 'reach_x_far', 'approach_height',
-                 'tilt_min_center_z', 'tilt_candidates_deg', 'planner_fallback')
+                 'tilt_min_center_z', 'tilt_candidates_deg', 'planner_fallback',
+                 'drop_z')
 
     def __init__(self, **kw):
         for slot in self.__slots__:
@@ -462,6 +463,11 @@ class WorkspaceSpec:
                 for i, t in enumerate(tilts)),
             planner_fallback=_as_str_tuple(_req(d, 'planner_fallback', where),
                                            f'{where}.planner_fallback'),
+            # 놓기 순간 TCP 높이(m). 그리퍼가 크면 열었을 때 손끝이 드롭 통 벽에
+            # 닿아(놓은 뒤 그 자세가 start-in-collision → 이후 계획 전부 즉시 거부)
+            # episode 가 멈춘다. 그리퍼 길이에 따라 달라지므로 모델별로 준다.
+            # 생략하면 FR3 기준 0.040(프랑카 핸드가 이 높이에서 벽을 넘음).
+            drop_z=_as_float(d.get('drop_z', 0.040), f'{where}.drop_z'),
         )
 
     def to_dict(self):
@@ -472,6 +478,7 @@ class WorkspaceSpec:
             'tilt_min_center_z': self.tilt_min_center_z,
             'tilt_candidates_deg': list(self.tilt_candidates_deg),
             'planner_fallback': list(self.planner_fallback),
+            'drop_z': self.drop_z,
         }
 
 

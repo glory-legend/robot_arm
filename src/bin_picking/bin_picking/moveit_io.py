@@ -217,14 +217,15 @@ class MoveItIOMixin:
         res = result.result
         return res.error_code.val, res.planned_trajectory
 
-    def plan_to_joint_goal(self, joint_values, vel=0.3):
-        req = self._make_plan_request(vel=vel, acc=vel)
+    def plan_to_joint_goal(self, joint_values, vel=0.3, planner_id=''):
+        req = self._make_plan_request(vel=vel, acc=vel, planner_id=planner_id)
         req.goal_constraints.append(self._make_joint_constraints(joint_values))
         code_val, traj = self._send_move_goal(req)
         if code_val != MoveItErrorCodes.SUCCESS:
             self._log_failure(
                 '관절 목표 계획',
-                f'MoveIt 오류 {self.error_name(code_val)} ({code_val})',
+                f'MoveIt 오류 {self.error_name(code_val)} ({code_val})'
+                + (f' [{planner_id}]' if planner_id else ''),
                 target=joint_values)
         return code_val == MoveItErrorCodes.SUCCESS, traj
 
@@ -469,10 +470,31 @@ class MoveItIOMixin:
             self.publish_ee_path(pts, self.COLOR_GENERAL)
         return self.execute_trajectory(traj)
 
-    def plan_viz_execute_joint(self, joint_values, vel=0.3, label=''):
-        ok, traj = self.plan_to_joint_goal(joint_values, vel=vel)
+    def plan_viz_execute_joint(self, joint_values, vel=0.3, label='',
+                               planners=None):
+        """관절 목표 계획 → 미리보기(주황) → execute.
+
+        pose 목표(plan_viz_execute)와 마찬가지로 여러 OMPL 플래너를 순차 시도한다.
+        ready 복귀·롤아웃 접근처럼 워크스페이스를 가로지르는 관절 이동은 기본
+        RRTConnect 한 방으로는 'Unable to solve' 로 실패할 때가 있는데(특히 팔이
+        큰 UR 계열이 좁은 통 사이를 지날 때), 프로파일의 planner_fallback 이
+        바로 그 '어려운 구간용' 대안 플래너 목록이다. 예전엔 pose 목표에만
+        적용돼 정작 실패가 잦은 관절 목표는 폴백 없이 잘렸다.
+        첫 성공을 채택하고, 성공 케이스에선 첫 플래너에서 바로 끝나므로 기존
+        동작(FR3 포함)은 사실상 그대로다."""
+        if planners is None:
+            planners = self.PLANNER_FALLBACK or ['']
+        ok, traj = False, None
+        for pid in planners:
+            ok, traj = self.plan_to_joint_goal(joint_values, vel=vel,
+                                                planner_id=pid)
+            if ok and traj is not None:
+                break
+            self.get_logger().warn(
+                f'{label}: 관절 계획 {pid or "기본"} 실패 — 다음 플래너 시도')
         if not ok or traj is None:
-            self.get_logger().error(f'{label}: 계획 실패')
+            self.get_logger().error(
+                f'{label}: 계획 실패 (모든 플래너 {", ".join(p or "기본" for p in planners)})')
             return False
         pts = self.trajectory_to_ee_path(traj)
         if pts:
