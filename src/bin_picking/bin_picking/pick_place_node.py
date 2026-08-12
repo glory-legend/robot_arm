@@ -891,14 +891,27 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         above = Pose()
         above.position = Point(x=qx, y=qy, z=self.APPROACH_HEIGHT)
         above.orientation = ori_drop
-        # 운반도 직선 우선(비틀림 제거) — 안 되면 기존 RRT 폴백
+        # 운반도 직선 우선(비틀림 제거) — 안 되면 ready 경유 후 RRT 폴백
         ok_to = self.cartesian_viz_execute(
             [above], label='ToDropBin', vel=self._vel,
             allow_fallback=False, min_fraction=0.98, log_fail=False)
         if not ok_to:
-            self.get_logger().info('[놓기] 직선 운반 불가 — RRT 로 폴백')
-            ok_to = self.plan_viz_execute(
-                above, vel=self._vel, label='ToDropBin')
+            # [§5a 운반 장벽] far 바닥 볼트를 잡은 자세는 팔이 전방-우측으로 최대
+            # 신전(J1≈-0.2)돼 있어, 드롭 통(+Y, 좌측 후방)까지의 대각 스윙을 RRT 가
+            # 통째로 못 푸는 경우가 있다(잡고도 못 옮겨 detach). 중립 ready 관절자세를
+            # 경유해 하나의 큰 스윙을 두 개의 짧고 쉬운 모션으로 쪼갠다 — joint goal 은
+            # planner_fallback 이 있어 pose 목표보다 신뢰도가 높다. (docs §5a 후보(1))
+            self.get_logger().info('[놓기] 직선 운반 불가 — ready 경유 후 재시도')
+            if self.plan_viz_execute_joint(
+                    self._ready_target, vel=self._vel,
+                    label='ToDropBin-ready경유'):
+                ok_to = self.cartesian_viz_execute(
+                    [above], label='ToDropBin', vel=self._vel,
+                    allow_fallback=False, min_fraction=0.98, log_fail=False)
+            if not ok_to:
+                self.get_logger().info('[놓기] ready 경유 후에도 직선 불가 — RRT 폴백')
+                ok_to = self.plan_viz_execute(
+                    above, vel=self._vel, label='ToDropBin')
         if not ok_to:
             return fail('놓는 통 위 이동 실패')
 
