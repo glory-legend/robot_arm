@@ -436,7 +436,7 @@ class WorkspaceSpec:
 
     __slots__ = ('reach_y_max', 'reach_x_far', 'approach_height',
                  'tilt_min_center_z', 'tilt_candidates_deg', 'planner_fallback',
-                 'drop_z', 'grasp_floor_raise')
+                 'drop_z')
 
     def __init__(self, **kw):
         for slot in self.__slots__:
@@ -468,11 +468,6 @@ class WorkspaceSpec:
             # episode 가 멈춘다. 그리퍼 길이에 따라 달라지므로 모델별로 준다.
             # 생략하면 FR3 기준 0.040(프랑카 핸드가 이 높이에서 벽을 넘음).
             drop_z=_as_float(d.get('drop_z', 0.040), f'{where}.drop_z'),
-            # 바닥 한계 지배 시 적응형 하강이 grasp_z 위로 상향 탐색할 여유(m).
-            # 손끝이 긴 그리퍼(Robotiq 등)는 이게 있어야 바닥 볼트에서 적응형
-            # 하강 루프가 살아난다. 생략하면 0.0(FR3 동작 불변).
-            grasp_floor_raise=_as_float(d.get('grasp_floor_raise', 0.0),
-                                        f'{where}.grasp_floor_raise'),
         )
 
     def to_dict(self):
@@ -484,7 +479,47 @@ class WorkspaceSpec:
             'tilt_candidates_deg': list(self.tilt_candidates_deg),
             'planner_fallback': list(self.planner_fallback),
             'drop_z': self.drop_z,
-            'grasp_floor_raise': self.grasp_floor_raise,
+        }
+
+
+class GraspSpec:
+    """파지 알고리즘 중 **팔/그리퍼 기하에 의존하는** 튜닝값들.
+
+    이 값들은 순수 알고리즘 상수처럼 보이지만 실제로는 그리퍼 손끝 길이·팔
+    자유도에 물려 있어, 한 로봇 기준으로 하드코딩하면 다른 로봇에서 조용히
+    깨진다(예: `max_above` 가 FR3 손끝 9.5mm 기준이라 손끝이 긴 Robotiq 에서
+    적응형 하강 루프를 통째로 무효화했다). 그래서 모델별 프로파일로 뺀다.
+    전 필드 선택 — 생략하면 FR3 기준 기본값이라 기존 동작이 불변이다.
+    (감사 계획: docs/robot_profiles_audit_plan.md)
+    """
+
+    __slots__ = ('max_above', 'floor_raise')
+
+    def __init__(self, **kw):
+        for slot in self.__slots__:
+            setattr(self, slot, kw[slot])
+
+    @classmethod
+    def from_dict(cls, d, where='grasp'):
+        if not isinstance(d, dict):
+            raise ProfileError(f'{where}: 매핑이어야 한다')
+        return cls(
+            # 적응형 하강 z_cap = 볼트중심 + 이 값. '이보다 높으면 어차피 빈손'의
+            # 상한. 손끝이 짧은 그리퍼는 작아도 되지만, 이 값이 바닥 한계(grasp_z)
+            # 보다 작으면 적응형 하강 루프가 스킵된다. 생략 시 FR3 기준 0.006.
+            max_above=_as_float(d.get('max_above', 0.006),
+                                f'{where}.max_above'),
+            # 바닥 한계 지배 시 적응형 하강이 grasp_z 위로 상향 탐색할 여유(m).
+            # 손끝이 긴 그리퍼(Robotiq 등)는 이게 있어야 바닥 볼트에서 적응형
+            # 하강 루프가 살아난다. 생략하면 0.0(FR3 동작 불변).
+            floor_raise=_as_float(d.get('floor_raise', 0.0),
+                                  f'{where}.floor_raise'),
+        )
+
+    def to_dict(self):
+        return {
+            'max_above': self.max_above,
+            'floor_raise': self.floor_raise,
         }
 
 
@@ -595,12 +630,12 @@ class RobotProfile:
     """등록된 로봇 모델 하나. 전환의 단위이자 검증의 단위다."""
 
     __slots__ = ('name', 'display_name', 'vendor', 'status', 'task_validated',
-                 'notes', 'arm', 'gripper', 'workspace', 'description',
+                 'notes', 'arm', 'gripper', 'workspace', 'grasp', 'description',
                  'source_path')
 
     def __init__(self, name, display_name, vendor, status, notes,
                  arm, gripper, workspace, description, source_path=None,
-                 task_validated=False):
+                 task_validated=False, grasp=None):
         self.name = name
         self.display_name = display_name
         self.vendor = vendor
@@ -612,6 +647,8 @@ class RobotProfile:
         self.arm = arm
         self.gripper = gripper
         self.workspace = workspace
+        # 선택 섹션 — 없으면 FR3 기준 기본값의 GraspSpec (기존 동작 불변).
+        self.grasp = grasp if grasp is not None else GraspSpec.from_dict({})
         self.description = description
         self.source_path = source_path
 
@@ -639,6 +676,8 @@ class RobotProfile:
             arm=ArmSpec.from_dict(_req(d, 'arm', '<root>')),
             gripper=GripperSpec.from_dict(_req(d, 'gripper', '<root>')),
             workspace=WorkspaceSpec.from_dict(_req(d, 'workspace', '<root>')),
+            # 선택 섹션(팔/그리퍼 의존 파지 튜닝). 없으면 FR3 기준 기본값.
+            grasp=GraspSpec.from_dict(d.get('grasp', {}) or {}),
             description=DescriptionSpec.from_dict(_req(d, 'description',
                                                        '<root>')),
             source_path=source_path,
@@ -655,6 +694,7 @@ class RobotProfile:
             'arm': self.arm.to_dict(),
             'gripper': self.gripper.to_dict(),
             'workspace': self.workspace.to_dict(),
+            'grasp': self.grasp.to_dict(),
             'description': self.description.to_dict(),
         }
 

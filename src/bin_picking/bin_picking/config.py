@@ -114,7 +114,8 @@ class PickPlaceConfig:
     #   TCP_TO_FINGERTIP / FINGER_HALF_W / FINGER_TIP_HALF_X
     #   GRASP_MIN_OPEN / GRASP_PREGRASP_OPEN / APERTURE_STEP
     #   REACH_Y_MAX / REACH_X_FAR / APPROACH_HEIGHT / TILT_MIN_CENTER_Z
-    #   TILT_CANDIDATES_DEG / PLANNER_FALLBACK
+    #   TILT_CANDIDATES_DEG / PLANNER_FALLBACK / DROP_Z
+    #   GRASP_MAX_ABOVE / GRASP_FLOOR_RAISE (grasp: 섹션 — 손끝 길이 의존)
     #   ROBOT_MODEL / ROBOT_PROFILE
     #
     # [왜 클래스 속성에 꽂는가 — 인스턴스 속성이 아니라]
@@ -215,20 +216,11 @@ class PickPlaceConfig:
     # 원래 목표가 계획상 막히면(바닥/기구학 무엇이든) 2mm 씩 올려 재계획하되,
     # 손가락이 샤프트 상반부(중심~+4mm)를 물 수 없는 높이까지는 안 올라간다.
     GRASP_RAISE_STEP = 0.002         # 하강 목표 상향 재계획 간격
-    # 0.002 → 0.006: 적응형 하강 z_cap = 볼트중심 + 이 값. 바닥 볼트의 목표
-    # grasp_z 가 이제 0.015(=GRASP_FLOOR_Z)이므로 0.002(z_cap=0.012)면 while
-    # 루프가 목표를 못 돌린다. 0.006(z_cap=0.016)이면 0.015 를 허용한다.
-    GRASP_MAX_ABOVE = 0.006
-    # ---------- 바닥 한계 지배 시 적응형 상향 여유 (모델별) ----------
-    # 손끝이 긴 그리퍼(예: Robotiq 2F-85, TCP_TO_FINGERTIP=28.5mm)는 바닥 볼트의
-    # 목표 grasp_z(=GRASP_FLOOR_Z)가 이미 'bolt중심 + GRASP_MAX_ABOVE'보다 높다.
-    # 그러면 적응형 하강 루프의 z_cap(=bolt중심+GRASP_MAX_ABOVE)이 grasp_z보다
-    # 낮아 루프가 통째로 스킵되고(while 조건 즉시 거짓), 유일한 경로인 IK 관절
-    # 폴백 1회에만 의존한다 → 전방으로 먼 자세에서 하강이 실패해도 재시도가 없다.
-    # 이 값(>0)이면 그런 '바닥 한계 지배' 케이스에서 grasp_z 위로 이만큼 상향
-    # 탐색을 허용한다(손끝이 아직 샤프트 수직 구간 안이라 파지는 유효). 프랑카는
-    # 0.0 → 분기 자체가 없어 FR3 동작은 완전히 동일하다. 프로파일에서 주입.
-    GRASP_FLOOR_RAISE = 0.0
+    # ⚠ 적응형 하강 z_cap 을 정하는 두 값 GRASP_MAX_ABOVE(볼트중심+이값 상한)와
+    #   GRASP_FLOOR_RAISE(바닥 한계 지배 시 grasp_z 위 상향 여유)는 **손끝 길이에
+    #   의존**하므로(손끝이 길면 grasp_z 가 튀어 z_cap 이 무효화된다) 프로파일의
+    #   `grasp:` 섹션에서 apply_profile() 이 주입한다. 유도 근거는 각 모델 yaml 의
+    #   grasp 주석 참조(FR3 는 max_above=0.006 / floor_raise=0.0 로 기존 동작 불변).
     # 하강 직전 자세 재취득(3b) 허용 오차. 이보다 많이 움직였으면 접근 자세/개구가
     # 더 이상 유효하지 않으므로 이번 시도를 깨끗이 취소하고 다음 사이클에 재계획.
     POSE_REFRESH_TOL = 0.004
@@ -436,7 +428,8 @@ def apply_profile(profile, cls=PickPlaceConfig):
 
     반환: 꽂은 프로파일(호출자가 로그에 쓰기 좋게).
     """
-    arm, grip, ws = profile.arm, profile.gripper, profile.workspace
+    arm, grip, ws, gr = (profile.arm, profile.gripper,
+                         profile.workspace, profile.grasp)
 
     # --- 신원 (로그/텔레메트리에서 "지금 무슨 로봇인가"를 답할 수 있어야 한다) ---
     cls.ROBOT_MODEL = profile.name
@@ -477,7 +470,10 @@ def apply_profile(profile, cls=PickPlaceConfig):
     cls.TILT_CANDIDATES_DEG = tuple(ws.tilt_candidates_deg)
     cls.PLANNER_FALLBACK = list(ws.planner_fallback)
     cls.DROP_Z = ws.drop_z
-    cls.GRASP_FLOOR_RAISE = ws.grasp_floor_raise
+
+    # --- 파지 알고리즘(팔/그리퍼 의존) ---
+    cls.GRASP_MAX_ABOVE = gr.max_above
+    cls.GRASP_FLOOR_RAISE = gr.floor_raise
 
     # --- 유도 상수 재계산 (순서 중요: 위 값들이 다 꽂힌 뒤라야 한다) ---
     # 파지 판정 하한 = (허공에서 닫히는 폭 + 대상 샤프트 반경) / 2 — 두 모집단의

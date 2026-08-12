@@ -75,6 +75,11 @@
 
 ## 3. 마이그레이션 계획 (위험 집합 → 프로파일)
 
+> **진행:** ✅ `grasp:` 섹션 신설 + `max_above`(구 `GRASP_MAX_ABOVE`) + `floor_raise`
+> (workspace 에서 이동) 이관 완료(2026-08-12). FR3 불변(162 tests pass, 회귀 dict 가
+> `GRASP_MAX_ABOVE=0.006`/`GRASP_FLOOR_RAISE=0.0` 대조). 남은 위험집합(`z_tol`,
+> `ik_seed_*`, `pick_clear_r` 등)은 아래 표대로 같은 패턴으로 이어서 진행.
+
 원칙: **FR3 완전 불변**. 새 프로파일 필드는 기본값을 FR3 현재값과 동일하게 두고, `apply_profile()`
 가 주입. `grasp_floor_raise` 를 넣은 것과 동일한 패턴(`378d1bb` 참고).
 
