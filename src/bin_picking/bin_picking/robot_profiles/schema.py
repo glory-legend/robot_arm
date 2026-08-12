@@ -493,7 +493,9 @@ class GraspSpec:
     (감사 계획: docs/robot_profiles_audit_plan.md)
     """
 
-    __slots__ = ('max_above', 'floor_raise')
+    __slots__ = ('max_above', 'floor_raise', 'z_tol', 'raise_step',
+                 'floor_clear', 'ik_seed_jitter', 'ik_seed_spread',
+                 'pick_clear_r')
 
     def __init__(self, **kw):
         for slot in self.__slots__:
@@ -514,12 +516,39 @@ class GraspSpec:
             # 하강 루프가 살아난다. 생략하면 0.0(FR3 동작 불변).
             floor_raise=_as_float(d.get('floor_raise', 0.0),
                                   f'{where}.floor_raise'),
+            # 실행 후 실측 TCP z 허용 초과분(m). 컨트롤러 추종 정확도(팔+구동계)에
+            # 민감하다. 생략 시 FR3 기준 0.003.
+            z_tol=_as_float(d.get('z_tol', 0.003), f'{where}.z_tol'),
+            # 적응형 하강 목표 상향 재계획 간격(m). 그리퍼 기하와 상호작용한다.
+            # 생략 시 FR3 기준 0.002.
+            raise_step=_as_float(d.get('raise_step', 0.002),
+                                 f'{where}.raise_step'),
+            # 손끝이 통 바닥 상면 위로 남길 여유(m). 하드 바닥 TCP(grasp_z) 유도에
+            # 쓰인다. 생략 시 FR3 기준 0.0005.
+            floor_clear=_as_float(d.get('floor_clear', 0.0005),
+                                  f'{where}.floor_clear'),
+            # ready 외 추가 IK 시드 수(팔 IK 분기 폴백). 여유자유도(7축 팔꿈치 분기)
+            # 해소용이라 6축 팔에서는 의미가 다르다. 정수. 생략 시 FR3 기준 1.
+            ik_seed_jitter=int(d.get('ik_seed_jitter', 1)),
+            # IK 시드를 흔드는 폭(rad, 관절 한계 안에서 클램프). 생략 시 FR3 기준 1.2.
+            ik_seed_spread=_as_float(d.get('ik_seed_spread', 1.2),
+                                     f'{where}.ik_seed_spread'),
+            # 파지 하강 전 임시 제거할 이웃 반경(m). 앞 항이 손가락 반경(그리퍼
+            # 풋프린트) 성격이라 큰 그리퍼면 커져야 한다. 생략 시 FR3 기준 0.075.
+            pick_clear_r=_as_float(d.get('pick_clear_r', 0.075),
+                                   f'{where}.pick_clear_r'),
         )
 
     def to_dict(self):
         return {
             'max_above': self.max_above,
             'floor_raise': self.floor_raise,
+            'z_tol': self.z_tol,
+            'raise_step': self.raise_step,
+            'floor_clear': self.floor_clear,
+            'ik_seed_jitter': self.ik_seed_jitter,
+            'ik_seed_spread': self.ik_seed_spread,
+            'pick_clear_r': self.pick_clear_r,
         }
 
 

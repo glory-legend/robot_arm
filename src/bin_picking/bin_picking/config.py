@@ -198,7 +198,9 @@ class PickPlaceConfig:
     # 준다(FR3+프랑카 핸드는 9.5mm, 유도 근거는 fr3.yaml 주석 참조). 예전 코드는
     # 'TCP=손끝'으로 착각해 목표 z 를 바닥 아래로 잡았고(물리 불가), 물리 바닥이
     # 손끝을 막아 TCP 가 늘 목표보다 그만큼 위에서 멈췄다.
-    GRASP_FLOOR_CLEAR = 0.0005       # 손끝이 통 바닥 상면 위로 남길 여유(0.5mm)
+    # ⚠ GRASP_FLOOR_CLEAR(손끝이 통 바닥 상면 위로 남길 여유, 0.5mm)는 그리퍼
+    #   정밀도/바닥 성격에 물려 있어 프로파일 grasp: 섹션에서 apply_profile() 이
+    #   꽂는다(FR3 는 0.0005 로 기존 동작 불변). 유도 근거는 각 모델 yaml 주석 참조.
     # 하드 바닥 TCP: 손끝이 바닥 상면 위 GRASP_FLOOR_CLEAR 를 유지하는 TCP 높이.
     #   = 바닥상면 + 손끝오프셋 + 여유 = 0.005 + 0.0095 + 0.0005 = 0.015 (FR3 기준)
     # ⚠ TCP_TO_FINGERTIP(프로파일)에서 유도되므로 apply_profile() 이 꽂는다.
@@ -210,12 +212,15 @@ class PickPlaceConfig:
     # → 하강 전용으로 훨씬 엄격한 게이트를 쓰고, 실행 뒤 FK 로 실제 도달 z 까지
     #   재확인한다(계획상 100% 라도 컨트롤러가 못 따라갔을 수 있으므로).
     GRASP_MIN_FRACTION = 0.995       # 하강 전용 fraction 게이트
-    GRASP_Z_TOL = 0.003              # 실행 후 실측 TCP z 허용 초과분(3mm)
+    # ⚠ GRASP_Z_TOL(실행 후 실측 TCP z 허용 초과분, 3mm)는 컨트롤러 추종 정확도
+    #   (팔+구동계)에 민감해 프로파일 grasp: 섹션에서 apply_profile() 이 꽂는다
+    #   (FR3 는 0.003 으로 기존 동작 불변).
     # ---------- 적응형 하강 깊이 ----------
     # 바닥 충돌모델을 유지한 채 '계획이 통과하는 가장 깊은 z'를 탐색한다.
     # 원래 목표가 계획상 막히면(바닥/기구학 무엇이든) 2mm 씩 올려 재계획하되,
     # 손가락이 샤프트 상반부(중심~+4mm)를 물 수 없는 높이까지는 안 올라간다.
-    GRASP_RAISE_STEP = 0.002         # 하강 목표 상향 재계획 간격
+    # ⚠ GRASP_RAISE_STEP(하강 목표 상향 재계획 간격, 2mm)는 그리퍼 기하와
+    #   상호작용해 프로파일 grasp: 섹션에서 apply_profile() 이 꽂는다(FR3 는 0.002).
     # ⚠ 적응형 하강 z_cap 을 정하는 두 값 GRASP_MAX_ABOVE(볼트중심+이값 상한)와
     #   GRASP_FLOOR_RAISE(바닥 한계 지배 시 grasp_z 위 상향 여유)는 **손끝 길이에
     #   의존**하므로(손끝이 길면 grasp_z 가 튀어 z_cap 이 무효화된다) 프로파일의
@@ -231,9 +236,11 @@ class PickPlaceConfig:
     DROP_SLOT_DX = 0.070             # 놓는 통 안 슬롯 간격 (x)
     DROP_SLOT_DY = 0.060             # 놓는 통 안 슬롯 간격 (y)
     SLOT_CLEAR_R = 0.055             # 볼트 반길이×2(0.050)+여유 — 이 안에 있으면 '자리 참'
-    # 손가락 반경(0.050) + 이웃 볼트 반길이(0.025). 중심간 거리로 판정하므로
-    # 이보다 작으면 이웃 몸통 끝이 손가락 영역 안으로 들어온다.
-    PICK_CLEAR_R = 0.075             # 파지 하강 전 임시 제거할 이웃 반경
+    # ⚠ PICK_CLEAR_R(파지 하강 전 임시 제거할 이웃 반경) = 손가락 반경(0.050) +
+    #   이웃 볼트 반길이(0.025). 앞 항이 그리퍼 풋프린트 성격이라 큰 그리퍼면
+    #   커져야 하므로 프로파일 grasp: 섹션에서 apply_profile() 이 꽂는다(FR3 는
+    #   0.075). 중심간 거리로 판정하므로 이보다 작으면 이웃 몸통 끝이 손가락
+    #   영역 안으로 들어온다.
     MAX_PICK_RETRY = 3               # 같은 볼트 연속 실패 허용 횟수(무한 재시도 방지)
     # ---------- 블랙리스트: '진전 없는' 재시도 상한 (Issue C) ----------
     # '연속 실패'를 그냥 세면, 사이 사이에 다른 볼트를 성공적으로 집어 무더기가
@@ -408,8 +415,11 @@ class PickPlaceConfig:
     # 3 → 1: 낱개분리(전부 수직·도달권 내)에선 ready 시드로 거의 항상 하강이
     # 완주해 seed0 에서 break 된다. 팔 분기 탐색은 이제 저비용 폴백 1개로 충분.
     # (무더기·기울임으로 돌아가면 다시 3~5 로 올릴 것.)
-    IK_SEED_JITTER = 1               # ready 외 추가 시드 수(팔 IK 분기 폴백)
-    IK_SEED_SPREAD = 1.2             # 흔드는 폭(rad) — 관절 한계 안에서 클램프
+    # ⚠ IK_SEED_JITTER(ready 외 추가 시드 수, 팔 IK 분기 폴백)와 IK_SEED_SPREAD
+    #   (흔드는 폭 rad — 관절 한계 안에서 클램프)는 팔의 여유자유도(7축 팔꿈치
+    #   분기)에 물려 있어(6축 팔은 여유자유도가 없어 seed jitter 의 의미가 다르다)
+    #   프로파일 grasp: 섹션에서 apply_profile() 이 꽂는다(FR3 는 jitter=1 /
+    #   spread=1.2 로 기존 동작 불변).
 
 
 def apply_profile(profile, cls=PickPlaceConfig):
@@ -474,6 +484,13 @@ def apply_profile(profile, cls=PickPlaceConfig):
     # --- 파지 알고리즘(팔/그리퍼 의존) ---
     cls.GRASP_MAX_ABOVE = gr.max_above
     cls.GRASP_FLOOR_RAISE = gr.floor_raise
+    cls.GRASP_Z_TOL = gr.z_tol
+    cls.GRASP_RAISE_STEP = gr.raise_step
+    # ⚠ GRASP_FLOOR_CLEAR 는 아래 GRASP_FLOOR_Z 유도에 쓰이므로 반드시 먼저 꽂는다.
+    cls.GRASP_FLOOR_CLEAR = gr.floor_clear
+    cls.IK_SEED_JITTER = gr.ik_seed_jitter
+    cls.IK_SEED_SPREAD = gr.ik_seed_spread
+    cls.PICK_CLEAR_R = gr.pick_clear_r
 
     # --- 유도 상수 재계산 (순서 중요: 위 값들이 다 꽂힌 뒤라야 한다) ---
     # 파지 판정 하한 = (허공에서 닫히는 폭 + 대상 샤프트 반경) / 2 — 두 모집단의
