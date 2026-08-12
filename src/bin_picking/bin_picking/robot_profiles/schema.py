@@ -436,7 +436,7 @@ class WorkspaceSpec:
 
     __slots__ = ('reach_y_max', 'reach_x_far', 'approach_height',
                  'tilt_min_center_z', 'tilt_candidates_deg', 'planner_fallback',
-                 'drop_z')
+                 'drop_z', 'grasp_floor_raise')
 
     def __init__(self, **kw):
         for slot in self.__slots__:
@@ -468,6 +468,11 @@ class WorkspaceSpec:
             # episode 가 멈춘다. 그리퍼 길이에 따라 달라지므로 모델별로 준다.
             # 생략하면 FR3 기준 0.040(프랑카 핸드가 이 높이에서 벽을 넘음).
             drop_z=_as_float(d.get('drop_z', 0.040), f'{where}.drop_z'),
+            # 바닥 한계 지배 시 적응형 하강이 grasp_z 위로 상향 탐색할 여유(m).
+            # 손끝이 긴 그리퍼(Robotiq 등)는 이게 있어야 바닥 볼트에서 적응형
+            # 하강 루프가 살아난다. 생략하면 0.0(FR3 동작 불변).
+            grasp_floor_raise=_as_float(d.get('grasp_floor_raise', 0.0),
+                                        f'{where}.grasp_floor_raise'),
         )
 
     def to_dict(self):
@@ -479,6 +484,7 @@ class WorkspaceSpec:
             'tilt_candidates_deg': list(self.tilt_candidates_deg),
             'planner_fallback': list(self.planner_fallback),
             'drop_z': self.drop_z,
+            'grasp_floor_raise': self.grasp_floor_raise,
         }
 
 

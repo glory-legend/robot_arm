@@ -711,6 +711,14 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         #   스스로 실현한다. 재계획은 서비스 호출뿐이라(실행 없음) 비용이 없다.
         # [Issue A] 게이트는 GRASP_MIN_FRACTION(0.995) 유지 — 끝점 도달이 생명.
         z_cap = pos[2] + self.GRASP_MAX_ABOVE      # 이보다 높으면 어차피 빈손
+        # [바닥 한계 지배 케이스] 손끝이 긴 그리퍼는 grasp_z(=바닥 한계)가 이미
+        # z_cap 보다 높아 아래 while 이 0회 돌고(적응형 하강이 죽고) IK 폴백 1회에
+        # 만 의존한다 → 전방으로 먼 자세에서 재시도 없이 실패. 그런 모델
+        # (GRASP_FLOOR_RAISE>0)은 grasp_z 위로 그만큼 상향 탐색을 허용한다.
+        # 손끝이 아직 샤프트 수직 구간 안이라 파지는 유효. FR3 는 값이 0.0 이라
+        # 이 분기가 없어 z_cap 이 예전과 완전히 동일하다.
+        if self.GRASP_FLOOR_RAISE > 0.0:
+            z_cap = max(z_cap, grasp_z + self.GRASP_FLOOR_RAISE)
         z_try = grasp_z
         descended = False
         while z_try <= z_cap + 1e-9:
