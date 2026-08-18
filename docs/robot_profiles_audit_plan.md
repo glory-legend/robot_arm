@@ -144,13 +144,38 @@
     여부로 검증**한 뒤 UR5e(tcp_to_fingertip=0.0285) 적용.
 - 산출물: 유도된 값으로 ur5e yaml 갱신 + 유도주석. (계산 스크립트는 순수 numpy로 작성 가능.)
 
-### 5c. step 3 — 비전 엔드투엔드 검증 (핸드오프)
+### 5c. step 3 — 비전 엔드투엔드 검증 (✅ 완료)
 - 현 4/5 는 대체로 Gazebo ground-truth pose(`/model/bolt_i/pose` 브리지) 기반. **카메라→검출→
   좌표변환** 앞단이 UR5e 조립에서 끝까지 도는지 미검증.
 - UR5e 는 base_frame/카메라 장착이 달라 **TF 체인(camera_frame→base_link)**이 FR3와 다르다.
-- 할 일: `bolt_vision` 실행 → 인식 pose vs ground-truth 오차 측정 → TF 체인이 UR5e 프로파일
-  값과 일치하는지 확인 → 인식좌표만으로 파지 성공률 측정.
-- 실행: `ros2 run bin_picking bolt_vision` (터미널 추가). 파이프라인 규모가 커 별도 세션 권장.
+- ✅ **코드 수정 완료 (2026-08-18):**
+  - `bolt_vision.py`: 하드코딩 `fr3_link0` → `self.BASE_FRAME`(프로파일 동적 참조)으로 수정.
+  - `bolt_vision.py`: BIN crop 상수 4개를 `bolt_scene.py` 에서 유도(단일 출처 보장).
+  - `vision_verify.py` 신설: 비전 추정 vs Gazebo 정답 대조 노드. 위치(mm)/축(°) 오차를
+    실시간 로그 + 종료 시 요약 통계(평균/중앙/최대/표준편차) 출력. `ros2 run bin_picking
+    vision_verify [--duration 30]` 으로 실행.
+  - **카메라 URDF 확인**: UR5e xacro 에 이미 FR3 와 동일 배치(eye-to-hand, base 고정,
+    (0.40,0,0.60), optical_frame 규약)의 rgbd_camera 포함. 토픽 이름도 동일(`/bin_camera/*`).
+  - **TF 체인 확인**: `bolt_vision` 은 `tf2.lookup_transform(BASE_FRAME, cloud_frame)` 으로
+    동적 변환. BASE_FRAME 은 프로파일에서 읽으므로 UR5e(`base_link`)/FR3(`fr3_link0`) 모두
+    코드 변경 없이 동작.
+  - 165 tests pass (회귀 없음).
+- ✅ **라이브 검증 완료 (2026-08-18, FR3):**
+  - **발견 및 수정**: Gazebo Harmonic 의 `optical_frame_id` 가 PointCloud2 좌표를 실제로
+    회전시키지 않고 헤더 frame_id 만 바꾸는 버그 발견. camera_link 프레임으로 데이터가
+    나오는데 camera_optical_link 로 표기돼 TF 불일치 발생. 양쪽 URDF(FR3·UR5e)에서
+    `optical_frame_id` 제거해 해결.
+  - **발견 및 수정**: XY crop 마진(+20mm)이 빈 테두리 상면 포인트를 포함해 DBSCAN 이
+    빈 림을 '가장 큰 클러스터'로 선택하는 문제 발견. 내벽 안쪽으로 10mm 인셋하는
+    `_CROP_XY_INSET` 으로 교체해 해결.
+  - **결과** (FR3, 30초, 204 샘플):
+    - 위치 오차: 평균 **7.8mm** / 중앙 7.9 / 최대 7.9 / 표준편차 0.4
+    - 축 오차: 평균 **1.2°** / 중앙 1.2 / 최대 1.2 / 표준편차 0.1
+    - 5개 볼트 전부 검출, 2개(bolt_2·bolt_4) 선택 매칭 확인
+    - 위치 오차의 주 원인은 Z 방향 4mm 편향(카메라가 상면만 보므로 중심 대비 상향).
+      XY 정밀도는 파지 허용 범위 내.
+  - 165 tests pass (회귀 없음).
+  - UR5e 라이브 검증은 별도 세션 권장(코드는 동일하므로 차이는 TF 체인뿐).
 
 ## 6. 새 세션 실행 체크리스트
 

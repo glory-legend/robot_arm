@@ -73,6 +73,7 @@ robotarm_main/
 | `markers.py` | RViz 마커 발행 |
 | `selection.py` | 볼트 선택(휴리스틱·학습·롤아웃) |
 | `bolt_vision.py` | **독립 노드**: 카메라 포인트클라우드 → 볼트 6D 자세 |
+| `vision_verify.py` | **독립 노드**: 비전 추정 vs Gazebo 정답 비교 → 위치/축 오차 통계(§5c 검증용) |
 | `bolt_scene.py` | 통/볼트 자산 치수(스폰과 planning-scene 공유 단일 소스) |
 | `grasp_selector.py` | 학습형 파지 선택기(sklearn SGD, ROS 무의존) |
 | `train_selector.py` | 누적 attempts 로그로 선택기 오프라인 학습 |

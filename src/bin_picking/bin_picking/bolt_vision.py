@@ -40,6 +40,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 import tf2_ros
 
 from bin_picking import robot_profiles
+from bin_picking.bolt_scene import BIN_XYZ, BIN_OUTER, BIN_THICK
 
 try:
     from sklearn.cluster import DBSCAN
@@ -58,11 +59,17 @@ class BoltVision(Node):
     OUT_TOPIC = '/next_bolt_pose'
     MARKER_TOPIC = '/bolt_vision_markers'
 
-    # ---- 통 영역 crop (base 프레임, m). bolt_scene 과 일치시켜야 함 ----
-    BIN_X = (0.26, 0.54)         # 집는 통 x 범위(통 0.40 ± 0.14, 여유)
-    BIN_Y = (-0.12, 0.12)
-    Z_MIN = 0.0065               # 바닥 상면(0.005) 위 — 바닥/지면 컷
-    Z_MAX = 0.060                # 통 벽 위 로봇/손 등 컷
+    # ---- 통 영역 crop (base 프레임, m). bolt_scene 에서 유도 — 단일 출처 ----
+    # 안쪽 벽(BIN_THICK)보다 5mm 더 안쪽에서 잘라 벽 윗면 포인트를 제거한다.
+    # +margin 이면 벽 밖까지 포함돼 DBSCAN 이 빈 테두리를 '가장 큰 클러스터'로
+    # 잡아 볼트 대신 선택하는 문제가 발생했다(§5c 검증에서 발견).
+    _CROP_XY_INSET = BIN_THICK + 0.005
+    BIN_X = (BIN_XYZ[0] - BIN_OUTER[0] / 2 + _CROP_XY_INSET,
+             BIN_XYZ[0] + BIN_OUTER[0] / 2 - _CROP_XY_INSET)
+    BIN_Y = (BIN_XYZ[1] - BIN_OUTER[1] / 2 + _CROP_XY_INSET,
+             BIN_XYZ[1] + BIN_OUTER[1] / 2 - _CROP_XY_INSET)
+    Z_MIN = BIN_THICK + 0.0015  # 바닥 상면 바로 위 — 바닥/지면 컷
+    Z_MAX = 0.060                # 통 벽 위 로봇/손 등 컷(쌓인 볼트는 포함)
 
     # ---- 클러스터링 ----
     VOXEL = 0.003                # 다운샘플 격자(3mm) — DBSCAN 속도
@@ -92,7 +99,7 @@ class BoltVision(Node):
         self._n = 0
         self.get_logger().info(
             f'구독 {self.CLOUD_TOPIC} → 발행 {self.OUT_TOPIC} '
-            f'(fr3_link0). Gazebo+카메라가 떠 있어야 포인트클라우드가 옵니다.')
+            f'({self.BASE_FRAME}). Gazebo+카메라가 떠 있어야 포인트클라우드가 옵니다.')
 
     # -------------------------------------------------------------
     def _lookup_cam2base(self, cloud_frame):

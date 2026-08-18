@@ -64,6 +64,8 @@ setup(
             'binpick_model = bin_picking.model_cli:main',
             # 등록한 모델의 실제 도달 범위 측정 (workspace 값 유도)
             'measure_workspace = bin_picking.tools_measure_workspace:main',
+            # 비전 추정 vs Gazebo 정답 정확도 검증 (§5c)
+            'vision_verify = bin_picking.vision_verify:main',
         ],
     },
 )

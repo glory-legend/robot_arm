@@ -29,6 +29,7 @@ Full rationale: `docs/architecture.md`. Full desktop wire contract: `docs/deskto
 | `markers.py` | RViz marker publishing |
 | `selection.py` | Bolt selection (heuristic / learned / plan-only rollout). **Owns `_log_attempt()`**, the single exit point every `_pick()` outcome passes through |
 | `bolt_vision.py` | **Independent node.** Camera point cloud → per-bolt 6D pose → publishes `/next_bolt_pose` |
+| `vision_verify.py` | **Independent node.** Compares `bolt_vision` estimated poses against Gazebo ground-truth — logs position/axis errors and prints summary statistics. §5c verification tool |
 | `bolt_scene.py` | Bin/bolt asset dimensions — single source shared by spawn (`launch/spawn_bolts.launch.py`) and MoveIt planning-scene |
 | `grasp_selector.py` | Learned grasp selector (sklearn `SGDClassifier`, ROS-free) |
 | `train_selector.py` | Offline hyperparameter search over accumulated `attempts.jsonl`; still saves an SGD-compatible model (GBT is compared but not deployed — see file docstring) |

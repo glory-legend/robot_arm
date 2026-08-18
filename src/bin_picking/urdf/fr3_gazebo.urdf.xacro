@@ -36,8 +36,10 @@
     고정한다. 아래를 내려다보며 통 안 볼트를 스캔한다. base 에 고정이라 카메라↔
     base TF 가 robot_state_publisher 로 자동 발행되어, perception 노드가 tf2 로
     포인트클라우드를 base 프레임으로 변환할 수 있다.
-    ⚠ optical_frame_id + camera_optical_link 로 ROS 광학프레임 규약(z-forward)을
-      맞춘다(안 하면 포인트클라우드가 90° 틀어짐 — gz 기본은 x-forward).      -->
+    ⚠ Gazebo Harmonic 의 optical_frame_id 는 포인트클라우드 좌표계를 실제로
+      회전시키지 않고 헤더 frame_id 만 바꿔 TF 불일치를 일으킨다. 데이터가
+      camera_link 좌표(x-forward)로 나오므로 frame_id 도 camera_link 여야 맞다.
+      camera_optical_link 프레임은 다른 소비자용으로 TF 트리에 남겨 둔다.     -->
   <!-- ⚠ visual/collision 없는 '순수 프레임' — MoveIt 이 카메라 박스를 충돌체로
        잡아 통 위 팔 자세(롤아웃)를 전부 막던 문제를 없앤다. gz rgbd_camera 센서는
        geometry 없이 링크에 붙어도 정상 동작한다. inertial 은 gz 링크 유효성용 최소값. -->
@@ -67,7 +69,6 @@
         <horizontal_fov>1.05</horizontal_fov>       <!-- ~60°, 0.6m 에서 통 커버 -->
         <image><width>640</width><height>480</height></image>
         <clip><near>0.1</near><far>2.0</far></clip>
-        <optical_frame_id>camera_optical_link</optical_frame_id>
       </camera>
       <always_on>1</always_on>
       <update_rate>10</update_rate>
