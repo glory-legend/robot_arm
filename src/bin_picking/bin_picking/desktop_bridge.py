@@ -102,6 +102,8 @@ ROBOT_MODEL = PickPlaceConfig.ROBOT_MODEL
 _GRIPPER_SPEC = PickPlaceConfig.ROBOT_PROFILE.gripper
 # selection.py `_log_attempt` 훅이 사이클 결과를 얹어 발행하는 토픽.
 CYCLE_RESULT_TOPIC = PickPlaceConfig.CYCLE_RESULT_TOPIC
+COMMAND_TOPIC = PickPlaceConfig.COMMAND_TOPIC
+ROBOT_PHASE_TOPIC = PickPlaceConfig.ROBOT_PHASE_TOPIC
 
 # 실제 로봇 동작 연동 없이 ACK 만 돌려주는 "골격만" 명령 — §2A 전체 명령 표 중
 # PICK_BOLT/GET_STATUS/ESTOP 을 뺀 나머지. `POST /api/v1/command` 하나로 받는다.
@@ -206,6 +208,13 @@ class DesktopBridgeNode(Node):
 
         # --- 사이클 결과 구독 (selection.py `_log_attempt` 훅 → RESULT) ---
         self.create_subscription(String, CYCLE_RESULT_TOPIC, self._cycle_result_cb, 10)
+
+        # --- 커맨드 버스: desktop_bridge → pick_place_node ---
+        self._command_pub = self.create_publisher(String, COMMAND_TOPIC, 10)
+
+        # --- 로봇 단계 구독: pick_place_node → desktop_bridge ---
+        self._robot_phase = 'IDLE'
+        self.create_subscription(String, ROBOT_PHASE_TOPIC, self._robot_phase_cb, 10)
 
         # --- PICK_BOLT → 기존 외부비전 입력 경로로 재발행 ---
         self._pose_pub = self.create_publisher(PoseStamped, EXT_POSE_TOPIC, 10)
@@ -378,9 +387,9 @@ class DesktopBridgeNode(Node):
     async def _http_estop(self, request):
         with self._estop_lock:
             self._estop = True
+        self._publish_command({'cmd': 'ESTOP'})
         self.get_logger().warn(
-            '[desktop_bridge] ESTOP 수신 — 소프트 플래그만 설정됨. '
-            '실제 정지는 물리 E-STOP/로봇 안전컨트롤러가 담당(§5).')
+            '[desktop_bridge] ESTOP 수신 → pick_place_node 전달 완료.')
         return web.json_response({'accepted': True})
 
     async def _http_command(self, request):
@@ -392,6 +401,10 @@ class DesktopBridgeNode(Node):
             return web.json_response(
                 {'accepted': False, 'errors': [f'unknown command type: {mtype!r}']})
         self._cmd_state[mtype] = body.get('args') or {}
+        self._publish_command({'cmd': mtype, **(body.get('args') or {})})
+        if mtype == 'RESET':
+            with self._estop_lock:
+                self._estop = False
         return web.json_response({'accepted': True})
 
     # ---------- 로봇 모델 등록 조회 / 전환 ----------
@@ -591,6 +604,18 @@ class DesktopBridgeNode(Node):
     def _joint_state_cb(self, msg):
         self._joint_state = msg
 
+    def _robot_phase_cb(self, msg):
+        try:
+            data = json.loads(msg.data)
+            self._robot_phase = data.get('phase', 'IDLE')
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    def _publish_command(self, cmd_dict):
+        msg = String()
+        msg.data = json.dumps(cmd_dict)
+        self._command_pub.publish(msg)
+
     def _cycle_result_cb(self, msg):
         """selection.py `_log_attempt` 훅이 보낸 사이클 결과 → RESULT/grasp_result 로 변환."""
         try:
@@ -722,8 +747,9 @@ class DesktopBridgeNode(Node):
     def _tick_heartbeat(self):
         with self._estop_lock:
             estop = self._estop
+        state = 'SAFE_STOP' if estop else self._robot_phase
         self._send(self._envelope('heartbeat', {
-            'state': 'SAFE_STOP' if estop else 'IDLE',
+            'state': state,
             'moveit_ok': self._joint_state is not None,
             # 사이클에 종속된 값이 아니라 "가장 최근에 관측된 cycle_id"다(nullable
             # — 아직 사이클이 한 번도 안 돌았으면 None). 실시간 진행 중인 사이클을
@@ -737,11 +763,10 @@ class DesktopBridgeNode(Node):
             estop = self._estop
         return {
             'estop': estop,
+            'robot_phase': self._robot_phase,
             'connected_clients': self._connected,
             'joint_state_recv': self._joint_state is not None,
             'cmd_state': self._cmd_state,
-            # 이 프로세스가 실제로 쓰고 있는 로봇 모델. 저장된 활성 모델과
-            # 다르면(전환 후 재기동 전) 앱이 그 상태를 드러낼 수 있어야 한다.
             'robot_model': ROBOT_MODEL,
             'robot_model_pending': robot_profiles.active_model_name(),
         }

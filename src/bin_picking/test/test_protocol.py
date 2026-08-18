@@ -220,6 +220,33 @@ def test_joint_margins_joint_present_in_q_but_missing_limits():
     assert out[1] is None
 
 
+def test_robot_phases_contains_appendix_b_states():
+    expected = {
+        'IDLE', 'HOMING', 'WAITING_TARGET', 'PLANNING', 'APPROACHING',
+        'DESCENDING', 'GRASPING', 'LIFTING', 'PLACING', 'RECOVERING',
+        'SAFE_STOP', 'ERROR',
+    }
+    assert set(protocol.ROBOT_PHASES) == expected
+    assert len(protocol.ROBOT_PHASES) == len(expected)
+
+
+def test_robot_phases_are_all_uppercase_strings():
+    for phase in protocol.ROBOT_PHASES:
+        assert isinstance(phase, str)
+        assert phase == phase.upper()
+
+
+def test_is_valid_phase_accepts_all_registered():
+    for phase in protocol.ROBOT_PHASES:
+        assert protocol.is_valid_phase(phase)
+
+
+def test_is_valid_phase_rejects_unknown():
+    assert not protocol.is_valid_phase('GRAPSING')
+    assert not protocol.is_valid_phase('')
+    assert not protocol.is_valid_phase('idle')
+
+
 def test_joint_margins_and_joint_margin_agree_on_minimum():
     # 두 함수는 같은 로직의 스칼라/리스트 버전이어야 한다(구현 중복 없이
     # protocol.py 가 유일한 소스) — 리스트의 최솟값이 스칼라와 같아야 함.

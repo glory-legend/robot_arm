@@ -15,6 +15,17 @@ import math
 # 바뀌었다(desktop_protocol.md §4).
 PROTOCOL_VERSION = 3
 
+ROBOT_PHASES = (
+    'IDLE', 'HOMING', 'WAITING_TARGET', 'PLANNING', 'APPROACHING',
+    'DESCENDING', 'GRASPING', 'LIFTING', 'PLACING', 'RECOVERING',
+    'SAFE_STOP', 'ERROR',
+)
+_ROBOT_PHASES_SET = frozenset(ROBOT_PHASES)
+
+
+def is_valid_phase(phase):
+    return phase in _ROBOT_PHASES_SET
+
 # ⚠ 이 표의 왼쪽 문자열 일부는 커밋 bf7aff0 에서 이름이 바뀌었다 — attempts.jsonl
 # 의 과거/현재 레코드가 같은 사건에 다른 reason 을 쓴다(PROGRESS.md "reason 문자열
 # 개명" 항목 참고). reason 으로 그룹핑해 분석할 때 반드시 확인할 것.

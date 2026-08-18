@@ -170,6 +170,7 @@ from bin_picking.scene import SceneMixin
 from bin_picking.markers import MarkersMixin
 from bin_picking.sensing import SensingMixin
 from bin_picking.selection import SelectionMixin
+from bin_picking import protocol
 
 
 class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMixin, RobotStateMixin, MoveItIOMixin, GripperMixin, SceneMixin, MarkersMixin, SensingMixin, SelectionMixin):
@@ -335,6 +336,14 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         # 안 보이는 상태로 publish 하면 조용히 버려짐). __init__ 시점에 만들어
         # 두면 첫 PICK_BOLT 가 실제로 처리될 때까지 디스커버리가 끝날 여유가 생긴다.
         self._cycle_result_pub = self.create_publisher(String, self.CYCLE_RESULT_TOPIC, 10)
+
+        # --- 데스크톱 커맨드 버스 (desktop_bridge → pick_place_node) ---
+        self._estop_requested = False
+        self._paused = False
+        self._go_home_requested = False
+        self._robot_phase = 'IDLE'
+        self._phase_pub = self.create_publisher(String, self.ROBOT_PHASE_TOPIC, 10)
+        self.create_subscription(String, self.COMMAND_TOPIC, self._command_cb, 10)
         self.selector = None
         if self.USE_LEARNED_SELECTOR and GraspSelector is not None:
             self.selector = GraspSelector()
@@ -401,10 +410,66 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         self._pick_origin = 'ROBOT'
         return self._select_fallback()
 
+    def _publish_phase(self, phase):
+        if not protocol.is_valid_phase(phase):
+            self.get_logger().error(f'[phase] 미등록 phase: {phase!r}')
+            return
+        self._robot_phase = phase
+        msg = String()
+        msg.data = json.dumps({'phase': phase})
+        self._phase_pub.publish(msg)
+
+    def _command_cb(self, msg):
+        try:
+            cmd = json.loads(msg.data)
+        except (json.JSONDecodeError, TypeError):
+            return
+        action = cmd.get('cmd')
+        if action == 'ESTOP':
+            self._estop_requested = True
+            self._paused = False
+            self._publish_phase('SAFE_STOP')
+            self.get_logger().warn('[command] ESTOP 수신 — 새 사이클 진입 차단')
+        elif action == 'RESET':
+            self._estop_requested = False
+            self.get_logger().info('[command] RESET 수신 — ESTOP 해제')
+        elif action == 'PAUSE':
+            self._paused = True
+            self.get_logger().info('[command] PAUSE 수신')
+        elif action == 'RESUME':
+            self._paused = False
+            self.get_logger().info('[command] RESUME 수신')
+        elif action == 'SET_SPEED':
+            try:
+                scale = max(0.05, min(1.0, float(cmd.get('scale', 1.0))))
+            except (ValueError, TypeError):
+                self.get_logger().warn(f'[command] SET_SPEED 무효 scale: {cmd.get("scale")!r}')
+                return
+            base_vel = 0.9 if self._auto else 0.3
+            base_fine = 0.6 if self._auto else 0.3
+            self._vel = base_vel * scale
+            self._vel_fine = base_fine * scale
+            self.get_logger().info(f'[command] SET_SPEED scale={scale:.2f} → vel={self._vel:.2f}, fine={self._vel_fine:.2f}')
+        elif action == 'BLACKLIST_ADD':
+            bid = cmd.get('bolt_id')
+            if bid:
+                self._blacklist.add(bid)
+                self.get_logger().info(f'[command] BLACKLIST_ADD {bid}')
+        elif action == 'BLACKLIST_REMOVE':
+            bid = cmd.get('bolt_id')
+            if bid:
+                self._blacklist.discard(bid)
+                self.get_logger().info(f'[command] BLACKLIST_REMOVE {bid}')
+        elif action == 'GO_HOME':
+            self._go_home_requested = True
+            self.get_logger().info('[command] GO_HOME 수신')
+
     def _spin_sleep(self, duration):
-        """콜백을 처리하면서 대기"""
+        """콜백을 처리하면서 대기. PAUSE 중이면 해제될 때까지 대기를 연장한다."""
         end_time = time.time() + duration
-        while time.time() < end_time:
+        while time.time() < end_time or self._paused:
+            if self._estop_requested:
+                return
             rclpy.spin_once(self, timeout_sec=0.05)
 
     # =========================================================
@@ -627,6 +692,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
                               retries=_retries_before + 1)
             return False
 
+        self._publish_phase('APPROACHING')
         approach_pose = Pose()
         approach_pose.position = Point(x=tx, y=ty, z=self.APPROACH_HEIGHT)
         approach_pose.orientation = ori
@@ -698,6 +764,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         # 무더기 속으로 손가락을 넣어야 하므로, 대상 볼트와 '바로 옆 이웃'을
         # 잠시 씬에서 뺀다. 그러지 않으면 이웃과의 충돌로 하강 fraction 이 떨어지고
         # 곡선 폴백이 통 안을 쓸어버린다. (다음 사이클 refresh 가 자동 복원)
+        self._publish_phase('DESCENDING')
         near = self._neighbors_within(pos, self.PICK_CLEAR_R, bolt_id)
         if near:
             self.remove_collision_objects(near)
@@ -768,6 +835,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         if not self.verify_descent_reached(grasp_z, label):
             return fail('하강 미달 — 파지 높이에 도달하지 못함', 'descend_short')
 
+        self._publish_phase('GRASPING')
         self.gripper_close()
         self._grasp_closed = True      # 씬 부착과 무관하게 '물리적으로 닫힘'
         # [지상진실 파지 판정] 손가락 폭만으론 sim 에서 손가락이 얇은 볼트를
@@ -793,6 +861,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         self._attached_src_id = bolt_id
         self._spin_sleep(0.2 if self._auto else 0.3)
 
+        self._publish_phase('LIFTING')
         lift = self.make_vertical_waypoints(
             tx, ty, grasp_z, self.APPROACH_HEIGHT, ori)
         if not self.cartesian_viz_execute(lift, label=f'Lift-{label}',
@@ -995,6 +1064,24 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         while rclpy.ok():
             cycle += 1
 
+            # --- ESTOP 체크: 설정되어 있으면 새 사이클 진입 차단 ---
+            if self._estop_requested:
+                if self._robot_phase != 'SAFE_STOP':
+                    self._publish_phase('SAFE_STOP')
+                self._spin_sleep(0.5)
+                cycle -= 1
+                continue
+
+            # --- GO_HOME 요청 처리 ---
+            if self._go_home_requested:
+                self._go_home_requested = False
+                self._publish_phase('HOMING')
+                self.plan_viz_execute_joint(
+                    self._ready_target, vel=self._vel, label='GoHome')
+                self.gripper_open()
+                self._publish_phase('IDLE')
+                continue
+
             # --- Step A: Ready 자세에서 대기 ---
             # 직전 시도가 '아무것도 안 쥔 실패'면 팔이 접근 높이에 그대로 있다.
             # Ready 왕복 + 그리퍼 재개방은 순수 낭비 → 생략하고 제자리 재선택.
@@ -1004,6 +1091,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
                     f'--- [{cycle}] Step A: 생략(제자리 재선택 — 왕복 제거) ---')
             else:
                 self.get_logger().info(f'--- [{cycle}] Step A: Ready 복귀 ---')
+                self._publish_phase('HOMING')
                 if not self.plan_viz_execute_joint(
                         self._ready_target, vel=self._vel,
                         label=f'Ready{cycle}'):
@@ -1012,6 +1100,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
                 self.gripper_open()
                 self._spin_sleep(0.2 if self._auto else 0.5)
             self._refresh_bolt_scene()      # 씬을 실제 볼트 위치로 갱신
+            self._publish_phase('IDLE')
 
             if self.STEP_BY_STEP and need_trigger:
                 self._wait_for_trigger(
@@ -1037,6 +1126,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
                 continue
 
             # --- Step B: 최적 볼트 6D 자세 수신(외부 우선, 없으면 자체 선택) ---
+            self._publish_phase('WAITING_TARGET')
             self.get_logger().info(
                 f'--- [{cycle}] Step B: 최적 볼트 자세 수신 대기 '
                 f'({self.EXT_POSE_TOPIC}, 최대 {self._ext_pose_wait:.1f}s) ---')
@@ -1050,12 +1140,14 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
             plan = self._pending_plan       # 학습 선택 계획(없으면 None)
 
             # --- Step C: 그리퍼 각도를 볼트 축에 맞춰 동적 파지 ---
+            self._publish_phase('PLANNING')
             self.get_logger().info(f'--- [{cycle}] Step C: 파지 ---')
             if not self._pick(target, plan=plan):
                 need_trigger = False         # 실패 → 신호 없이 곧바로 자동 재시도
                 continue                     # Ready 로 돌아가 다음 볼트 재선택
 
             # --- Step D: 놓는 통의 빈 자리에 툭 놓기 ---
+            self._publish_phase('PLACING')
             self.get_logger().info(f'--- [{cycle}] Step D: 놓는 통에 놓기 ---')
             if self._drop():
                 n_done += 1

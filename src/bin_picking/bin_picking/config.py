@@ -307,6 +307,8 @@ class PickPlaceConfig:
     TILT_PRIOR_PENALTY = 0.02
     EXT_POSE_TOPIC = '/next_bolt_pose'   # 외부 비전이 최적 볼트 6D 자세를 던지는 곳
     CYCLE_RESULT_TOPIC = '/bin_picking/cycle_result'   # 사이클 결과(selection.py 훅 → desktop_bridge)
+    COMMAND_TOPIC = '/bin_picking/command'              # desktop_bridge → pick_place_node 명령 버스
+    ROBOT_PHASE_TOPIC = '/bin_picking/robot_phase'      # pick_place_node → desktop_bridge 실시간 단계
     EXT_POSE_WAIT = 3.0              # 외부 자세 대기 시간(초). 없으면 자체 선택
     STEP_BY_STEP = True              # True면 사이클마다 /next_step 대기(수동 진행)
                                      # False면 연속 자동 운전
