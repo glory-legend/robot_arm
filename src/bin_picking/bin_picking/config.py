@@ -192,7 +192,6 @@ class PickPlaceConfig:
     BIN_WALL_TOP = BIN_XYZ[2] + BIN_OUTER[2]          # = 0.025
     # 바닥에 '그냥 누운' 볼트의 기준 중심 z. 이보다 높으면 무언가에 얹힌 것이다.
     BOLT_REST_CENTER_Z = BIN_FLOOR_TOP + BOLT_SHAFT_RADIUS   # = 0.009
-    GRASP_DEPTH_OFFSET = 0.004       # (레거시, 아래 _grasp_z_for 에서 미사용)
     # ★★ [근본원인 수정] TCP 는 손끝이 아니다 ★★
     # TCP_TO_FINGERTIP(= TCP z − 손끝 최저면 z)은 그리퍼마다 다르므로 프로파일이
     # 준다(FR3+프랑카 핸드는 9.5mm, 유도 근거는 fr3.yaml 주석 참조). 예전 코드는

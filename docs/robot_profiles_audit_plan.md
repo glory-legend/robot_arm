@@ -71,14 +71,18 @@
   MAX_PICK_RETRY, MAX_NO_PROGRESS, USE_LEARNED_SELECTOR, SELECTOR_REFIT_EVERY,
   WARM_START_EPOCHS, TILT_PRIOR_PENALTY, GRASP_SETTLE_SEC, EXT_POSE_WAIT, STEP_BY_STEP,
   REQUIRE_SENSING, 각종 TOPIC/TIMEOUT/COLOR/FRAME_DIAG/BOLT_ID_RE/APPROACH_DOWN`
-- 죽은 코드: `GRASP_DEPTH_OFFSET(0.004, 레거시 미사용)` → 감사 김에 제거 검토.
+- ~~죽은 코드: `GRASP_DEPTH_OFFSET(0.004, 레거시 미사용)`~~ → ✅ 제거 완료(2026-08-21).
+  `config.py` 클래스 상수 + `test_config_profile_regression.py` 회귀 항목 삭제.
 
 ## 3. 마이그레이션 계획 (위험 집합 → 프로파일)
 
-> **진행:** ✅ `grasp:` 섹션 신설 + `max_above`(구 `GRASP_MAX_ABOVE`) + `floor_raise`
-> (workspace 에서 이동) 이관 완료(2026-08-12). FR3 불변(162 tests pass, 회귀 dict 가
-> `GRASP_MAX_ABOVE=0.006`/`GRASP_FLOOR_RAISE=0.0` 대조). 남은 위험집합(`z_tol`,
-> `ik_seed_*`, `pick_clear_r` 등)은 아래 표대로 같은 패턴으로 이어서 진행.
+> **진행:** ✅ **전체 완료(2026-08-21).** `grasp:` 섹션 신설 + 위험집합 8개 필드 전부
+> 이관됨. `schema.py`(`GraspSpec`) + `config.py`(`apply_profile()` 주입) +
+> `fr3.yaml`/`ur5e_robotiq85.yaml`(값+유도주석) + `test_config_profile_regression.py`
+> (FR3 리터럴 대조) 4층 모두 정합. 182 tests pass(FR3 불변 증명). 죽은 코드
+> `GRASP_DEPTH_OFFSET` 제거 완료. UR5e 의 `z_tol`/`ik_seed_jitter`/`pick_clear_r`
+> 는 FR3 기본값을 그대로 이관했고, 향후 라이브 A/B 로 UR5e 최적값을 확정할 것
+> (YAML 에 `# 검토:` 주석으로 후보값 기재해 둠).
 
 원칙: **FR3 완전 불변**. 새 프로파일 필드는 기본값을 FR3 현재값과 동일하게 두고, `apply_profile()`
 가 주입. `grasp_floor_raise` 를 넣은 것과 동일한 패턴(`378d1bb` 참고).
@@ -123,17 +127,16 @@
 
 ## 5. 백로그 (이번 세션에서 발견/보류)
 
-### 5a. ★ bolt_3 운반 모션 장벽 (step 1b, 하강과 별개)
+### 5a. ★ bolt_3 운반 모션 장벽 (step 1b, 하강과 별개) — ✅ 해결
 - 증상: 전방으로 먼 바닥 볼트(예 (0.442,-0.045))는 `378d1bb` 로 **하강·파지는 성공**하나,
   그 far 자세(팔 전방-우측 최대 신전, J1≈-0.4)에서 **드롭 통(0.000,0.395)까지 운반 모션이
   5개 플래너 전부 실패**(`ToDropBin 자세 계획 실패`) → 잡고도 못 옮겨 detach.
 - 성격: 하강이 아니라 **도달성/모션계획**. 리프트 후 곧장 큰 스윙을 RRT가 못 푼다.
-- 후보 해법(검증 필요): (1) 운반 전 **중립/ready 관절자세 경유**(joint goal, 플래너 폴백 有)
-  후 드롭 통으로. (2) 리프트 높이 상향. (3) far 코너를 애초에 도달성 필터로 제외(reach 재실측).
-- 검증: 라이브 A/B 필요(§7).
+- ✅ **해결(커밋 `2f71e13`)**: 후보 해법 (1) 채택 — 드롭 통 이동을 ready 경유로 분할.
 
-### 5b. step 2 — `tilt_min_center_z` 실측화 (진행 중이었음)
-- 현재 UR5e 값 0.042 는 "FR3의 3배" heuristic(0.009 + 11mm×3). 미실측.
+### 5b. step 2 — `tilt_min_center_z` 실측화 — ✅ 수치유도 완료
+- ~~현재 UR5e 값 0.042 는 "FR3의 3배" heuristic(0.009 + 11mm×3). 미실측.~~
+- ✅ `tools/derive_tilt_min_center_z.py` 로 수치유도 완료 → UR5e 0.035 적용(yaml 반영 완료).
 - 정밀 유도 방법(이 세션에서 설계): 코드의 실제 tool 프레임(`geometry._grasp_frame`:
   `z_tool=approach, y_tool=z_tool×axis, x_tool=y_tool×z_tool`) + `_rotate_about`(로드리게스)로,
   기울임 θ에서 **최저 손끝 z**를 수치 계산 → floor(0) 위에 남는 최소 볼트중심 c 를 구한다.
@@ -181,13 +184,18 @@
     - BASE_FRAME 이 `base_link` 로 자동 전환 확인, TF 체인 정상.
     - FR3 결과(7.8mm/1.2°)와 동등 — 양쪽 모델 모두 파지 허용 범위 내.
 
-## 6. 새 세션 실행 체크리스트
+## 6. 완료 상태 요약 (2026-08-21 기준)
 
-1. `git status`/브랜치 확인(현재 `feat/robot-model-registration`). 최신 커밋 `378d1bb` 이후.
-2. 우선순위: **`GRASP_MAX_ABOVE` 이관(고위험도·고가치)** → 나머지 위험집합 →
-   step 1b 운반장벽 → step 2 tilt → step 3 vision.
-3. 각 변경: schema→config→yaml(fr3=불변값, ur5e=값)→회귀테스트→`pytest`(161)→라이브 A/B.
-4. **FR3 불변 불변식**: 새 필드 기본값=FR3 현재값, `apply_profile` 주입, 회귀 테스트가 리터럴 대조.
+| 항목 | 상태 |
+|---|---|
+| §3 위험집합 8개 상수 이관 | ✅ 전체 완료 |
+| §2c 죽은 코드 GRASP_DEPTH_OFFSET | ✅ 제거 완료 |
+| §5a 운반 모션 장벽 | ✅ ready 경유로 해결 |
+| §5b tilt_min_center_z 수치유도 | ✅ 0.035 적용 (라이브 미실측) |
+| §5c 비전 E2E 검증 | ✅ 양쪽 모델 완료 |
+| UR5e 라이브 A/B 튜닝 (`z_tol`/`ik_seed_jitter`/`pick_clear_r`) | 🔲 YAML `# 검토:` 에 후보 기재, 향후 진행 |
+
+테스트: 182 passed (FR3 불변 증명).
 
 ## 7. 라이브 재현 방법 (이 세션에서 확립 — 헤드리스)
 
