@@ -1,11 +1,13 @@
-# robotarm_main — FR3 M8 볼트 빈피킹 (ROS2 Jazzy + Gazebo)
+# robotarm_main — 다중 로봇 M8 볼트 빈피킹 (ROS2 Jazzy + Gazebo)
 
-Franka **FR3** 7축 로봇과 평행 그리퍼로, 얕은 통(bin)에 놓인 **M8 볼트**를
-하나씩 집어 다른 통에 옮기는 빈피킹(bin-picking) 시뮬레이션입니다.
+얕은 통(bin)에 놓인 **M8 볼트**를 하나씩 집어 다른 통에 옮기는
+빈피킹(bin-picking) 시뮬레이션입니다. **로봇 모델 프로파일** 시스템으로
+코드 변경 없이 팔을 갈아끼울 수 있으며, 현재 **Franka FR3**(7축)과
+**UR5e + Robotiq 2F-85**(6축)가 등록·검증되어 있습니다.
 
 > **처음 보시는 분께**: 전체 그림은 아래 "파이프라인"과 "디렉토리 구조"만 읽으면
 > 잡힙니다. 코드를 고칠 땐 [모듈 지도](#모듈-지도-bin_picking)에서 해당 책임
-> 파일 하나만 열면 됩니다 — 3350줄 단일 파일을 책임별로 나눠 두었습니다.
+> 파일 하나만 열면 됩니다.
 
 ---
 
@@ -16,8 +18,9 @@ flowchart LR
     CAM[RGB-D 카메라<br/>gz rgbd_camera] -->|PointCloud2| VIS[bolt_vision<br/>볼트 6D 자세 추정]
     VIS -->|/next_bolt_pose| NODE[integrated_pick_place<br/>픽앤플레이스 노드]
     POSE[Gazebo 볼트 pose<br/>/model/bolt_N/pose] -->|센싱 폴백| NODE
-    NODE -->|MoveIt 계획/실행| ARM[FR3 팔 + 그리퍼]
+    NODE -->|MoveIt 계획/실행| ARM[로봇팔 + 그리퍼<br/>FR3 · UR5e 등]
     NODE -->|충돌객체/마커| RVIZ[RViz2]
+    NODE <-->|REST+WS| DESK[desktop_bridge<br/>데스크톱앱 통신]
 ```
 
 1. **인식** (`bolt_vision`): 통 위 카메라의 포인트클라우드를 base 프레임으로 변환 →
@@ -34,15 +37,22 @@ flowchart LR
 
 ```
 robotarm_main/
-├─ README.md              ← 지금 이 문서
-├─ LICENSE / NOTICE       ← Apache-2.0 + 원저작자 표기
-├─ docs/architecture.md   ← 모듈 의존 그래프 · 상세 설계
-├─ docs/robot_profiles.md ← 로봇팔 모델 등록 · 검증 · 전환 (다른 제조사 팔 붙이기)
+├─ README.md                          ← 지금 이 문서
+├─ LICENSE / NOTICE                   ← Apache-2.0 + 원저작자 표기
+├─ docs/
+│  ├─ architecture.md                 ← 모듈 의존 그래프 · 상세 설계
+│  ├─ robot_profiles.md               ← 로봇팔 모델 등록 · 검증 · 전환
+│  ├─ robot_profiles_audit_plan.md    ← 공유상수 타깃 감사 계획 · 진행 기록
+│  ├─ desktop_protocol.md             ← 데스크톱앱 통신 데이터 계약
+│  └─ desktop_connection_guide.md     ← 데스크톱앱 접속 · 트러블슈팅
+├─ tools/                             ← 개발 보조 스크립트 (tilt 수치유도 등)
 └─ src/
-   ├─ bin_picking/                 ★ 이 프로젝트의 코드 (아래 모듈 지도)
-   ├─ franka_description/          FR3 모델(URDF/메시) — 통째 포함(자체 완결)
-   ├─ franka_fr3_moveit_config/    MoveIt 설정
-   └─ franka_gazebo_bringup/       Gazebo 컨트롤러 설정
+   ├─ bin_picking/                    ★ 이 프로젝트의 코드 (아래 모듈 지도)
+   │  ├─ robot_profiles/data/         프로파일 YAML (fr3 · ur5e_robotiq85)
+   │  └─ tools/desktop_sdk/           데스크톱앱 Python 클라이언트 라이브러리
+   ├─ franka_description/             FR3 모델(URDF/메시) — 통째 포함(자체 완결)
+   ├─ franka_fr3_moveit_config/       MoveIt 설정
+   └─ franka_gazebo_bringup/          Gazebo 컨트롤러 설정
 ```
 
 `src/` 아래를 그대로 colcon 워크스페이스로 빌드하면 됩니다. 외부 저장소를
@@ -52,15 +62,14 @@ robotarm_main/
 
 ## 모듈 지도 (`bin_picking/`)
 
-원래 한 파일(3350줄)이던 갓클래스를 **책임별 Mixin 파일**로 나눴습니다.
-`IntegratedPickPlace` 가 이들을 모두 상속하므로 동작은 완전히 동일하고,
-파일만 열어 보면 그 책임의 코드만 보입니다.
+`IntegratedPickPlace` 가 책임별 Mixin 파일을 모두 상속하므로 동작은
+완전히 동일하고, 파일만 열어 보면 그 책임의 코드만 보입니다.
 
 | 파일 | 책임 (열면 이것만 보임) |
 |---|---|
 | `pick_place_node.py` | **여기서 시작.** 전체 흐름(`run`/`_pick`/`_drop`)을 담은 얇은 오케스트레이터 + `main()` |
 | `config.py` | 작업 상수(파지 깊이·개구·학습 등)와 "왜 이 값인지" 주석 + 로봇 프로파일 주입 |
-| `robot_profiles/` | **로봇 모델 등록/검증/전환** — 업체마다 다른 값(관절·그리퍼·도달성·설정 위치)을 데이터로 분리 ([`docs/robot_profiles.md`](docs/robot_profiles.md)) |
+| `robot_profiles/` | **로봇 모델 등록/검증/전환** — 스키마(`schema.py`), 레지스트리(`registry.py`), 검증기(`validator.py`), 벤더 YAML 처리(`vendor_yaml.py`) ([`docs/robot_profiles.md`](docs/robot_profiles.md)) |
 | `model_cli.py` | `binpick_model` 명령 — 모델 등록·검증·전환 |
 | `gripper_adapters.py` | 그리퍼 액션 인터페이스 어댑터(FollowJointTrajectory / GripperCommand) |
 | `geometry.py` | 순수 수학: 볼트 축·회전·파지 좌표계·선분거리 (ROS 무의존) |
@@ -73,11 +82,13 @@ robotarm_main/
 | `markers.py` | RViz 마커 발행 |
 | `selection.py` | 볼트 선택(휴리스틱·학습·롤아웃) |
 | `bolt_vision.py` | **독립 노드**: 카메라 포인트클라우드 → 볼트 6D 자세 |
-| `vision_verify.py` | **독립 노드**: 비전 추정 vs Gazebo 정답 비교 → 위치/축 오차 통계(§5c 검증용) |
+| `vision_verify.py` | **독립 노드**: 비전 추정 vs Gazebo 정답 비교 → 위치/축 오차 통계 |
 | `bolt_scene.py` | 통/볼트 자산 치수(스폰과 planning-scene 공유 단일 소스) |
 | `grasp_selector.py` | 학습형 파지 선택기(sklearn SGD, ROS 무의존) |
 | `train_selector.py` | 누적 attempts 로그로 선택기 오프라인 학습 |
-| `desktop_bridge.py` | **독립 노드**: 데스크톱앱 통신(REST+WebSocket 하이브리드+토큰인증, `docs/desktop_protocol.md` §4) |
+| `protocol.py` | 데스크톱 통신 프로토콜 변환/검증 (순수, ROS 무의존) |
+| `desktop_bridge.py` | **독립 노드**: 데스크톱앱 통신(REST+WebSocket 하이브리드+토큰인증) |
+| `tools_measure_workspace.py` | 도달 범위 격자 측정 도구 (프로파일 workspace 값 유도용) |
 
 의존 방향은 `config ← geometry ← grasp_planning ← (ROS mixin들) ← node` 로
 단방향입니다. 자세한 그래프는 [`docs/architecture.md`](docs/architecture.md).
@@ -116,7 +127,8 @@ ros2 run   bin_picking desktop_bridge                    # 6) (선택) 데스크
 `--auto` 를 빼면 사이클마다 수동 진행:
 `ros2 topic pub --once /next_step std_msgs/msg/Empty '{}'`
 
-**RViz**: Fixed Frame `fr3_link0`, PointCloud2(`/bin_camera/points`,
+**RViz**: Fixed Frame은 활성 모델에 따라 다릅니다(FR3: `fr3_link0`,
+UR5e: `base_link`). PointCloud2(`/bin_camera/points`,
 Reliability=**Best Effort**), MarkerArray(`/pick_place_markers`).
 
 ---
@@ -149,6 +161,12 @@ ros2 run bin_picking desktop_bridge --ros-args -p api_token:=<토큰>   # Gazebo
 python3 src/bin_picking/tools/mock_desktop_client.py --token <토큰>   # 데스크톱 대역 목 클라이언트(ROS 무의존)
 ```
 
+### Python 클라이언트 라이브러리 (`desktop_sdk`)
+
+데스크톱앱 팀이 Python으로 연동할 때 쓸 수 있는 클라이언트 라이브러리가
+`src/bin_picking/tools/desktop_sdk/`에 있습니다. REST/WebSocket 양쪽을 감싸고,
+토큰 인증·자동 재연결·타입 모델(`models.py`)을 제공합니다.
+
 실전 사용법(오류 대처·주의사항 등)은 Notion "실전 사용 가이드" 문서 참고.
 
 ---
@@ -175,8 +193,15 @@ ros2 launch bin_picking desktop_integration_demo.launch.py robot_model:=my_arm
 등록 절차와 각 항목을 어디서 얻는지는 [`docs/robot_profiles.md`](docs/robot_profiles.md).
 데스크톱앱에서 전환하는 REST 엔드포인트도 같은 문서에 있습니다.
 
-> 현재 벤더링된 자산은 **FR3 하나**입니다. 다른 제조사 팔을 실제로 띄우려면
-> 그 팔의 description/MoveIt 패키지(+ 그리퍼)를 먼저 확보해야 합니다.
+### 등록된 모델
+
+| 모델 | 팔 | 그리퍼 | 상태 |
+|---|---|---|---|
+| `fr3` | Franka FR3 (7축) | Franka Hand (linear) | verified, task_validated |
+| `ur5e_robotiq85` | UR5e (6축) | Robotiq 2F-85 (angular) | verified |
+
+다른 제조사 팔을 추가하려면 그 팔의 description/MoveIt 패키지(+ 그리퍼)를
+확보한 뒤 `binpick_model new`로 프로파일을 만들면 됩니다.
 
 ---
 
