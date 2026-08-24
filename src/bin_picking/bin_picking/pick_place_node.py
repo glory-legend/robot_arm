@@ -244,6 +244,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         #  /model/bolt_i/pose → TFMessage. 볼트마다 토픽이 따로 있다.
         #  없으면(브리지 미설정) 자동으로 BOLT_LAYOUT 폴백.
         self._bolt_sensed = {}   # 'bolt_i' -> ((x,y,z), (qx,qy,qz,qw)) [월드]
+        self._sense_seq = 0      # 센싱 갱신 횟수(이벤트 기반 대기용)
         self._sensing_logged = False
         self._frame_diag = []        # 실제로 수신한 'parent -> child' 이름 표본
         self._frame_diag_n = 0
@@ -471,6 +472,21 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
             if self._estop_requested:
                 return
             rclpy.spin_once(self, timeout_sec=0.05)
+
+    def _spin_until(self, predicate, timeout, poll_sec=0.05):
+        """*predicate*()가 참이 되거나 *timeout*초가 지나면 복귀.
+
+        PAUSE/ESTOP 시맨틱은 _spin_sleep과 동일하게 유지한다.
+        반환값: predicate가 참이면 True, 타임아웃이면 False.
+        """
+        deadline = time.time() + timeout
+        while time.time() < deadline or self._paused:
+            if self._estop_requested:
+                return False
+            rclpy.spin_once(self, timeout_sec=poll_sec)
+            if predicate():
+                return True
+        return predicate()
 
     # =========================================================
     # Pick & Place 한 볼트 (반복 단위)
@@ -859,7 +875,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         if not self.attach_bolt(bolt_id if bolt_id else 'picked_bolt'):
             return fail('씬 부착 실패', 'attach_fail')
         self._attached_src_id = bolt_id
-        self._spin_sleep(0.2 if self._auto else 0.3)
+        self._spin_sleep(0.1 if self._auto else 0.3)
 
         self._publish_phase('LIFTING')
         lift = self.make_vertical_waypoints(
@@ -868,7 +884,9 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
                                           vel=self._vel_fine):
             return fail('리프트 실패', 'descend_fail')
         # --- 지상진실 재검증: 볼트가 그리퍼를 따라 올라왔나 ---
-        self._spin_sleep(0.25 if self._auto else 0.4)   # 센싱 갱신 여유
+        seq0 = self._sense_seq
+        self._spin_until(lambda: self._sense_seq > seq0,
+                         timeout=0.25 if self._auto else 0.4)
         if z_before is not None and bolt_id in self._bolt_sensed:
             z_after = self._bolt_sensed[bolt_id][0][2]
             rose = z_after - z_before
@@ -1001,7 +1019,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
             # 놓은 볼트는 임무 완료 → 씬에서 제거(그리퍼 아래 유령 충돌 방지)
             self.remove_collision_objects([held])
         self._attached_src_id = None
-        self._spin_sleep(0.4 if self._auto else 0.8)   # 볼트 안착 여유
+        self._spin_sleep(0.15 if self._auto else 0.8)  # 볼트 안착 여유
         self.get_logger().info(f'툭 놓기 완료 (TCP z={self.DROP_Z:.3f})')
         return True
 
@@ -1048,7 +1066,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         self.add_label_marker((BIN_XYZ[0], BIN_XYZ[1], 0.06), 'Pick Bin')
         self.add_label_marker(
             (DROP_BIN_XYZ[0], DROP_BIN_XYZ[1], 0.06), 'Drop Bin')
-        self._spin_sleep(1.0)
+        self._spin_sleep(0.3)
 
         # =====================================================
         # 실시간 루프:  Ready → 자세 수신 → 파지 → 툭 놓기 → Ready
@@ -1098,7 +1116,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
                     self.get_logger().error('ready 이동 실패 — 중단')
                     break
                 self.gripper_open()
-                self._spin_sleep(0.2 if self._auto else 0.5)
+                self._spin_sleep(0.1 if self._auto else 0.5)
             self._refresh_bolt_scene()      # 씬을 실제 볼트 위치로 갱신
             self._publish_phase('IDLE')
 
@@ -1121,7 +1139,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
                     f'spawn_bolts.launch.py(터미널2)를 새로 실행하세요.\n'
                     f'  ③ 스폰 전부터 볼트가 이미 보였다면 이전 세션 잔재입니다 '
                     f'— 그 볼트들은 pose 를 발행하지 않을 수 있습니다')
-                self._spin_sleep(3.0)
+                self._spin_until(lambda: bool(self._bolt_sensed), timeout=1.0)
                 need_trigger = False    # 신호 재요구 없이 자동 재확인
                 continue
 
@@ -1166,7 +1184,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
         if rclpy.ok():
             self.plan_viz_execute_joint(
                 self._ready_target, vel=0.3, label='Ready')
-            self._spin_sleep(0.5)
+            self._spin_sleep(0.2)
         self.get_logger().info('=== 통합 Pick & Place 완료! ===')
 
     def run_auto_picking(self):
