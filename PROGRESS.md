@@ -39,6 +39,21 @@ semantics 수정, seeded clutter 벤치마크, 다중 pose/grasp 후보, 실물 
 
 ## ✅ 완료한 태스크
 
+### 통신 계약 P0 정리 — 검증가능 슬라이스 (2026-08-27)
+- **범위:** `docs/bin_picking_analysis_and_upgrade_plan.md` 의 P0 중, Gazebo 없이
+  단위테스트로 완전 검증되는 것만 처리(사용자 결정).
+- ✅ **BP-C01** alert 대소문자 통일(`ALERT`→`alert`) — 브릿지 4곳 + SDK wire 테스트.
+  이전엔 SDK `on('alert')` 가 stale/TF/모델변경 경고를 전혀 못 받았다.
+- ✅ **BP-C02** 리프트 실패 reason 오기록 수정(`descend_fail`→`lift_fail`) +
+  AST 회귀 테스트(방출 reason ↔ `FAIL_REASON_MAP` 양방향 일치, 죽은 키 금지).
+- ✅ **BP-C04a(부분)** RESET `confirm=true` 시행 — `protocol.validate_command`
+  순수 함수 + 브릿지 게이트 + 문서 각주. confirm 없으면 estop 안 풀림.
+- 🟢 **BP-C03** 주 결함 해소 — 비전 제거로 `/next_bolt_pose` 발행자가 브릿지
+  하나뿐이라 오상관 구조적 불가. 동시 PICK_BOLT 거부·corr 왕복은 기구현.
+- **검증:** `pytest test/` → **193 passed**(기존 182 + 신규 11).
+- **미착수(Gazebo 런타임 필요):** BP-C04a ACK 분리, BP-C04b active goal cancel/
+  soft-stop, BP-C05 grasp/cycle 결과 분리. → 시뮬 세션에서 이어서.
+
 ### 두 번째 팔 등록 완료 — UR5e + Robotiq 2F-85 (2026-08-10)
 - **목표:** 등록 계층이 실제로 벤더 중립인지, **다른 제조사 팔을 올릴 수 있는지** 증명.
 - **결과 — 등록·전환·로드 전 과정 동작:**
