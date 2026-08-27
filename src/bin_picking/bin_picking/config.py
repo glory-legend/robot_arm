@@ -304,7 +304,7 @@ class PickPlaceConfig:
     # 못 이긴다. 결과적으로 '수직으로 집을 수 있는 볼트'가 항상 먼저 선택되고,
     # 기울임은 수직이 아예 불가능한(벽에 딱 붙은) 볼트에서만 채택된다.
     TILT_PRIOR_PENALTY = 0.02
-    EXT_POSE_TOPIC = '/next_bolt_pose'   # 외부 비전이 최적 볼트 6D 자세를 던지는 곳
+    EXT_POSE_TOPIC = '/next_bolt_pose'   # 외부(데스크톱앱 PICK_BOLT)가 최적 볼트 6D 자세를 던지는 곳
     CYCLE_RESULT_TOPIC = '/bin_picking/cycle_result'   # 사이클 결과(selection.py 훅 → desktop_bridge)
     COMMAND_TOPIC = '/bin_picking/command'              # desktop_bridge → pick_place_node 명령 버스
     ROBOT_PHASE_TOPIC = '/bin_picking/robot_phase'      # pick_place_node → desktop_bridge 실시간 단계

@@ -47,15 +47,13 @@ setup(
     maintainer='slfkalstks',
     maintainer_email='slfkalstks@gmail.com',
     description='FR3 M8 볼트 빈피킹 데모 (ROS2 Jazzy + Gazebo Harmonic). '
-                '비전 인식 → 볼트 선택 → MoveIt 파지/이동/놓기.',
+                '외부 좌표(데스크톱앱 PICK_BOLT) → 볼트 선택 → MoveIt 파지/이동/놓기.',
     license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             # 통합 픽앤플레이스 데모 (ros2 run bin_picking integrated_pick_place --auto)
             'integrated_pick_place = bin_picking.pick_place_node:main',
-            # 카메라 포인트클라우드 → 볼트 6D 자세 인식 노드
-            'bolt_vision = bin_picking.bolt_vision:main',
             # 누적된 attempts.jsonl 로 파지 선택기 오프라인 학습
             'train_selector = bin_picking.train_selector:main',
             # 데스크톱앱 ↔ 로봇 통신 브릿지 (REST+WebSocket 하이브리드, docs/desktop_protocol.md)
@@ -64,8 +62,6 @@ setup(
             'binpick_model = bin_picking.model_cli:main',
             # 등록한 모델의 실제 도달 범위 측정 (workspace 값 유도)
             'measure_workspace = bin_picking.tools_measure_workspace:main',
-            # 비전 추정 vs Gazebo 정답 정확도 검증 (§5c)
-            'vision_verify = bin_picking.vision_verify:main',
         ],
     },
 )

@@ -5,16 +5,17 @@
 
 ## Purpose
 The ROS2 `ament_python` package that is this project. FR3 + parallel gripper bin-picking
-demo: RGB-D vision estimates M8 bolt poses in a bin, a pick/place pipeline plans and
-executes grasps via MoveIt2 in Gazebo, and a WebSocket+JSON bridge exposes the robot to an
-externally-developed desktop app. See root `README.md` for the pipeline diagram and
-`docs/architecture.md` for why the code is split the way it is.
+demo: a pick/place pipeline plans and executes grasps via MoveIt2 in Gazebo, receiving M8
+bolt poses via `/next_bolt_pose` from an externally-developed desktop app (bolt recognition —
+camera → point cloud → pose ranking — is owned entirely by that desktop app, not this repo),
+and a WebSocket+JSON bridge exposes the robot to that desktop app. See root `README.md` for
+the pipeline diagram and `docs/architecture.md` for why the code is split the way it is.
 
 ## Key Files
 | File | Description |
 |------|-------------|
 | `package.xml` | ROS2 package manifest — declares `ament_python` build type and runtime deps (`rclpy`, MoveIt msgs, `franka_description`/`franka_fr3_moveit_config`/`franka_gazebo_bringup`, `ros_gz_sim`, etc.) |
-| `setup.py` | Python package + console-script entry points: `integrated_pick_place`, `bolt_vision`, `train_selector`, `desktop_bridge`. Also installs `models/`, `urdf/`, `worlds/`, `launch/*.launch.py` into `share/` |
+| `setup.py` | Python package + console-script entry points: `integrated_pick_place`, `train_selector`, `desktop_bridge`. Also installs `models/`, `urdf/`, `worlds/`, `launch/*.launch.py` into `share/` |
 | `setup.cfg` | ament_python install-scripts config |
 
 ## Subdirectories
@@ -25,7 +26,7 @@ externally-developed desktop app. See root `README.md` for the pipeline diagram 
 | `test/` | pytest unit tests (currently: `protocol.py` contract tests, ROS-free) |
 | `tools/` | Standalone dev/verification scripts, not installed as ROS nodes (e.g. `mock_desktop_client.py`) |
 | `models/` | Gazebo SDF models for the bolt bin and M8 bolt, spawned by `launch/spawn_bolts.launch.py` |
-| `urdf/` | Thin xacro wrapper around `franka_description`'s FR3 URDF, adding Gazebo-specific overrides (camera, gravity) |
+| `urdf/` | Thin xacro wrapper around `franka_description`'s FR3 URDF, adding Gazebo-specific overrides (gravity) |
 | `worlds/` | Gazebo world SDF (`robot_view.sdf`) |
 | `resource/` | Empty ament marker file (`resource/bin_picking`) required by `ament_python` — do not touch |
 

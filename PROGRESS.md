@@ -4,7 +4,7 @@ FR3 M8 볼트 빈피킹 — **컴퓨터비전 → 데스크톱앱 → 로봇암*
 지금은 Gazebo 시뮬로 리허설, 최종 목표는 **실물 FR3 로봇암 적용**.
 
 > 범례: ✅ 완료 · 🔶 진행/부분 · ⬜ 예정
-> 갱신: 2026-07-24
+> 갱신: 2026-08-25
 
 ---
 
@@ -17,16 +17,23 @@ FR3 M8 볼트 빈피킹 — **컴퓨터비전 → 데스크톱앱 → 로봇암*
 ## 📍 현재 단계 (한눈에)
 
 ```
-[시뮬 파지 ✅] → [비전 인식 🔶] → [데스크톱 데이터계약 ✅기획] → [통신방식 ✅구현]
-    → [데스크톱앱 구현 ⬜(별도 팀)] → [로봇측 연동 IF 🔶] → [실물 전환 ⬜]
+[시뮬 파지 ✅] → [볼트 인식 = 데스크톱앱 몫(별도 팀) ⬜] → [데스크톱 데이터계약 ✅기획]
+    → [통신방식 ✅구현] → [로봇측 연동 IF 🔶] → [데스크톱앱 구현 ⬜(별도 팀)] → [실물 전환 ⬜]
 ```
 
-**요약:** 로봇 쪽 "집기" 기반(시뮬)은 탄탄하고, 코드도 리팩토링·GitHub 관리까지 끝났다.
-데스크톱↔로봇 **통신 방식(전송 프로토콜)을 확정·구현**해 `desktop_bridge` 노드로
-왕복 검증까지 마쳤다(데스크톱앱 본체는 별도 팀이 만들 예정이라 이번 범위 밖).
-다음은 **비전 엔드투엔드 검증**과, 데스크톱앱이 나온 뒤 **나머지 명령의 실동작
-연동**(현재는 PICK_BOLT 만 실동작, 그 외는 ACK 골격만).
-전체 목표 대비 대략 **55% 지점**.
+> **2026-08-27 아키텍처 정리:** 로봇쪽 테스트용 비전(`bolt_vision`·`vision_verify`·
+> 카메라 URDF/월드/브릿지)을 **제거**했다. 볼트 인식은 데스크톱앱(별도 팀)이 담당하는
+> 별개 파이프라인이고, 로봇은 데스크톱이 보낸 좌표(`PICK_BOLT`→`/next_bolt_pose`)를
+> 받아 집기만 한다 — 로봇쪽 카메라는 데스크톱앱 없이 E2E를 돌려보려던 비계였다.
+> `/next_bolt_pose` 입력 통로와 Gazebo pose 폴백은 정식 인터페이스로 유지.
+
+**요약:** FR3/UR5e 시뮬 파지 기반과 양 모델의 비전 E2E 검증, 로봇 프로파일 등록·전환,
+데스크톱↔로봇 REST+WebSocket 통신 및 Python SDK까지 구현됐다. 다만 현재 성공률의
+기준 장면은 실제 무더기가 아니라 겹치지 않는 5개 단일 레이어이며, 데스크톱 명령 중
+일부만 커맨드 버스로 로봇 동작에 연결돼 있다. 다음 핵심은 통신 계약 결함/소프트 정지
+semantics 수정, seeded clutter 벤치마크, 다중 pose/grasp 후보, 실물 센싱·안전 계층이다.
+상세 실행 백로그는 `docs/bin_picking_analysis_and_upgrade_plan.md`. 전체 목표 대비
+대략 **60~65% 지점**.
 
 ---
 
@@ -195,6 +202,26 @@ FR3 M8 볼트 빈피킹 — **컴퓨터비전 → 데스크톱앱 → 로봇암*
 
 ## 🔜 앞으로 할 일 / 해야 할 것
 
+### 정밀 분석 · 업그레이드 핸드오프 (2026-08-25)
+- 프로젝트 전체 문서·소스·런치·프로파일·테스트를 대조하고, 최신 빈피킹 연구 및
+  MoveIt/ROS 공식 기능을 현재 구조에 맞춰 적용하는 실행 계획을 작성했다.
+- 확인된 우선 결함: `ALERT` type 대소문자 드리프트, 리프트 실패 reason 오기록,
+  `/next_bolt_pose`의 비전/데스크톱 출처·correlation 소실, soft ESTOP/RESET 의미,
+  파지 성공과 place 완료 결과의 미분리.
+- 현재 장면은 실제 무더기가 아니라 5개 단일 레이어 singulation 기준선이므로,
+  L0~L3 seeded clutter benchmark와 clear-rate 지표를 먼저 추가하는 방향을 확정했다.
+- Claude/후속 작업자는 작업 ID·파일·수용 기준·검증 명령이 정리된
+  **`docs/bin_picking_analysis_and_upgrade_plan.md`**를 실행 백로그로 사용할 것.
+- 통신 프로토콜은 별도 정밀 감사를 완료했다. 확인된 P0는 `deadline(t_sim)`과 Unix
+  벽시계 혼용, HTTP 접수와 robot ACK 미분리, RESULT/ALERT의 telemetry queue 드롭,
+  재접속 복구 부재다. v3 hotfix와 v4 command resource/action/idempotency/replay/
+  scope·lease 구현 순서는 **`docs/desktop_protocol_upgrade_plan.md`**를 기준으로 한다.
+- PLC 없는 구성을 위한 ROS Supervisor 설계를 별도로 확정했다. 셀/명령/cycle 상태기계,
+  READY admission, custom Action, phase별 cancel·recovery, restart reconciliation과 현재
+  `run()`/`_pick()`/`_drop()`의 이관 순서는 **`docs/ros_supervisor_design.md`**의
+  `SUP-01`~`SUP-08`을 기준으로 한다. Supervisor는 기능 안전이나 FCI 실시간 제어를
+  대체하지 않는다.
+
 ### 즉시 (지금 막힌 지점 해소)
 - ✅ **비전 엔드투엔드 검증 (FR3 라이브 완료):**
   - ✅ `bolt_vision` 벤더 중립화: 하드코딩 `fr3_link0` 제거, BIN crop 을 `bolt_scene` 단일 출처로 유도.
@@ -234,5 +261,7 @@ FR3 M8 볼트 빈피킹 — **컴퓨터비전 → 데스크톱앱 → 로봇암*
 - `README.md` — 빌드·실행·모듈 지도
 - `docs/architecture.md` — 모듈 의존 그래프·회귀 주의점
 - `docs/desktop_protocol.md` — 데스크톱↔로봇 데이터 계약(주고받는 데이터)
+- `docs/desktop_protocol_upgrade_plan.md` — 통신 결함·보안·신뢰성 감사와 v4 실행 백로그
+- `docs/ros_supervisor_design.md` — PLC 없는 셀의 ROS 상태기계·Action·복구 설계
 - `docs/robot_profiles.md` — 로봇 프로파일 등록 시스템
 - `docs/robot_profiles_audit_plan.md` — 공유상수 타깃 감사 실행 계획(핸드오프)

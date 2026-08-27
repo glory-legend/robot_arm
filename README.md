@@ -15,21 +15,27 @@
 
 ```mermaid
 flowchart LR
-    CAM[RGB-D 카메라<br/>gz rgbd_camera] -->|PointCloud2| VIS[bolt_vision<br/>볼트 6D 자세 추정]
-    VIS -->|/next_bolt_pose| NODE[integrated_pick_place<br/>픽앤플레이스 노드]
+    DESK[데스크톱앱<br/>카메라→포인트클라우드→볼트 랭킹<br/>*별도 팀·이 repo 밖*] -->|PICK_BOLT REST+WS| BR[desktop_bridge]
+    BR -->|/next_bolt_pose| NODE[integrated_pick_place<br/>픽앤플레이스 노드]
     POSE[Gazebo 볼트 pose<br/>/model/bolt_N/pose] -->|센싱 폴백| NODE
     NODE -->|MoveIt 계획/실행| ARM[로봇팔 + 그리퍼<br/>FR3 · UR5e 등]
     NODE -->|충돌객체/마커| RVIZ[RViz2]
-    NODE <-->|REST+WS| DESK[desktop_bridge<br/>데스크톱앱 통신]
+    NODE -->|arm_state 스트림| BR
+    BR <-->|디지털 섀도우·감시/개입| DESK
 ```
 
-1. **인식** (`bolt_vision`): 통 위 카메라의 포인트클라우드를 base 프레임으로 변환 →
-   통 영역만 잘라 클러스터링(DBSCAN) → 볼트별 중심·축(PCA) 추정 →
-   가장 집기 좋은 볼트의 6D 자세를 `/next_bolt_pose` 로 발행.
+> **로봇은 볼트를 인식하지 않는다.** 인식(카메라→포인트클라우드→랭킹)은
+> **데스크톱앱(별도 팀)** 몫이고, 로봇은 좌표를 받아 **집어 옮기고 상태를 실시간
+> 보고**하는 실행자다. (예전엔 데스크톱앱 없이 E2E를 테스트하려고 로봇쪽에도
+> `bolt_vision` 카메라 노드를 뒀지만, 이제 제거했다.)
+
+1. **좌표 수신**: 데스크톱앱이 1순위 볼트 6D 좌표를 `PICK_BOLT` 로 보내면
+   `desktop_bridge` 가 `/next_bolt_pose` 로 재발행한다. (좌표원이 없을 땐 Gazebo
+   볼트 pose 를 센싱 폴백으로 씀.)
 2. **선택**: 노드가 외부 자세를 우선 쓰고, 없으면 센싱된 볼트 중 자체 선택.
    학습형 선택기(SGD)와 plan-only 롤아웃으로 "실제로 집을 수 있는" 후보를 고름.
 3. **집기·놓기**: 볼트 축에 맞춰 그리퍼 각도를 돌려 파지 → 부착 → 리프트 →
-   놓는 통 빈 자리에 툭 놓기.
+   놓는 통 빈 자리에 툭 놓기. 진행 상태(`arm_state`)를 데스크톱에 실시간 발행.
 
 ---
 
@@ -43,7 +49,10 @@ robotarm_main/
 │  ├─ architecture.md                 ← 모듈 의존 그래프 · 상세 설계
 │  ├─ robot_profiles.md               ← 로봇팔 모델 등록 · 검증 · 전환
 │  ├─ robot_profiles_audit_plan.md    ← 공유상수 타깃 감사 계획 · 진행 기록
+│  ├─ bin_picking_analysis_and_upgrade_plan.md ← 정밀 분석 · 결함 · Claude 실행 백로그
 │  ├─ desktop_protocol.md             ← 데스크톱앱 통신 데이터 계약
+│  ├─ desktop_protocol_upgrade_plan.md ← 프로토콜 정밀 감사 · v4 Claude 백로그
+│  ├─ ros_supervisor_design.md        ← PLC 없는 셀의 ROS 작업관리자 설계 · 구현 백로그
 │  └─ desktop_connection_guide.md     ← 데스크톱앱 접속 · 트러블슈팅
 ├─ tools/                             ← 개발 보조 스크립트 (tilt 수치유도 등)
 └─ src/
@@ -74,15 +83,13 @@ robotarm_main/
 | `gripper_adapters.py` | 그리퍼 액션 인터페이스 어댑터(FollowJointTrajectory / GripperCommand) |
 | `geometry.py` | 순수 수학: 볼트 축·회전·파지 좌표계·선분거리 (ROS 무의존) |
 | `grasp_planning.py` | 그리퍼 개구·접근 기울기·통 벽/도달성 판정 |
-| `sensing.py` | 볼트 6D 자세 구독·외부 비전 입력 (`_all_bolt_poses` 단일 입구) |
+| `sensing.py` | 볼트 6D 자세 구독·외부 좌표 입력(`/next_bolt_pose`) (`_all_bolt_poses` 단일 입구) |
 | `robot_state.py` | `/joint_states` 구독과 팔·손가락 관절 상태 |
 | `moveit_io.py` | MoveIt 계획/실행/Cartesian/IK/FK 래퍼 |
 | `gripper.py` | 그리퍼 제어와 파지 성공 판정 |
 | `scene.py` | PlanningScene 충돌객체·볼트 attach/detach |
 | `markers.py` | RViz 마커 발행 |
 | `selection.py` | 볼트 선택(휴리스틱·학습·롤아웃) |
-| `bolt_vision.py` | **독립 노드**: 카메라 포인트클라우드 → 볼트 6D 자세 |
-| `vision_verify.py` | **독립 노드**: 비전 추정 vs Gazebo 정답 비교 → 위치/축 오차 통계 |
 | `bolt_scene.py` | 통/볼트 자산 치수(스폰과 planning-scene 공유 단일 소스) |
 | `grasp_selector.py` | 학습형 파지 선택기(sklearn SGD, ROS 무의존) |
 | `train_selector.py` | 누적 attempts 로그로 선택기 오프라인 학습 |
@@ -113,23 +120,24 @@ source install/setup.bash          # 쉘이 zsh면 install/setup.zsh
 > `.bash` 대신 `.zsh` 확장자 버전을 source하면 해결됩니다 — `/opt/ros/jazzy/`와
 > `install/` 아래 둘 다 있습니다. 기본 쉘이 뭔지 모르겠으면 `echo $SHELL`로 확인.
 
-## 실행 (터미널 6개, 비전 포함 전체 파이프라인)
+## 실행 (터미널 4개)
 
 ```bash
-ros2 launch bin_picking franka_gazebo_moveit.launch.py   # 1) 로봇 + 카메라
+ros2 launch bin_picking franka_gazebo_moveit.launch.py   # 1) 로봇 (Gazebo + MoveIt)
 ros2 launch bin_picking spawn_bolts.launch.py            # 2) 통 + 볼트 스폰
-ros2 launch bin_picking vision_pipeline.launch.py        # 3) (선택) 카메라 브릿지
-ros2 run   bin_picking bolt_vision                       # 4) (선택) 비전 인식
-ros2 run   bin_picking integrated_pick_place --auto      # 5) 데모 (연속 자동)
-ros2 run   bin_picking desktop_bridge                    # 6) (선택) 데스크톱앱 통신 브릿지
+ros2 run   bin_picking desktop_bridge                    # 3) (선택) 데스크톱앱 통신 브릿지
+ros2 run   bin_picking integrated_pick_place --auto      # 4) 데모 (연속 자동)
 ```
+
+볼트 좌표는 데스크톱앱이 `PICK_BOLT` 로 보내면 `desktop_bridge` 가
+`/next_bolt_pose` 로 넘겨줍니다. 데스크톱앱 없이 도는 데모(위 4개)에서는 노드가
+Gazebo 볼트 pose 를 센싱 폴백으로 써서 스스로 대상을 고릅니다.
 
 `--auto` 를 빼면 사이클마다 수동 진행:
 `ros2 topic pub --once /next_step std_msgs/msg/Empty '{}'`
 
 **RViz**: Fixed Frame은 활성 모델에 따라 다릅니다(FR3: `fr3_link0`,
-UR5e: `base_link`). PointCloud2(`/bin_camera/points`,
-Reliability=**Best Effort**), MarkerArray(`/pick_place_markers`).
+UR5e: `base_link`). MarkerArray(`/pick_place_markers`).
 
 ---
 
@@ -139,11 +147,15 @@ Reliability=**Best Effort**), MarkerArray(`/pick_place_markers`).
 노드, REST+WebSocket 하이브리드+토큰인증)만 먼저 준비해 뒀습니다 — 데이터 계약과
 설계 근거는 [`docs/desktop_protocol.md`](docs/desktop_protocol.md), **접속 방법·검증
 절차·트러블슈팅**은 [`docs/desktop_connection_guide.md`](docs/desktop_connection_guide.md)
-참고.
+참고. 실물 운용 수준으로 올리기 위한 확인 결함과 v4 구현 순서는
+[`docs/desktop_protocol_upgrade_plan.md`](docs/desktop_protocol_upgrade_plan.md)에 있습니다.
+PLC 없이 셀 상태기계·명령 승인·취소·복구를 담당할 ROS 작업관리자 설계는
+[`docs/ros_supervisor_design.md`](docs/ros_supervisor_design.md)를 참고하세요.
 
-**범위:** 비전(카메라→포인트클라우드→볼트 인식)은 데스크톱 앱과 직접 통신하는
-별개 파이프라인입니다(다른 팀 담당). 여기서 검증하는 건 **로봇팔 ↔ 데스크톱
-통신**뿐이라, 아래 명령엔 비전 노드(`vision_pipeline`/`bolt_vision`)가 없습니다.
+**범위:** 볼트 인식(카메라→포인트클라우드→랭킹)은 데스크톱 앱(다른 팀)이 담당하는
+별개 파이프라인이라 로봇 쪽에는 없습니다. 로봇은 데스크톱이 보낸 좌표(`PICK_BOLT`
+→ `/next_bolt_pose`)를 받아 집을 뿐이며, 여기서 검증하는 건 **로봇팔 ↔ 데스크톱
+통신**입니다.
 
 ### 명령 한 줄로 전체 기동 (권장)
 ```bash

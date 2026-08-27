@@ -26,12 +26,6 @@
             name="gz::sim::systems::SceneBroadcaster"/>
     <plugin filename="gz-sim-contact-system"
             name="gz::sim::systems::Contact"/>
-    <!-- ★ 카메라/RGB-D 센서 렌더링·발행에 필수. 이게 없으면 rgbd_camera 가
-         gz 토픽을 전혀 내지 않아 포인트클라우드가 안 온다(RViz 빈 화면). -->
-    <plugin filename="gz-sim-sensors-system"
-            name="gz::sim::systems::Sensors">
-      <render_engine>ogre2</render_engine>
-    </plugin>
 
     <light type="directional" name="sun">
       <cast_shadows>true</cast_shadows>

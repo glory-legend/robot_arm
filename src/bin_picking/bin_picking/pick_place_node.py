@@ -62,11 +62,10 @@ ex05 + ex07 + ex09 + ex10 예제의 핵심을 하나의 파이프라인으로 �
   ※ 전제: franka_description 의 finger_joint2 mimic 등록 패치가 적용된 상태여야
      한다(없으면 한쪽 손가락만 닫혀 편측 파지). 최초 1회 colcon build 필요.
 
-  터미널1: ros2 launch bin_picking franka_gazebo_moveit.launch.py   # 로봇+카메라
+  터미널1: ros2 launch bin_picking franka_gazebo_moveit.launch.py   # 로봇 (Gazebo+MoveIt)
   터미널2: ros2 launch bin_picking spawn_bolts.launch.py            # 통+볼트 스폰
-  터미널3: ros2 launch bin_picking vision_pipeline.launch.py        # (선택) 카메라 브릿지
-  터미널4: ros2 run bin_picking bolt_vision                         # (선택) 비전 인식
-  터미널5: ros2 run bin_picking integrated_pick_place --auto        # 데모 (연속 자동)
+  터미널3: ros2 run bin_picking desktop_bridge                      # (선택) 데스크톱 통신 브릿지
+  터미널4: ros2 run bin_picking integrated_pick_place --auto        # 데모 (연속 자동)
            (--auto 없이 실행하면 STEP_BY_STEP=True → 사이클마다 /next_step 대기:
             ros2 topic pub --once /next_step std_msgs/msg/Empty '{}')
 

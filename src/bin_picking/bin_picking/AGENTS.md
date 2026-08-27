@@ -7,8 +7,8 @@
 Core implementation. Originally a single 3350-line god-class; refactored into responsibility-
 scoped **Mixin** modules that `IntegratedPickPlace` (in `pick_place_node.py`) all inherits
 from — behavior is unchanged (107 methods / 82 constants verified identical pre/post-split),
-but each file now shows only the code for its one responsibility. Two independent ROS2 nodes
-also live here (`bolt_vision.py`, `desktop_bridge.py`) plus ROS-free pure-Python helpers.
+but each file now shows only the code for its one responsibility. An independent ROS2 node
+also lives here (`desktop_bridge.py`) plus ROS-free pure-Python helpers.
 Full rationale: `docs/architecture.md`. Full desktop wire contract: `docs/desktop_protocol.md`.
 
 ## Key Files
@@ -21,15 +21,13 @@ Full rationale: `docs/architecture.md`. Full desktop wire contract: `docs/deskto
 | `gripper_adapters.py` | Gripper action-interface adapters (`FollowJointTrajectory` / `GripperCommand`); owns goal construction and result interpretation so `gripper.py` stays vendor-neutral |
 | `geometry.py` | Pure math: bolt axis/rotation, grasp coordinate frames, segment distance. ROS-free, unit-testable |
 | `grasp_planning.py` | Gripper aperture, approach tilt, bin-wall/reachability judgment |
-| `sensing.py` | Subscribes to bolt 6D poses + external vision input. **Owns the single entry point `_all_bolt_poses()`** |
+| `sensing.py` | Subscribes to bolt 6D poses via `/next_bolt_pose` (`EXT_POSE_TOPIC`, the desktop app's pose input) plus the Gazebo ground-truth fallback. **Owns the single entry point `_all_bolt_poses()`** |
 | `robot_state.py` | `/joint_states` subscription, arm + finger joint state queries |
 | `moveit_io.py` | MoveIt plan/execute/Cartesian/IK/FK service & action wrappers |
 | `gripper.py` | Gripper control (delegates goal/result handling to `gripper_adapters.py`) + grasp-success judgment |
 | `scene.py` | PlanningScene collision-object registration, bolt attach/detach |
 | `markers.py` | RViz marker publishing |
 | `selection.py` | Bolt selection (heuristic / learned / plan-only rollout). **Owns `_log_attempt()`**, the single exit point every `_pick()` outcome passes through |
-| `bolt_vision.py` | **Independent node.** Camera point cloud → per-bolt 6D pose → publishes `/next_bolt_pose` |
-| `vision_verify.py` | **Independent node.** Compares `bolt_vision` estimated poses against Gazebo ground-truth — logs position/axis errors and prints summary statistics. §5c verification tool |
 | `bolt_scene.py` | Bin/bolt asset dimensions — single source shared by spawn (`launch/spawn_bolts.launch.py`) and MoveIt planning-scene |
 | `grasp_selector.py` | Learned grasp selector (sklearn `SGDClassifier`, ROS-free) |
 | `train_selector.py` | Offline hyperparameter search over accumulated `attempts.jsonl`; still saves an SGD-compatible model (GBT is compared but not deployed — see file docstring) |

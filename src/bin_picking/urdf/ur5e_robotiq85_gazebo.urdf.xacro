@@ -17,7 +17,6 @@
   구성:
     world → ur_robot(UR5e) → tool0 → ur_to_robotiq 어댑터 → Robotiq 2F-85
                                                           → grasp_tcp (파지 기준)
-    base_link → camera_link (빈피킹 eye-to-hand RGB-D)
 
   [gz_ros2_control 주의] Robotiq 쪽은 `sim_ignition:=true` 일 때
   `ign_ros2_control/IgnitionSystem` 을 내보내는데, Jazzy 의 gz_ros2_control 이
@@ -101,42 +100,6 @@
     <child link="$(arg tf_prefix)grasp_tcp"/>
     <origin xyz="0 0 $(arg grasp_tcp_z)" rpy="0 0 0"/>
   </joint>
-
-  <!-- ================== 빈피킹 비전 카메라 (eye-to-hand) ==================
-    FR3 래퍼와 같은 배치: 집는 통(base 기준 x=0.40) 위 0.60m 에서 내려다본다.
-    base 에 고정이라 카메라↔base TF 가 robot_state_publisher 로 자동 발행된다. -->
-  <link name="camera_link">
-    <inertial>
-      <mass value="0.01"/>
-      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
-    </inertial>
-  </link>
-  <joint name="camera_joint" type="fixed">
-    <parent link="$(arg tf_prefix)base_link"/>
-    <child link="camera_link"/>
-    <origin xyz="0.40 0.0 0.60" rpy="0 1.5708 0"/>
-  </joint>
-  <link name="camera_optical_link"/>
-  <joint name="camera_optical_joint" type="fixed">
-    <parent link="camera_link"/>
-    <child link="camera_optical_link"/>
-    <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
-  </joint>
-
-  <gazebo reference="camera_link">
-    <sensor name="bin_camera" type="rgbd_camera">
-      <camera>
-        <horizontal_fov>1.05</horizontal_fov>
-        <image><width>640</width><height>480</height></image>
-        <clip><near>0.1</near><far>2.0</far></clip>
-      </camera>
-      <always_on>1</always_on>
-      <update_rate>10</update_rate>
-      <visualize>true</visualize>
-      <topic>bin_camera</topic>
-      <gz_frame_id>camera_link</gz_frame_id>
-    </sensor>
-  </gazebo>
 
   <!-- ================== gz_ros2_control ================== -->
   <gazebo>
