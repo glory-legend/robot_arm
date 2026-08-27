@@ -16,6 +16,12 @@
 > 없이 클린 브레이크 — 데스크톱 앱 본체가 아직 없어 안전하다. §2 데이터
 > 카탈로그(필드 스펙) 자체는 안 바뀌었다, 어느 채널로 오가는지만 바뀌었다.
 >
+> **2026-08-25 정밀 감사:** v3의 현재 계약은 이 문서가 계속 설명한다. 다만
+> clock domain, HTTP 접수/robot ACK 분리, 중요 이벤트 유실·재접속, WS query token,
+> scope/제어권에서 실물 운용 전 수정할 문제가 확인됐다. 목표 v4 계약과 Claude용
+> 작업 ID·수용 기준은 [`desktop_protocol_upgrade_plan.md`](./desktop_protocol_upgrade_plan.md)를
+> 따른다. 해당 작업이 구현되기 전까지 계획서의 v4 예시를 현재 API로 사용하면 안 된다.
+>
 > **"어떻게 접속하는가"는 이 문서가 아니라 [`desktop_connection_guide.md`](./desktop_connection_guide.md)
 > 참고** — 접속 주소(WSL2 네트워크 유의사항 포함)·실행 방법·빠른 검증·
 > 트러블슈팅·실측 검증 내역을 담았다(2026-08-04).
@@ -93,9 +99,14 @@
 | `SET_SPEED` | 속도 스케일 | `scale(0.0–1.0)` | ACK | HIGH |
 | `GO_HOME` | 홈 복귀 | `speed` | ACK+RESULT | HIGH |
 | **`ESTOP`** | 소프트 비상정지 | `reason` | **즉시 ACK** | **SAFETY** |
-| `RESET` | fault/세이프스톱 해제 | `confirm=true` | ACK+상태 | HIGH |
+| `RESET` | fault/세이프스톱 해제 | `confirm=true` | ACK+상태 | HIGH |¹
 | `ACK_ALARM` | 알람 확인 | `alarm_id` | ACK | NORMAL |
 | `GET_STATUS` | 전체 상태 스냅샷 요청 | — | 스냅샷 | LOW |
+
+¹ **RESET `confirm` 시행됨(2026-08-27, BP-C04a):** `args.confirm` 이 불리언 `true`
+가 아니면(누락·`false`·문자열 `"true"`·`1` 포함) `ACK{accepted:false,
+errors:["RESET requires confirm=true"]}` 로 거부되고 로봇에 발행되지 않으며 세이프
+스톱도 풀리지 않는다. 검증 로직은 `protocol.validate_command()`(순수)가 단일 소스다.
 | `PING` | keepalive | `seq` | `PONG` | LOW |
 
 > **랭킹 전달 방식 (선택):**

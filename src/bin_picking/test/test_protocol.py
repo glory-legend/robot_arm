@@ -257,3 +257,32 @@ def test_joint_margins_and_joint_margin_agree_on_minimum():
     scalar = protocol.joint_margin(q, limits)
     per_joint = protocol.joint_margins(q, limits, order)
     assert math.isclose(scalar, min(v for v in per_joint if v is not None))
+
+
+# --- BP-C04a: RESET confirm 검증 (validate_command) ---
+
+def test_reset_requires_confirm_true():
+    """RESET 은 confirm=true 없이는 거부돼야 한다(안전 정지 오해제 방지)."""
+    assert protocol.validate_command('RESET', {}) == ['RESET requires confirm=true']
+    assert protocol.validate_command('RESET', {'confirm': False}) \
+        == ['RESET requires confirm=true']
+    # 문자열/정수 truthy 값은 엄격히 거부 — 타입을 정확히 맞추게 한다.
+    assert protocol.validate_command('RESET', {'confirm': 'true'}) \
+        == ['RESET requires confirm=true']
+    assert protocol.validate_command('RESET', {'confirm': 1}) \
+        == ['RESET requires confirm=true']
+
+
+def test_reset_accepted_with_confirm_true():
+    assert protocol.validate_command('RESET', {'confirm': True}) == []
+
+
+def test_validate_command_none_args_safe():
+    # args 가 아예 없어도(None) 크래시 없이 검증한다.
+    assert protocol.validate_command('RESET', None) == ['RESET requires confirm=true']
+    assert protocol.validate_command('START', None) == []
+
+
+def test_other_commands_have_no_extra_constraints():
+    for mtype in ('START', 'STOP', 'PAUSE', 'RESUME', 'GO_HOME', 'SET_SPEED'):
+        assert protocol.validate_command(mtype, {}) == []

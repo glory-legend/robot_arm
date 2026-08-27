@@ -400,8 +400,14 @@ class DesktopBridgeNode(Node):
         if mtype not in _ACK_ONLY_TYPES:
             return web.json_response(
                 {'accepted': False, 'errors': [f'unknown command type: {mtype!r}']})
-        self._cmd_state[mtype] = body.get('args') or {}
-        self._publish_command({'cmd': mtype, **(body.get('args') or {})})
+        args = body.get('args') or {}
+        # 명령별 인자 검증(순수, protocol). RESET 은 confirm=true 없으면 거부 —
+        # 검증 실패 시 로봇에 발행하지도, estop 을 풀지도 않는다(BP-C04a).
+        errors = protocol.validate_command(mtype, args)
+        if errors:
+            return web.json_response({'accepted': False, 'errors': errors})
+        self._cmd_state[mtype] = args
+        self._publish_command({'cmd': mtype, **args})
         if mtype == 'RESET':
             with self._estop_lock:
                 self._estop = False

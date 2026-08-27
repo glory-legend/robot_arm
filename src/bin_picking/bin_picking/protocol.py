@@ -118,6 +118,27 @@ def validate_pick_bolt(args):
     return errors
 
 
+# 명령별 인자 검증 규칙(ROS 무의존, 순수). 여기 없는 명령은 추가 검증이 없다.
+# 부록A 명령 표에서 인자에 제약이 있는 것만 둔다. `desktop_bridge._http_command`
+# 가 이 결과를 그대로 ACK{accepted:false, errors} 로 돌려준다.
+def validate_command(mtype, args):
+    """ACK-only 제어 명령(`type`, `args`)의 인자 유효성 검사.
+
+    반환: 에러 메시지 리스트(비어 있으면 유효).
+
+    - RESET: fault/세이프스톱을 해제하는 위험 명령이라 반드시 `confirm=true` 를
+      요구한다(부록A). 이게 없으면 오조작/유실 클릭으로 안전 정지가 풀린다 —
+      BP-C04a. `confirm` 은 엄격히 불리언 True 만 인정한다(문자열 "true"·1 은
+      거부해 데스크톱 팀이 타입을 정확히 맞추게 한다).
+    """
+    args = args or {}
+    errors = []
+    if mtype == 'RESET':
+        if args.get('confirm') is not True:
+            errors.append('RESET requires confirm=true')
+    return errors
+
+
 def is_stale(stamp_ns, deadline_ns, now_ns):
     """PICK_BOLT.args.deadline (옵션) 이 지났으면 True.
 
