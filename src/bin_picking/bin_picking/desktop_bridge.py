@@ -11,7 +11,7 @@
     `GET /api/v1/status` — 명령/조회. 아무 언어의 흔한 HTTP 클라이언트(curl 포함)로
     바로 붙을 수 있다.
   - `GET /ws/telemetry` — 접속 직후 STATUS 스냅샷 1회 + 이후 arm_state(20Hz)·
-    heartbeat(1Hz)·RESULT·grasp_result·ALERT 를 순수 서버→클라이언트로 스트림.
+    heartbeat(1Hz)·RESULT·grasp_result·alert 를 순수 서버→클라이언트로 스트림.
     클라이언트가 보내는 메시지는 더 이상 명령으로 처리하지 않는다(v2까지는 명령도
     이 WS 연결로 받았다 — REST 로 분리한 이유는 desktop_protocol.md §4 참고).
   - **인증**: 모든 `/api/*` 는 `Authorization: Bearer <token>` 필수. WS 는 핸드셰이크에
@@ -472,7 +472,7 @@ class DesktopBridgeNode(Node):
             f'(현재 실행 중인 모델은 {ROBOT_MODEL} — 재기동해야 적용됩니다)')
         # 텔레메트리로도 알린다. 이 브릿지에 붙은 다른 클라이언트가 "왜 갑자기
         # 모델이 바뀌었나"를 모른 채 지나가면 안 된다(§4 "침묵은 버그다").
-        self._send(self._envelope('ALERT', {
+        self._send(self._envelope('alert', {
             'severity': 'warn',
             'code': 'ROBOT_MODEL_CHANGED',
             'msg': (f'활성 로봇 모델이 {profile.name} 로 바뀌었습니다. '
@@ -523,7 +523,7 @@ class DesktopBridgeNode(Node):
         if errors:
             # deadline 초과는 조용히 흘려보내지 않고 ALERT 까지 띄운다.
             if errors == ['stale: deadline exceeded']:
-                self._send(self._envelope('ALERT', {
+                self._send(self._envelope('alert', {
                     'severity': 'warn', 'code': 'STALE_COMMAND',
                     'msg': f'PICK_BOLT {cmd_id} deadline exceeded',
                     'context': {'bolt_id': args.get('bolt_id')},
@@ -586,7 +586,7 @@ class DesktopBridgeNode(Node):
                 self.get_logger().warn(
                     '[desktop_bridge] WS 로 들어온 메시지를 무시했습니다 — v3부터 명령은 '
                     'REST(/api/v1/*) 전용입니다.')
-                await ws.send_str(json.dumps(self._envelope('ALERT', {
+                await ws.send_str(json.dumps(self._envelope('alert', {
                     'severity': 'warn', 'code': 'WS_COMMANDS_DEPRECATED',
                     'msg': 'v3부터 WS로 명령을 보낼 수 없습니다. REST API를 사용하세요.',
                 })))
@@ -739,7 +739,7 @@ class DesktopBridgeNode(Node):
         self._arm_state_stall_count += 1
         if self._arm_state_stall_count >= 3 and not self._arm_state_stall_alerted:
             self._arm_state_stall_alerted = True
-            self._send(self._envelope('ALERT', {
+            self._send(self._envelope('alert', {
                 'severity': 'warn', 'code': code, 'msg': detail,
                 'context': {'consecutive_ticks': self._arm_state_stall_count},
             }))

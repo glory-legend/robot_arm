@@ -146,3 +146,78 @@ class TestClientImport:
         assert hasattr(desktop_sdk, '__all__')
         for name in desktop_sdk.__all__:
             assert hasattr(desktop_sdk, name)
+
+
+class TestAlertWireType:
+    """BP-C01 회귀: 브릿지가 보내는 alert envelope 를 SDK 가 실제로 받는지.
+
+    브릿지(`desktop_bridge.py`)는 stale command·TF/joint-state 스톨·모델 변경을
+    `type='alert'` 로 발행하고, SDK 의 `_dispatch()` 는 `mtype == 'alert'` 만
+    처리한다. 예전엔 브릿지가 `'ALERT'`(대문자)로 보내 `on('alert')` 가 전혀
+    받지 못하고 `'*'` raw listener 로만 우연히 보였다. 이 테스트가 그 계약을
+    고정한다 — 여기서 쓰는 envelope 는 브릿지가 실제로 만드는 것과 동일한 형태다.
+    """
+
+    def _client(self):
+        from desktop_sdk import BinPickingClient
+        return BinPickingClient('http://localhost:1', 'test-token')
+
+    def _bridge_stale_alert(self):
+        """desktop_bridge._reject_stale() 가 보내는 것과 동일한 envelope."""
+        return Envelope.from_dict({
+            'v': 3, 'type': 'alert', 'id': 'alert-abc', 'corr': None,
+            'prio': 'NORMAL', 't_wall': 0, 't_sim': 0,
+            'use_sim_time': True, 'seq': 7,
+            'args': {
+                'severity': 'warn', 'code': 'STALE_COMMAND',
+                'msg': 'PICK_BOLT c-1 deadline exceeded',
+                'context': {'bolt_id': 'bolt_2'},
+            },
+        })
+
+    def test_lowercase_alert_reaches_alert_listener(self):
+        client = self._client()
+        received = []
+        client.on('alert', received.append)
+
+        client._dispatch(self._bridge_stale_alert())
+
+        assert len(received) == 1
+        alert = received[0]
+        assert alert.severity == 'warn'
+        assert alert.code == 'STALE_COMMAND'
+        assert alert.context['bolt_id'] == 'bolt_2'
+
+    def test_alert_also_reaches_wildcard_listener(self):
+        client = self._client()
+        raw = []
+        client.on('*', raw.append)
+
+        client._dispatch(self._bridge_stale_alert())
+
+        assert len(raw) == 1
+        assert raw[0].type == 'alert'
+
+    def test_uppercase_alert_does_not_reach_alert_listener(self):
+        """대문자 'ALERT' 는 계약 위반 — on('alert') 로 오면 안 된다(회귀 방지).
+
+        브릿지가 다시 'ALERT' 로 퇴행하면 이 테스트가 아니라
+        test_lowercase_alert_reaches_alert_listener 가 실서비스에서 깨지는데,
+        여기서는 와이어 타입 규약 자체를 명시적으로 못박아 둔다.
+        """
+        client = self._client()
+        typed = []
+        raw = []
+        client.on('alert', typed.append)
+        client.on('*', raw.append)
+
+        bad = Envelope.from_dict({
+            'v': 3, 'type': 'ALERT', 'id': 'alert-bad', 'corr': None,
+            'prio': 'NORMAL', 't_wall': 0, 't_sim': 0,
+            'use_sim_time': True, 'seq': 8,
+            'args': {'severity': 'warn', 'code': 'STALE_COMMAND', 'msg': 'x'},
+        })
+        client._dispatch(bad)
+
+        assert typed == []          # 대문자는 타입드 리스너에 안 온다
+        assert len(raw) == 1        # raw 로만 흘러간다(예전의 숨은 동작)
