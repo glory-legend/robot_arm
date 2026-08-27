@@ -881,7 +881,7 @@ class IntegratedPickPlace(Node, PickPlaceConfig, GeometryMixin, GraspPlanningMix
             tx, ty, grasp_z, self.APPROACH_HEIGHT, ori)
         if not self.cartesian_viz_execute(lift, label=f'Lift-{label}',
                                           vel=self._vel_fine):
-            return fail('리프트 실패', 'descend_fail')
+            return fail('리프트 실패', 'lift_fail')
         # --- 지상진실 재검증: 볼트가 그리퍼를 따라 올라왔나 ---
         seq0 = self._sense_seq
         self._spin_until(lambda: self._sense_seq > seq0,
