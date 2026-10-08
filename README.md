@@ -217,6 +217,18 @@ ros2 launch bin_picking desktop_integration_demo.launch.py robot_model:=my_arm
 
 ---
 
+## 혼합 박스 팔레타이징 (별도 데모)
+
+사용자 지정 「실시간 바코드 기반 온라인 혼합 박스 팔레타이징 시스템」 PDF의
+오프라인 배치와 **진공 흡착 툴을 장착한 FR3의 실제 운반 데모**를 구현했습니다.
+빌드 후 `ros2 launch bin_picking palletizing_demo.launch.py`를 실행하면
+컨베이어 픽업 지점의 박스 **36개를 3단**으로 쌓습니다. 기본 `strategy:=dense`는
+박스별 0°/90° 회전·3 mm 간격·다중 상면 지지·누적 하중을 검사하며,
+128개 후보 배치를 비교합니다. 계산에 약 1분, 실제 운반에는 추가 시간이 필요합니다.
+이전 6개 데모는 `strategy:=compact box_count:=6`로 실행할 수 있습니다.
+바코드·목적지·버퍼 회수는 후속 단계입니다. 정적 미리보기는 `mode:=preview`.
+범위·실행법·검증 기록은 [`docs/palletizing_implementation.md`](docs/palletizing_implementation.md).
+
 ## 학습 데이터
 
 파지 성공/실패 이력은 홈의 `~/pick_place_logs/attempts.jsonl` 에 누적되며,

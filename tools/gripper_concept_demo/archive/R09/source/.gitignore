@@ -1,0 +1,8 @@
+node_modules/
+dist/
+public/fr3/
+test-results/
+playwright-report/
+.premium-audit.json
+public/robotiq/
+public/robotiq-2f85/

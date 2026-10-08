@@ -1,0 +1,92 @@
+{
+  "date": "2026-10-02",
+  "captures": [
+    {
+      "file": "screenshots/r10-reproduced-stowed.png",
+      "design": "c2",
+      "time": 26,
+      "bolt": "m8",
+      "internal": false,
+      "provenance": "R10 preserved design reproduced on 2026-10-02, not an original historical screenshot"
+    },
+    {
+      "file": "screenshots/r10-reproduced-internal.png",
+      "design": "c2",
+      "time": 40,
+      "bolt": "m8",
+      "internal": true,
+      "provenance": "R10 preserved design reproduced on 2026-10-02, not an original historical screenshot"
+    },
+    {
+      "file": "screenshots/r11-whole.png",
+      "design": "r11",
+      "time": 0,
+      "bolt": "m8",
+      "internal": false,
+      "provenance": "R11 original implementation screenshot on 2026-10-02"
+    },
+    {
+      "file": "screenshots/r11-pick.png",
+      "design": "r11",
+      "time": 5,
+      "bolt": "m8",
+      "internal": false,
+      "provenance": "R11 original implementation screenshot on 2026-10-02"
+    },
+    {
+      "file": "screenshots/r11-righting.png",
+      "design": "r11",
+      "time": 12,
+      "bolt": "m8",
+      "internal": false,
+      "provenance": "R11 original implementation screenshot on 2026-10-02"
+    },
+    {
+      "file": "screenshots/r11-handoff.png",
+      "design": "r11",
+      "time": 21,
+      "bolt": "m8",
+      "internal": true,
+      "provenance": "R11 original implementation screenshot on 2026-10-02"
+    },
+    {
+      "file": "screenshots/r11-stowed.png",
+      "design": "r11",
+      "time": 26,
+      "bolt": "m8",
+      "internal": false,
+      "provenance": "R11 original implementation screenshot on 2026-10-02"
+    },
+    {
+      "file": "screenshots/r11-fastening.png",
+      "design": "r11",
+      "time": 50,
+      "bolt": "m8",
+      "internal": false,
+      "provenance": "R11 original implementation screenshot on 2026-10-02"
+    },
+    {
+      "file": "screenshots/r11-internal.png",
+      "design": "r11",
+      "time": 40,
+      "bolt": "m8",
+      "internal": true,
+      "provenance": "R11 original implementation screenshot on 2026-10-02"
+    },
+    {
+      "file": "screenshots/r11-m6-fastening.png",
+      "design": "r11",
+      "time": 50,
+      "bolt": "m6",
+      "provenance": "R11 original implementation screenshot on 2026-10-02"
+    },
+    {
+      "file": "screenshots/r11-m10-fastening.png",
+      "design": "r11",
+      "time": 50,
+      "bolt": "m10",
+      "provenance": "R11 original implementation screenshot on 2026-10-02"
+    }
+  ],
+  "browser_errors": []
+}

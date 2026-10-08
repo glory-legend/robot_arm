@@ -1,0 +1,98 @@
+{
+  "version": "R10",
+  "adopted_from": "R10 review concept 2 (원통 + 캠 연속 스트로크)",
+  "date": "2026-10-02",
+  "design": {
+    "body_mm": {
+      "diameter": 62,
+      "length": 81
+    },
+    "nose_mm": {
+      "diameter": 29,
+      "length": 12
+    },
+    "tool_length_mm": 93,
+    "section_vs_R09": "3,599 -> 3,019 mm² (-16%)",
+    "feed": "ring motor -> threaded sleeve around spindle -> yoke ring nut; 3 tie rods stop yoke rotation",
+    "chuck": "spring-closed, one-way trigger latches on the back stroke at carriage 0; 3 mm yoke over-travel unlatches",
+    "tweezer_spread": "fixed cam rails, first 0.6 mm of the stow stroke",
+    "stages": 11,
+    "stages_R09": 14,
+    "actuators": 5,
+    "actuators_R09": 6,
+    "unchanged": [
+      "tweezer blades",
+      "2R thumb 24+24",
+      "Ø27.6 6-jaw chuck",
+      "nose Ø29x12",
+      "FR3 arm and path"
+    ],
+    "min_bolt_pitch_mm": {
+      "M6": 22,
+      "M8": 24,
+      "M10": 26
+    }
+  },
+  "unit_tests": {
+    "passed": 72,
+    "failed": 0,
+    "note": "tests/compact.test.ts: 10 checks x 4 designs (r09, c1, c2=R10, c3)"
+  },
+  "browser_tests": {
+    "passed": 18,
+    "failed": 0,
+    "duration": "2.3m"
+  },
+  "typecheck": "passed",
+  "production_build": "passed",
+  "format": "passed",
+  "screenshots": [
+    "dense-wall-fastening.png",
+    "internal-layout.png",
+    "overtravel-release.png",
+    "pick.png",
+    "righting.png",
+    "stowed.png",
+    "stroke-clamp-spread.png",
+    "stroke-draw-in.png",
+    "thumb-park.png",
+    "transparent-spring-chuck.png",
+    "whole.png"
+  ],
+  "glb": {
+    "m10-r10-gripper.glb": {
+      "bytes": 917828,
+      "sha256": "0aa1addafb9c8992e36a095ff912fd4afe387d726d1146fbbfc0df8bf6402257",
+      "glb_version": 2,
+      "metres_scale_verified": true,
+      "origin": "FR3 flange",
+      "pose": "t=12 s (thumb righting, all mechanisms extended), held bolt included"
+    },
+    "m6-r10-gripper.glb": {
+      "bytes": 914628,
+      "sha256": "f30033dc3a7bcba5b55c3c590fd140435d9afe7dde0ebdc7f8810627a83d0621",
+      "glb_version": 2,
+      "metres_scale_verified": true,
+      "origin": "FR3 flange",
+      "pose": "t=12 s (thumb righting, all mechanisms extended), held bolt included"
+    },
+    "m8-r10-gripper.glb": {
+      "bytes": 916556,
+      "sha256": "b5036987c4083df4d9dd3c0b0a8a5bcca354fe5f8020a1ca8f68e218886c8e38",
+      "glb_version": 2,
+      "metres_scale_verified": true,
+      "origin": "FR3 flange",
+      "pose": "t=12 s (thumb righting, all mechanisms extended), held bolt included"
+    }
+  },
+  "not_verified": [
+    "spring-chuck grip force",
+    "trigger/latch reliability",
+    "cam wear",
+    "bolt attitude during draw-in after thumb park",
+    "FR3 wrist (~12 Nm) cannot react M8/M10 example torques",
+    "collision with the bolt pile",
+    "mass, strength, tolerances"
+  ],
+  "manufacturing_release": false
+}

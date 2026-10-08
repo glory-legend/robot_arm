@@ -1,0 +1,66 @@
+# =====================================================================
+#  UR5e + Robotiq Hand-E — gz_ros2_control 컨트롤러 설정
+# =====================================================================
+# 이 파일은 결합 xacro(`urdf/ur5e_robotiq_hande_gazebo.urdf.xacro`)의
+# gz_ros2_control 플러그인이 <parameters> 로 읽는다.
+#
+# 컨트롤러 이름은 프로파일(`robot_profiles/data/ur5e_robotiq_hande.yaml`)의
+# arm.controller / gripper.controller 와 **반드시 일치**해야 한다 —
+# 어긋나면 스포너가 실패해 로봇이 아예 안 움직인다. `binpick_model verify` 가
+# 실행 중인 controller_manager 와 대조해 잡아 준다.
+#
+# 팔 쪽은 `ur5e_robotiq_controllers.yaml`(2F-85 판)과 완전히 동일하다 — 같은
+# UR5e 이고 그리퍼는 팔 컨트롤러에 등장하지 않는다. 그리퍼 블록만 다르다.
+controller_manager:
+  ros__parameters:
+    update_rate: 500  # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    ur_arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    # GripperCommand 액션을 노출하는 표준 병렬 그리퍼 컨트롤러.
+    # (Robotiq 계열은 이쪽이 표준. 파이프라인은 gripper_adapters.py 가
+    #  FollowJointTrajectory/GripperCommand 두 방식을 모두 흡수한다.)
+    robotiq_hande_controller:
+      type: position_controllers/GripperActionController
+
+ur_arm_controller:
+  ros__parameters:
+    joints:
+      - shoulder_pan_joint
+      - shoulder_lift_joint
+      - elbow_joint
+      - wrist_1_joint
+      - wrist_2_joint
+      - wrist_3_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    state_publish_rate: 100.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
+
+robotiq_hande_controller:
+  ros__parameters:
+    # 종동(mimic) 관절 robotiq_hande_right_finger_joint 는 넣지 않는다 —
+    # 구동 관절 하나만 지령한다(gz 가 URDF <mimic> 으로 반대편을 따라오게 한다).
+    joint: robotiq_hande_left_finger_joint
+    # ★ 이 세 값이 '정지 = 파지'라는 판정을 성립시키는 핵심이다. 물체를 물면
+    #   목표 위치에 못 가고 멈추는데, 그걸 실패로 처리하면 파지가 전부 실패로
+    #   보고된다. 2F-85 판(`ur5e_robotiq_controllers.yaml`)의 값을 그대로
+    #   시작점으로 가져왔다 — 관절 단위가 rad(2F-85) 에서 m(Hand-E) 로 바뀌므로
+    #   goal_tolerance/stall_velocity_threshold 의 '물리적 의미'는 달라진다.
+    # ⚠ [시드값 — 라이브 튜닝 필요] 특히 goal_tolerance 0.05 는 Hand-E 에서
+    #   50mm 를 뜻해 전체 스트로크(25mm)보다 넓다 → 사실상 위치 오차를 전혀
+    #   안 보는 상태다. 파지 판정 자체는 /joint_states 실측 개구로 하므로
+    #   (geometry._finger_width_is_grasp) 동작은 하지만, Gazebo 에서 개폐를
+    #   확인한 뒤 mm 단위(예 0.005)로 조여야 한다.
+    allow_stalling: true          # 물체를 물어 멈추는 것은 정상이다
+    goal_tolerance: 0.05
+    stall_velocity_threshold: 0.001
+    stall_timeout: 0.5

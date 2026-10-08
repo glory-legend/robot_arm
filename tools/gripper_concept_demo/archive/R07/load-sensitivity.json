@@ -1,0 +1,109 @@
+{
+  "status": "예비 민감도 계산 / 실제 토크·재료·안전계수 미정 / 정격 판정 없음",
+  "assumptions": {
+    "torques_nm": [
+      20.0,
+      40.0,
+      60.0
+    ],
+    "head_across_flats_mm": [
+      10,
+      13,
+      17
+    ],
+    "solid_output_shaft_diameters_mm": [
+      16.0
+    ],
+    "equal_load_sharing_reaction_tabs": 2,
+    "tab_radius_mm": 65.0,
+    "friction_coefficient": 0.2,
+    "normal_force_per_pad_n": 20,
+    "uniform_pressure_circular_pad_radius_mm": 1
+  },
+  "head_force": [
+    {
+      "torque_nm": 20.0,
+      "across_flats_mm": 10,
+      "equivalent_tangential_force_n": 4000.0
+    },
+    {
+      "torque_nm": 20.0,
+      "across_flats_mm": 13,
+      "equivalent_tangential_force_n": 3076.923076923077
+    },
+    {
+      "torque_nm": 20.0,
+      "across_flats_mm": 17,
+      "equivalent_tangential_force_n": 2352.9411764705883
+    },
+    {
+      "torque_nm": 40.0,
+      "across_flats_mm": 10,
+      "equivalent_tangential_force_n": 8000.0
+    },
+    {
+      "torque_nm": 40.0,
+      "across_flats_mm": 13,
+      "equivalent_tangential_force_n": 6153.846153846154
+    },
+    {
+      "torque_nm": 40.0,
+      "across_flats_mm": 17,
+      "equivalent_tangential_force_n": 4705.882352941177
+    },
+    {
+      "torque_nm": 60.0,
+      "across_flats_mm": 10,
+      "equivalent_tangential_force_n": 12000.0
+    },
+    {
+      "torque_nm": 60.0,
+      "across_flats_mm": 13,
+      "equivalent_tangential_force_n": 9230.76923076923
+    },
+    {
+      "torque_nm": 60.0,
+      "across_flats_mm": 17,
+      "equivalent_tangential_force_n": 7058.823529411764
+    }
+  ],
+  "shaft_stress": [
+    {
+      "torque_nm": 20.0,
+      "solid_shaft_diameter_mm": 16.0,
+      "max_shear_mpa": 24.867959858108648
+    },
+    {
+      "torque_nm": 40.0,
+      "solid_shaft_diameter_mm": 16.0,
+      "max_shear_mpa": 49.735919716217296
+    },
+    {
+      "torque_nm": 60.0,
+      "solid_shaft_diameter_mm": 16.0,
+      "max_shear_mpa": 74.60387957432594
+    }
+  ],
+  "reaction_tabs": [
+    {
+      "torque_nm": 20.0,
+      "equal_share_force_per_tab_n": 153.84615384615384,
+      "one_tab_only_force_n": 307.6923076923077
+    },
+    {
+      "torque_nm": 40.0,
+      "equal_share_force_per_tab_n": 307.6923076923077,
+      "one_tab_only_force_n": 615.3846153846154
+    },
+    {
+      "torque_nm": 60.0,
+      "equal_share_force_per_tab_n": 461.53846153846155,
+      "one_tab_only_force_n": 923.0769230769231
+    }
+  ],
+  "pad_friction_torque": {
+    "single_pad_nm": 0.0026666666666666666,
+    "two_equal_pads_nm": 0.005333333333333333,
+    "limitation": "균일 압력 원형 면접촉의 개산값. 원통·나사산의 실제 접촉에는 직접 적용할 수 없음. 패드 자체 법선축 주위 비틀림이며 볼트 축 주위 체결 토크 정격이 아님."
+  }
+}

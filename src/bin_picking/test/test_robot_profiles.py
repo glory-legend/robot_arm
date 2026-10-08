@@ -117,6 +117,203 @@ class TestFr3RegressionIdentity:
 
 
 # =====================================================================
+# 1b. UR5e + Robotiq Hand-E — 신규 기본 모델
+# =====================================================================
+# FR3 쪽처럼 '옛 상수와 같은가'를 볼 대상이 없다(새 모델이라 비교 원본이 없다).
+# 그래서 여기서는 **값이 그렇게 나온 이유**를 지킨다:
+#   - 손끝 기하는 벤더 콜리전 메시에서 유도했으므로, 메시와 다시 대조한다.
+#   - 팔 섹션은 그리퍼와 무관하므로 ur5e_robotiq85 와 한 글자도 달라선 안 된다.
+#   - 적응형 하강이 살아 있는가는 이 저장소가 두 번 데인 지점이라 수식으로 고정한다.
+_HANDE = 'ur5e_robotiq_hande'
+
+# 이 저장소 소스트리 기준 경로들(설치본이 아니라 소스에서 돈다).
+_REPO_SRC = os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))))                      # …/src
+_HANDE_MESH = os.path.join(_REPO_SRC, 'robotiq_hande_description',
+                           'meshes', 'finger_collision.dae')
+_HANDE_URDF = os.path.join(_REPO_SRC, 'bin_picking', 'urdf',
+                           'ur5e_robotiq_hande_gazebo.urdf.xacro')
+
+# config.py 에서 손으로 옮겨 적은 작업(task) 상수 — 프로파일에서 유도하지 말 것.
+_TASK = {
+    'BIN_FLOOR_TOP': 0.005,        # 통 바닥 충돌박스 상면
+    'BOLT_SHAFT_RADIUS': 0.004,    # M8 샤프트 반경
+    'BOLT_REST_CENTER_Z': 0.009,   # = BIN_FLOOR_TOP + BOLT_SHAFT_RADIUS
+    'GRASP_DETECT_MAX': 0.009,
+}
+
+
+def _finger_pad_box():
+    """벤더 콜리전 메시에서 '파지 패드' 박스의 (x, y, z) 범위를 뽑는다.
+
+    finger_collision.dae 는 정점 16개 = 박스 두 개(파지 패드 + 캐리지)이고,
+    asset 이 unit meter=1.0 / Z_UP 이며 visual_scene 에 노드 변환이 없다 →
+    <float_array> 정점이 곧 손가락 링크 좌표(m)다. 패드는 손끝(z 최대) 쪽 박스.
+    """
+    import xml.etree.ElementTree as ET
+
+    ns = {'c': 'http://www.collada.org/2005/11/COLLADASchema'}
+    root = ET.parse(_HANDE_MESH).getroot()
+    asset = root.find('c:asset', ns)
+    assert float(asset.find('c:unit', ns).get('meter')) == 1.0
+    assert asset.find('c:up_axis', ns).text.strip() == 'Z_UP'
+
+    boxes = []
+    for geom in root.iter('{%s}geometry' % ns['c']):
+        mesh = geom.find('c:mesh', ns)
+        src_id = next(i.get('source').lstrip('#')
+                      for i in mesh.find('c:vertices', ns).findall('c:input', ns)
+                      if i.get('semantic') == 'POSITION')
+        vals = [float(v) for v in mesh.find(
+            "c:source[@id='%s']" % src_id, ns).find('c:float_array', ns).text.split()]
+        pts = list(zip(vals[0::3], vals[1::3], vals[2::3]))
+        boxes.append(((min(p[0] for p in pts), max(p[0] for p in pts)),
+                      (min(p[1] for p in pts), max(p[1] for p in pts)),
+                      (min(p[2] for p in pts), max(p[2] for p in pts))))
+    return max(boxes, key=lambda b: b[2][1])
+
+
+@pytest.fixture(scope='module')
+def hande():
+    return registry.get(_HANDE)
+
+
+class TestUr5eHandeProfile:
+    """신규 기본 모델 — 등록되어 있고, 값의 유도 근거가 살아 있는가."""
+
+    def test_is_the_default_model(self, hande):
+        assert registry.DEFAULT_MODEL == _HANDE
+        assert hande.name == _HANDE
+
+    def test_status_is_draft_until_gazebo_verified(self, hande):
+        """실물/실측 전이므로 draft 다 — 명시 전환은 계속 거부돼야 한다."""
+        assert not hande.is_verified
+        assert hande.task_validated is False
+
+    def test_arm_section_is_identical_to_2f85(self, hande):
+        """팔은 그리퍼와 무관하다 — 두 UR5e 프로파일이 어긋나면 둘 중 하나가 틀렸다."""
+        assert hande.arm.to_dict() == registry.get('ur5e_robotiq85').arm.to_dict()
+
+    def test_gripper_identifiers(self, hande):
+        g = hande.gripper
+        assert g.kind == 'linear'          # 평행 슬라이더 — 2F-85 의 angular 와 다르다
+        assert g.command_joint == 'robotiq_hande_left_finger_joint'
+        assert g.action_type == 'GripperCommand'
+        assert g.action_name == '/robotiq_hande_controller/gripper_cmd'
+        assert g.controller == 'robotiq_hande_controller'
+        # 종동 관절은 gz 가 처리하므로 발행되지 않는다 → 넣지 않는다.
+        assert list(g.state_joints) == ['robotiq_hande_left_finger_joint']
+
+    def test_joint_value_is_the_halfwidth(self, hande):
+        """관절값 = 반개구. 패드 안쪽면이 손가락 링크 x=0 에 있어서 성립한다.
+
+        이게 깨지면 파지 판정 경계(GRASP_DETECT_MIN/MAX)가 통째로 어긋난다.
+        """
+        for v in (0.0, 0.001, 0.004, 0.010, 0.025):
+            assert hande.gripper.halfwidth_of(v) == v
+            assert hande.gripper.full_width_of(v) == 2.0 * v
+        # 만개 총 개구 = 50mm (Robotiq Hand-E 카탈로그)
+        assert hande.gripper.full_width_of(hande.gripper.open_cmd) == pytest.approx(0.050)
+
+    def test_open_closed_direction(self, hande):
+        """FR3 규약(값이 커질수록 열림). 2F-85 는 정반대라 여기서 갈린다."""
+        g = hande.gripper
+        assert g.halfwidth_of(g.open_cmd) > g.halfwidth_of(g.closed_cmd)
+        assert g.command_range() == (g.closed_cmd, g.open_cmd)
+
+    def test_closing_axis_needs_quarter_turn(self, hande):
+        """grasp_tcp 는 닫힘축이 x 다 → y_tool 로 보내려면 z 둘레 +90°."""
+        import math
+        roll, pitch, yaw = hande.gripper.tool_frame_rpy
+        assert (roll, pitch) == (0.0, 0.0)
+        assert yaw == pytest.approx(math.pi / 2, abs=1e-4)
+
+    def test_grasp_detection_separates_empty_close_from_bolt(self, hande):
+        """허공 닫힘과 M8 파지가 판정 경계의 서로 다른 쪽에 있는가.
+
+        경계 = (허공 닫힘 개구 + 샤프트 반경)/2 — config.apply_profile 과 같은 식.
+        """
+        g = hande.gripper
+        empty = g.halfwidth_of(g.closed_cmd)
+        bolt = _TASK['BOLT_SHAFT_RADIUS']
+        boundary = (empty + bolt) / 2.0
+        assert empty < boundary < bolt <= _TASK['GRASP_DETECT_MAX']
+
+    def test_adaptive_descent_loop_actually_runs(self, hande):
+        """바닥 볼트에서 적응형 하강이 0회 돌지 않는가.
+
+        이 저장소가 두 번 데인 지점이다(2F-85 는 손끝 28.5mm 때문에 루프가 통째로
+        죽었다). Hand-E 는 FR3 보다 손끝이 1mm 길 뿐인데 그 1mm 로 grasp_z 가
+        z_cap 을 넘어선다 → floor_raise 가 반드시 0 보다 커야 한다.
+        수식은 pick_place_node 의 z_cap 계산을 그대로 옮긴 것이다.
+        """
+        gr, gg = hande.grasp, hande.gripper
+        grasp_z = (_TASK['BIN_FLOOR_TOP'] + gg.tcp_to_fingertip + gr.floor_clear)
+        z_cap = _TASK['BOLT_REST_CENTER_Z'] + gr.max_above
+        if gr.floor_raise > 0.0:
+            z_cap = max(z_cap, grasp_z + gr.floor_raise)
+        assert grasp_z <= z_cap + 1e-9, '적응형 하강 루프가 0회 돈다'
+
+        # 상향 재시도의 상한에서도 손끝이 샤프트 몸통 안에 남아야 한다
+        # (2F-85 라이브 실측 기준: 손끝 0.0115 까지는 물고, 샤프트 상단에서는 헛잡음).
+        shaft_top = _TASK['BOLT_REST_CENTER_Z'] + _TASK['BOLT_SHAFT_RADIUS']
+        assert z_cap - gg.tcp_to_fingertip < shaft_top
+
+    def test_drop_z_clears_the_bin_wall(self, hande):
+        """놓는 순간 손끝이 통 벽 상단(0.025)을 넘는가.
+
+        안 넘으면 놓은 직후 자세가 start-in-collision 이 되어 이후 계획이 전부
+        거부되고 episode 가 멈춘다(2F-85 에서 실측 확인된 실패 모드).
+        """
+        fingertip = hande.workspace.drop_z - hande.gripper.tcp_to_fingertip
+        assert fingertip > 0.025
+
+    def test_geometry_matches_vendor_collision_mesh(self, hande):
+        """손끝 기하 3값이 벤더 메시와 여전히 일치하는가.
+
+        yaml 주석의 유도를 기계로 다시 밟는다 — 메시가 바뀌거나 누가 값을 '보기
+        좋게' 반올림하면 여기서 걸린다.
+        """
+        if not os.path.exists(_HANDE_MESH):
+            pytest.skip(f'벤더 메시가 없다: {_HANDE_MESH}')
+        (x_lo, x_hi), (y_lo, y_hi), (z_lo, z_hi) = _finger_pad_box()
+        g = hande.gripper
+
+        # 패드 안쪽면이 x=0 이어야 '관절값 = 반개구'가 성립한다.
+        assert x_lo == pytest.approx(0.0, abs=1e-6)
+        # TCP(패드 중앙) → 손끝(패드 끝)
+        assert g.tcp_to_fingertip == pytest.approx(z_hi - (z_lo + z_hi) / 2.0,
+                                                   abs=5e-5)
+        # 닫힘축 반폭 = 패드 두께의 절반
+        assert g.finger_half_w == pytest.approx((x_hi - x_lo) / 2.0, abs=5e-5)
+        # 볼트축 반폭 = 원점에서 먼 쪽 y (보수적)
+        assert g.finger_tip_half_x == pytest.approx(max(abs(y_lo), abs(y_hi)),
+                                                    abs=5e-5)
+
+    def test_grasp_tcp_offset_in_urdf_matches_the_profile(self, hande):
+        """결합 xacro 의 grasp_tcp_z 가 메시에서 유도한 패드 중앙과 같은가.
+
+        yaml(손끝 오프셋)과 urdf(TCP 위치)는 같은 메시에서 나왔지만 서로 다른
+        파일에 산다 — 한쪽만 고치면 파지 깊이가 통째로 어긋난 채 조용히 돈다.
+        """
+        import re
+
+        if not (os.path.exists(_HANDE_MESH) and os.path.exists(_HANDE_URDF)):
+            pytest.skip('소스트리에서만 도는 검사다')
+        text = open(_HANDE_URDF, encoding='utf-8').read()
+        m = re.search(r'name="grasp_tcp_z"\s+default="([0-9.]+)"', text)
+        assert m, 'grasp_tcp_z 인자를 결합 xacro 에서 찾지 못했다'
+        grasp_tcp_z = float(m.group(1))
+
+        # 손가락 관절 원점(robotiq_hande_link 기준 z=0.099, 벤더 xacro hande_height)
+        _, _, (z_lo, z_hi) = _finger_pad_box()
+        assert grasp_tcp_z == pytest.approx(0.099 + (z_lo + z_hi) / 2.0, abs=5e-5)
+        # 그리고 손끝은 TCP 보다 정확히 tcp_to_fingertip 만큼 아래다.
+        assert (0.099 + z_hi) - grasp_tcp_z == pytest.approx(
+            hande.gripper.tcp_to_fingertip, abs=5e-5)
+
+
+# =====================================================================
 # 2. 스키마 — 빠지거나 모순된 입력을 등록 시점에 막는가
 # =====================================================================
 def _minimal_dict():
@@ -558,11 +755,16 @@ def test_env_var_wins_for_active_model(monkeypatch):
     monkeypatch.delenv(registry.ENV_MODEL)
 
 
-def test_default_active_model_is_fr3(monkeypatch, tmp_path):
+def test_default_active_model_is_ur5e_robotiq_hande(monkeypatch, tmp_path):
+    """저장된 선택도 환경변수도 없으면 UR5e + Hand-E 가 기본이다.
+
+    2026-08-31 에 fr3 → ur5e_robotiq_hande 로 옮겼다. fr3 는 등록된 채로 남는다.
+    """
     monkeypatch.delenv(registry.ENV_MODEL, raising=False)
     monkeypatch.setenv('XDG_CONFIG_HOME', str(tmp_path))   # 저장된 선택 없음
     assert registry.active_model_name() == registry.DEFAULT_MODEL
-    assert registry.active_profile().name == 'fr3'
+    assert registry.active_profile().name == 'ur5e_robotiq_hande'
+    assert 'fr3' in registry.names()
 
 
 def test_set_active_refuses_unregistered(monkeypatch, tmp_path):

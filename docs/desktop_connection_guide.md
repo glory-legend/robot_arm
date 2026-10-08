@@ -19,11 +19,12 @@
 | 텔레메트리 | WebSocket 스트림(순수 서버→클라이언트) — `ws(s)://<로봇IP>:8765/ws/telemetry` |
 | 인증 | **Bearer 토큰 필수**. REST는 `Authorization: Bearer <token>` 헤더, WS는 `?token=<token>` 쿼리스트링 |
 | 암호화(TLS) | 선택 — 인증서를 주면 HTTPS/WSS, 안 주면 평문(§5 캐비엇) |
-| 실행 노드 | `ros2 run bin_picking desktop_bridge` (독립 프로세스, Gazebo/MoveIt 불필요) |
+| 실행 노드 | `ros2 run bin_picking desktop_bridge --ros-args -p host:=127.0.0.1` (독립 프로세스, Gazebo/MoveIt 불필요; LAN 바인딩은 TLS/우회 필요 — §2) |
 | 데이터 계약 전체 | [`desktop_protocol.md`](./desktop_protocol.md) — 메시지 카탈로그·필드 스펙·enum |
 | 참고 구현(목 클라이언트) | `src/bin_picking/tools/mock_desktop_client.py` (ROS 무의존, REST는 표준 `urllib`만 사용) |
-| 지금 실동작하는 명령 | `GET_STATUS`, `PICK_BOLT`(완전 실동작), `ESTOP`(소프트 플래그만) |
-| 나머지 명령 | ACK 골격만(로봇 동작 미반영, 의도된 범위 — §3) |
+| 완전 실동작 명령 | `GET_STATUS`, `PICK_BOLT` |
+| 로봇 노드 일부 반영 | `ESTOP`/`RESET`/`PAUSE`/`RESUME`/`SET_SPEED`/`BLACKLIST_ADD`/`BLACKLIST_REMOVE`/`GO_HOME`(로봇 노드가 처리, 단 완료 ACK/RESULT는 없음 — §3) |
+| 수락만 되고 무시 | 그 외(`START`/`STOP`/`SET_MODE`/`STEP`/`SKIP_CURRENT`/`HOLD_BOLT`/`UNHOLD_BOLT`/`SET_SELECTOR`/`SET_PLACE_SLOT`/`ACK_ALARM`) — ACK만, 로봇 동작 없음(§3) |
 
 ---
 
@@ -36,11 +37,16 @@
 ```bash
 source /opt/ros/jazzy/setup.bash   # zsh면 setup.zsh (echo $SHELL로 확인)
 source install/setup.bash          # zsh면 setup.zsh
-ros2 run bin_picking desktop_bridge --ros-args -p api_token:=<원하는-토큰>
+ros2 run bin_picking desktop_bridge --ros-args -p host:=127.0.0.1 -p api_token:=<원하는-토큰>
 ```
 > zsh에서 `.bash`를 그대로 source하면 `setup.bash:.:11: ... setup.sh 없음` 에러가 난다
 > (`$BASH_SOURCE`로 자기 위치를 찾는데 zsh엔 없어서 `$PWD` 기준으로 잘못 찾음) — `.zsh`
 > 확장자 버전을 쓰면 해결된다.
+>
+> **`-p host:=127.0.0.1` 필수:** `host` 기본값은 `0.0.0.0`인데, TLS 없이 loopback이
+> 아닌 주소에 바인딩하면 브릿지가 **기동을 거부**한다(토큰 평문 노출 방지). 로컬
+> 개발은 위처럼 loopback으로 띄우고, 다른 머신에서 붙어야 하면 §2(TLS 또는
+> `allow_insecure_nonloopback:=true`) 참고.
 
 `api_token`을 안 주면 임의 토큰을 생성해 **시작 로그에 크게 출력**한다(그 값을
 그대로 쓰면 됨). `/joint_states`가 없으므로 `arm_state`만 안 나가고, 나머지
@@ -91,16 +97,19 @@ netsh advfirewall firewall add rule name="bin_picking desktop_bridge" dir=in act
 
 ### 호스트/포트 바꾸기
 ```bash
-# standalone
-ros2 run bin_picking desktop_bridge --ros-args -p host:=0.0.0.0 -p port:=9000 -p api_token:=<토큰>
+# standalone — 0.0.0.0(LAN) 바인딩은 TLS나 allow_insecure_nonloopback 없이는 거부된다
+ros2 run bin_picking desktop_bridge --ros-args -p host:=0.0.0.0 -p port:=9000 -p api_token:=<토큰> -p allow_insecure_nonloopback:=true
 # 풀스택 데모
 ros2 launch bin_picking desktop_integration_demo.launch.py bridge_host:=0.0.0.0 bridge_port:=9000
 ```
+> 위 standalone 예시의 `allow_insecure_nonloopback:=true`는 **신뢰된 사설망 전용**
+> 우회 스위치다(토큰이 평문으로 흐른다). 인터넷/비신뢰망이면 반드시 TLS를 켜라
+> (아래 "TLS(선택)" 절). 풀스택 데모 런치는 loopback 우회를 자체 처리한다.
 
 ### 인증 토큰
 ```bash
 # 고정 토큰으로 기동(데스크톱팀과 공유할 값)
-ros2 run bin_picking desktop_bridge --ros-args -p api_token:=my-shared-secret
+ros2 run bin_picking desktop_bridge --ros-args -p host:=127.0.0.1 -p api_token:=my-shared-secret
 
 # 안 주면 임의 생성 후 로그에 출력됨:
 #   [desktop_bridge] api_token 파라미터가 없어 임의 토큰을 생성했습니다.
@@ -129,9 +138,11 @@ ros2 run bin_picking desktop_bridge --ros-args -p api_token:=<토큰> -p tls_cer
 | 명령 | 경로 | 상태 | 비고 |
 |---|---|---|---|
 | `GET_STATUS` | `GET /api/v1/status` | ✅ 완전 실동작 | |
-| `PICK_BOLT` | `POST /api/v1/pick_bolt` | ✅ **완전 실동작** | 응답은 `{id, accepted, errors?}`(HTTP 200). `/next_bolt_pose`로 재발행 → 실제 파지 시도 → `RESULT`(WS, `corr`=응답의 `id`)에 `fail_reason`/`retry_suggested`/`retries`/`cycle_id`/`matched_bolt_id` 전부 실제 값. 필수필드 검증·deadline 시행도 동작 |
-| `ESTOP` | `POST /api/v1/estop` | 🔶 ACK + 소프트 플래그(heartbeat.state)만 | 실제 정지 연동은 다음 단계(§5) |
-| `START`/`STOP`/`SET_SPEED`/`BLACKLIST_ADD`/그 외 | `POST /api/v1/command` | 🔶 ACK 골격만 | body `{"type":"...", "args":{...}}`. 프로토콜 형태 확인용, 로봇 동작 미반영(의도된 범위) |
+| `PICK_BOLT` | `POST /api/v1/pick_bolt` | ✅ **완전 실동작** | 응답은 `{id, accepted, errors?}`(HTTP 200). `/next_bolt_pose`로 재발행 → 실제 파지 시도 → `RESULT`(WS, `corr`=응답의 `id`)에 `fail_reason`/`retry_suggested`/`retries`/`cycle_id`/`matched_bolt_id` 전부 실제 값. **주의:** `accepted:true`는 "토픽 발행됨"일 뿐 로봇 수락 아님. `RESULT success:true`는 리프트 성공이지 place 완료 아님. 필수필드 검증은 동작하나 **`deadline`은 벽시계(`time_ns`)와 비교하므로 시뮬 시각 기준 값이면 즉시 stale — v3에서는 쓰지 말 것** |
+| `ESTOP`(전용 `POST /api/v1/estop`)·`RESET`·`PAUSE`·`RESUME`·`SET_SPEED`·`BLACKLIST_ADD`·`BLACKLIST_REMOVE`·`GO_HOME` | `POST /api/v1/command` | 🔶 로봇 노드 일부 반영 | `pick_place_node._command_cb`가 처리(estop 플래그/일시정지/속도 스케일/블랙리스트/홈복귀 등). 단 **완료 ACK·RESULT를 돌려주지 않으므로 `accepted:true`만으로 적용을 확신하면 안 됨**. `ESTOP`/`PAUSE`는 소프트 플래그일 뿐 실행 중 MoveIt goal을 취소하지 않는다(하드웨어 안전정지 아님). `RESET`은 `args.confirm=true`(불리언) 필수 |
+| `START`·`STOP`·`SET_MODE`·`STEP`·`SKIP_CURRENT`·`HOLD_BOLT`·`UNHOLD_BOLT`·`SET_SELECTOR`·`SET_PLACE_SLOT`·`ACK_ALARM` | `POST /api/v1/command` | ⬜ 수락되나 무시 | `{accepted:true}`로 접수만 되고 로봇 노드(`_command_cb`)가 처리하지 않음 — 로봇 동작 없음(향후 연동) |
+
+> **`accepted`는 HTTP 200에 실려 온다:** 스키마 거부·`pick already in progress`·`estop active`도 전부 HTTP 200 + `{"accepted":false,"errors":[...]}`이다(인증 401·잘못된 JSON 400만 HTTP 상태 사용). HTTP 상태 코드만 보지 말고 반드시 `accepted`를 확인할 것.
 
 **범위(의도적 축소):** 비전(카메라→포인트클라우드→볼트 인식)은 이 브릿지를 거치지
 않는다 — 데스크톱 앱이 직접 통신하는 별개 파이프라인이라서다. 여기서 검증하는 건
@@ -149,7 +160,7 @@ ros2 run bin_picking desktop_bridge --ros-args -p api_token:=<토큰> -p tls_cer
 ### 데스크톱 개발자가 지금 바로 해볼 수 있는 것
 ```bash
 # 로봇쪽 (터미널 1)
-ros2 run bin_picking desktop_bridge --ros-args -p api_token:=devtoken
+ros2 run bin_picking desktop_bridge --ros-args -p host:=127.0.0.1 -p api_token:=devtoken
 
 # 데스크톱쪽 (터미널 2) — curl로 바로 테스트 가능
 curl -H "Authorization: Bearer devtoken" http://localhost:8765/api/v1/status
@@ -215,8 +226,13 @@ python3 src/bin_picking/tools/mock_desktop_client.py --token devtoken --assert  
   heartbeat 수신 횟수보다 `t_wall` 기준 정체 시간으로 하길 권장**한다(예: 수 초
   이상 `t_wall` 기준 응답 없음 → `LINK_DOWN`으로 판정, 단발성 heartbeat 지연은
   정상 범위로 흡수).
-- `PICK_BOLT`/`GET_STATUS`/`ESTOP` 외 제어 명령(`/api/v1/command`)은 ACK 골격만 —
-  로봇 동작 미반영(다음 단계, `PROGRESS.md` 로드맵 참고).
+- **제어 명령 실동작은 부분적이다**(§3 표): `ESTOP`/`RESET`/`PAUSE`/`RESUME`/`SET_SPEED`/
+  `BLACKLIST_ADD`/`BLACKLIST_REMOVE`/`GO_HOME`은 로봇 노드가 처리하지만 완료 ACK/RESULT가
+  없고, 그 외(`START`/`STOP`/`SET_MODE`/`STEP`/`SKIP_CURRENT`/`HOLD_BOLT`/`UNHOLD_BOLT`/
+  `SET_SELECTOR`/`SET_PLACE_SLOT`/`ACK_ALARM`)는 수락만 되고 무시된다(다음 단계, `PROGRESS.md` 로드맵 참고).
+- **이벤트 유실**: 텔레메트리(`arm_state`/`RESULT`/`alert`)는 **크기 500의 단일 큐**를 공유하고,
+  가득 차거나 WS가 끊겨 있으면 종류 무관하게 버려진다 — 재연결 시 replay가 없다. 중요한
+  `RESULT`는 타임아웃 후 `GET /api/v1/status` 재조회로 보완할 것.
 
 ---
 
@@ -239,10 +255,15 @@ python3 src/bin_picking/tools/mock_desktop_client.py --token devtoken --assert  
 
 ## 7. 다음 단계 (아직 준비 안 된 것)
 
-- `ESTOP` 외 나머지 제어 명령의 실제 로봇 동작 연동.
+- 나머지 제어 명령(`START`/`STOP`/`SET_MODE`/`STEP` 등)의 실제 로봇 동작 연동 + 부분 반영
+  명령의 완료 ACK/RESULT 회신.
+- `deadline` 시계 정정(현재 벽시계 비교 → 메시지 시계와 정합), 중요 이벤트 큐 분리·replay.
 - `fail_reason` 세분화(`REACH_FILTERED`/`COLLISION_ABORT`/`JOINT_LIMIT`/`TIMEOUT` — 현재
   로봇 파이프라인이 아직 구분해내지 못하는 실패 종류).
-- Deadman 워치독 + `RESET` 안전 게이팅(하드웨어 안전회로 연동 대비 자리 확보용).
-- 사용자별 인증/권한 구분(지금은 고정 공유 토큰 하나뿐, §5).
+- Deadman 워치독(하드웨어 안전회로 연동 대비 자리 확보용).
+- 사용자별 인증/권한 구분·제어권 lease(지금은 고정 공유 토큰 하나뿐, 다중 클라이언트 충돌 가능 — §5).
+- 활성 모델의 관절 이름·순서·기준 프레임·DOF를 주는 capability 조회 API(현재 `robot_models`는 이름/vendor/status만).
+
+> 위 구조적 결함의 상세·우선순위는 [`desktop_protocol_upgrade_plan.md`](./desktop_protocol_upgrade_plan.md) 참고.
 
 자세한 로드맵은 [`PROGRESS.md`](../PROGRESS.md) 참고.

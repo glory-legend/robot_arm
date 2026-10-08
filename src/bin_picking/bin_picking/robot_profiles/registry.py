@@ -18,7 +18,7 @@
 활성 모델 결정 순서:
   1. `BIN_PICKING_ROBOT_MODEL` 환경변수 (런치/일회성 실행이 이걸 쓴다)
   2. `~/.config/bin_picking/active_model` 상태 파일 (`binpick_model use` 가 쓴다)
-  3. `DEFAULT_MODEL` (= 'fr3')
+  3. `DEFAULT_MODEL` (= 'ur5e_robotiq_hande')
 """
 import os
 
@@ -26,7 +26,13 @@ import yaml
 
 from bin_picking.robot_profiles.schema import ProfileError, RobotProfile
 
-DEFAULT_MODEL = 'fr3'
+# 기본 모델. FR3 에서 UR5e+Hand-E 로 옮겼다 — M8 볼트처럼 작고 균일한 부품에서
+# 평행 슬라이더(Hand-E)의 반복 정밀도가 4절 링크(2F-85)보다 낫고, 실제 도입
+# 대상이 UR5e 이기 때문이다. `fr3`/`ur5e_robotiq85` 는 등록된 채로 남는다.
+# ⚠ 이 모델은 아직 `status: draft` 다. `set_active` 의 검증 게이트는 이 상수가
+#   아니라 프로파일 status 를 보므로, 명시적 전환(`binpick_model use`)은 verify
+#   전까지 계속 거부된다 — 기본값 경로만 draft 를 통과한다.
+DEFAULT_MODEL = 'ur5e_robotiq_hande'
 
 ENV_MODEL = 'BIN_PICKING_ROBOT_MODEL'
 ENV_PROFILE_PATH = 'BIN_PICKING_PROFILE_PATH'

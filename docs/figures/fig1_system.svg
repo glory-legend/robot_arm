@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="470" viewBox="0 0 760 470" font-family="sans-serif" font-size="13">
+  <style>
+    .b{fill:none;stroke:#000;stroke-width:1.5}
+    .t{fill:#000}
+    .lbl{font-size:12px}
+    .num{font-size:12px;font-weight:bold}
+    .arw{stroke:#000;stroke-width:1.3;fill:none;marker-end:url(#a)}
+    .dash{stroke:#000;stroke-width:1.2;stroke-dasharray:5 3;fill:none;marker-end:url(#a)}
+  </style>
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#000"/>
+    </marker>
+  </defs>
+  <text x="380" y="22" text-anchor="middle" class="num">[도 1]  전체 시스템 구성도</text>
+
+  <!-- 주문 시스템 80 -->
+  <rect class="b" x="300" y="45" width="160" height="40"/>
+  <text x="380" y="63" text-anchor="middle" class="lbl">주문 시스템</text>
+  <text x="380" y="79" text-anchor="middle" class="num">(80)</text>
+
+  <!-- 컨베이어 10 + 식별부 20 -->
+  <rect class="b" x="30" y="150" width="230" height="34"/>
+  <text x="145" y="171" text-anchor="middle" class="lbl">컨베이어 (10)</text>
+  <rect class="b" x="60" y="205" width="130" height="52"/>
+  <text x="125" y="224" text-anchor="middle" class="lbl">상류 식별부</text>
+  <text x="125" y="240" text-anchor="middle" class="lbl">(코드 판독)</text>
+  <text x="125" y="252" text-anchor="middle" class="num">(20)</text>
+
+  <!-- 로봇 30 + 흡착 그리퍼 32 -->
+  <rect class="b" x="330" y="150" width="110" height="34"/>
+  <text x="385" y="171" text-anchor="middle" class="lbl">로봇 (30)</text>
+  <rect class="b" x="335" y="200" width="100" height="34"/>
+  <text x="385" y="216" text-anchor="middle" class="lbl">상면 흡착</text>
+  <text x="385" y="230" text-anchor="middle" class="lbl">그리퍼 (32)</text>
+
+  <!-- 출고 팔레트 40 -->
+  <rect class="b" x="560" y="150" width="170" height="52"/>
+  <text x="645" y="170" text-anchor="middle" class="lbl">출고 팔레트</text>
+  <text x="645" y="185" text-anchor="middle" class="lbl">(목적지별)</text>
+  <text x="645" y="198" text-anchor="middle" class="num">(40)</text>
+
+  <!-- 임시 적층부 50 (3차원 적층) -->
+  <rect class="b" x="330" y="300" width="150" height="120"/>
+  <text x="405" y="318" text-anchor="middle" class="lbl">임시 적층부 (50)</text>
+  <text x="405" y="333" text-anchor="middle" class="lbl">(3차원 적층)</text>
+  <!-- 적층 박스 스케치 -->
+  <rect class="b" x="350" y="380" width="34" height="28"/>
+  <rect class="b" x="350" y="352" width="34" height="28"/>
+  <rect class="b" x="392" y="380" width="34" height="28"/>
+  <rect class="b" x="434" y="380" width="30" height="28"/>
+  <rect class="b" x="434" y="352" width="30" height="28"/>
+
+  <!-- 센서부 60 -->
+  <rect class="b" x="560" y="330" width="150" height="46"/>
+  <text x="635" y="349" text-anchor="middle" class="lbl">센서부 (60)</text>
+  <text x="635" y="364" text-anchor="middle" class="lbl">(실제위치·성공확인)</text>
+
+  <!-- 제어부 70 -->
+  <rect class="b" x="60" y="320" width="200" height="80"/>
+  <text x="160" y="345" text-anchor="middle" class="lbl">제어부 (70)</text>
+  <text x="160" y="365" text-anchor="middle" class="lbl">S1~S9 수행</text>
+  <text x="160" y="384" text-anchor="middle" class="lbl">G1·G2·G3 판정</text>
+
+  <!-- 화살표 -->
+  <path class="dash" d="M300,65 L200,65 L200,148"/>
+  <text x="205" y="110" class="lbl">회수 순서</text>
+  <text x="205" y="126" class="lbl">(변경 불가)</text>
+  <path class="arw" d="M260,167 L328,167"/>
+  <path class="arw" d="M440,167 L558,167"/>
+  <path class="arw" d="M385,234 L385,298"/>
+  <path class="arw" d="M480,360 L558,353"/>
+  <text x="500" y="345" class="lbl">확인</text>
+  <path class="arw" d="M160,318 L160,260 L190,232"/>
+  <path class="arw" d="M260,360 L328,360"/>
+  <text x="285" y="352" class="lbl">제어</text>
+  <path class="arw" d="M125,205 L145,186"/>
+</svg>

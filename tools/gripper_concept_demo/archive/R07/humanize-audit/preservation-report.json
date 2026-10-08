@@ -1,0 +1,78 @@
+{
+  "boundaries": true,
+  "files": {
+    "README.md": {
+      "numbers": true,
+      "urls": true,
+      "fenced_code": true,
+      "inline_code": true,
+      "table_cells": true,
+      "headings": true
+    },
+    "DESIGN.md": {
+      "numbers": true,
+      "urls": true,
+      "fenced_code": true,
+      "inline_code": true,
+      "table_cells": true,
+      "headings": true
+    },
+    "GRIPPER_SELECTION.md": {
+      "numbers": true,
+      "urls": true,
+      "fenced_code": true,
+      "inline_code": true,
+      "table_cells": true,
+      "headings": true
+    },
+    "IMPLEMENTATION.md": {
+      "numbers": true,
+      "urls": true,
+      "fenced_code": true,
+      "inline_code": true,
+      "table_cells": true,
+      "headings": true
+    },
+    "MECHANICAL_REVIEW.md": {
+      "numbers": true,
+      "urls": true,
+      "fenced_code": true,
+      "inline_code": true,
+      "table_cells": true,
+      "headings": true
+    },
+    "R06.md": {
+      "numbers": true,
+      "urls": true,
+      "fenced_code": true,
+      "inline_code": true,
+      "table_cells": true,
+      "headings": true
+    },
+    "REDESIGN.md": {
+      "numbers": true,
+      "urls": true,
+      "fenced_code": true,
+      "inline_code": true,
+      "table_cells": true,
+      "headings": true
+    },
+    "UX-CONTRACT.md": {
+      "numbers": true,
+      "urls": true,
+      "fenced_code": true,
+      "inline_code": true,
+      "table_cells": true,
+      "headings": true
+    },
+    "recording-preference.txt": {
+      "numbers": true,
+      "urls": true,
+      "fenced_code": true,
+      "inline_code": true,
+      "table_cells": true,
+      "headings": true
+    }
+  },
+  "pass": true
+}

@@ -43,10 +43,16 @@ rosbridge 대신 직접 구현한 이유는 desktop_protocol.md §4 참고 — �
     항상 WS 텔레메트리로 나간다(상관관계는 `_pending_pick['id']`, REST 응답의
     `id` 와 동일).
 
-현재 단계에서 "진짜로" 로봇에 반영되는 명령은 PICK_BOLT 뿐이다. 나머지
-제어 명령(ESTOP/START/SET_SPEED 등)은 ACK 까지만 진짜고 실제 로봇 동작
-연동은 다음 단계(로봇측 연동 인터페이스, PROGRESS.md 참고)로 남겨 둔다 —
-이번 목표는 "통신 기능 자체 검증"이라 프로토콜 골격을 정직하게 완성하는 데 집중했다.
+명령 실동작 반영 정도는 명령마다 다르다(커맨드버스 도입 이후):
+  - 완전 실동작: PICK_BOLT, GET_STATUS.
+  - 로봇 노드(pick_place_node._command_cb)가 일부 처리: ESTOP/RESET/PAUSE/RESUME/
+    SET_SPEED/BLACKLIST_ADD/BLACKLIST_REMOVE/GO_HOME. 단 브릿지는 발행+ACK 만 하고
+    로봇의 완료 ACK/RESULT 는 아직 되돌려주지 않는다(ESTOP/PAUSE 도 소프트 플래그라
+    실행 중 MoveIt goal 을 취소하지 않는다 — 하드웨어 안전정지가 아니다).
+  - 수락(ACK)만 되고 로봇 노드가 무시: 그 외 _ACK_ONLY_TYPES(START/STOP/SET_MODE/
+    STEP/SKIP_CURRENT/HOLD_BOLT/UNHOLD_BOLT/SET_SELECTOR/SET_PLACE_SLOT/ACK_ALARM).
+정확한 분류·데스크톱 대응은 docs/desktop_connection_guide.md §3, 구조적 한계(이벤트
+유실·deadline 시계 등)는 docs/desktop_protocol_upgrade_plan.md 참고.
 """
 import asyncio
 import hmac
@@ -105,9 +111,12 @@ CYCLE_RESULT_TOPIC = PickPlaceConfig.CYCLE_RESULT_TOPIC
 COMMAND_TOPIC = PickPlaceConfig.COMMAND_TOPIC
 ROBOT_PHASE_TOPIC = PickPlaceConfig.ROBOT_PHASE_TOPIC
 
-# 실제 로봇 동작 연동 없이 ACK 만 돌려주는 "골격만" 명령 — §2A 전체 명령 표 중
-# PICK_BOLT/GET_STATUS/ESTOP 을 뺀 나머지. `POST /api/v1/command` 하나로 받는다.
-# 다음 단계에서 하나씩 실동작에 연결.
+# `POST /api/v1/command` 하나로 받는 제어 명령 집합 — §2A 전체 명령 표 중
+# PICK_BOLT/GET_STATUS/ESTOP(전용 엔드포인트)을 뺀 나머지. 브릿지는 이들을 검증 후
+# ACK 하고 커맨드버스(COMMAND_TOPIC)로 발행한다. 로봇 노드(pick_place_node._command_cb)가
+# 실제로 처리하는 건 이 중 일부(RESET/PAUSE/RESUME/SET_SPEED/BLACKLIST_ADD/
+# BLACKLIST_REMOVE/GO_HOME)뿐이고, 나머지는 발행돼도 로봇이 무시한다 — 어느 명령이
+# 어디까지 반영되는지는 docs/desktop_connection_guide.md §3 표가 단일 소스.
 _ACK_ONLY_TYPES = frozenset([
     'START', 'STOP', 'PAUSE', 'RESUME', 'SET_MODE', 'STEP', 'SKIP_CURRENT',
     'BLACKLIST_ADD', 'BLACKLIST_REMOVE', 'HOLD_BOLT', 'UNHOLD_BOLT',

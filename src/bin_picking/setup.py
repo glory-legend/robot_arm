@@ -52,6 +52,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'palletizing_scene = bin_picking.palletizing_scene:main',
+            'palletizing_motion = bin_picking.palletizing_motion:main',
+            'palletizing_plan = bin_picking.palletizing_planner:main',
             # 통합 픽앤플레이스 데모 (ros2 run bin_picking integrated_pick_place --auto)
             'integrated_pick_place = bin_picking.pick_place_node:main',
             # 누적된 attempts.jsonl 로 파지 선택기 오프라인 학습

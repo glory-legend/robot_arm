@@ -116,7 +116,14 @@ def test_constant_unchanged(name):
         f'{name} 이 리팩토링 전 값과 다르다 — "기능 완전 동일" 약속이 깨졌다')
 
 
-def test_default_model_is_fr3():
+def test_pinned_model_is_fr3():
+    """이 파일이 보는 것은 'FR3 를 꽂은 결과'다.
+
+    ⚠ 이름이 곧 기본 모델이라는 뜻은 아니다 — 기본 모델은 2026-08-31 에
+      `ur5e_robotiq_hande` 로 옮겼다(registry.DEFAULT_MODEL). 여기서는 위
+      `_pin_fr3` 픽스처가 매 검사 직전에 FR3 를 되꽂아 회귀 대조를 결정론적으로
+      만든다. 그게 실제로 먹혔는지 확인하는 검사다.
+    """
     assert C.ROBOT_MODEL == 'fr3'
     assert C.ROBOT_PROFILE.name == 'fr3'
 

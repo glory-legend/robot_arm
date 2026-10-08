@@ -186,6 +186,23 @@ UR5E = dict(
     floor_bolt_center=0.009,
 )
 
+# Geometry derived from the vendored Hand-E collision mesh
+# (src/robotiq_hande_description/meshes/finger_collision.dae -- exactly two boxes;
+#  pad box x[0, 6.5] y[-10.6, 10.5] z[26.55, 47.55] mm in the finger-link frame):
+#   tcp_to_fingertip  = 47.55 - (26.55+47.55)/2 = 10.50 mm
+#   finger_half_w     = 6.5 / 2                 =  3.25 mm  (closing axis)
+#   finger_tip_half_x = 21.2 / 2                = 10.60 mm  (bolt axis)
+HANDE = dict(
+    name="UR5e + Robotiq Hand-E",
+    tcp_to_fingertip=0.0105,
+    finger_half_w=0.00325,
+    finger_tip_half_x=0.0106,
+    pregrasp_open=0.010,
+    tilt_candidates_deg=[15.0, 30.0],
+    yaml_value=0.019,        # derived by this script (0.01595 + 3mm margin)
+    floor_bolt_center=0.009,  # config.BOLT_REST_CENTER_Z = BIN_FLOOR_TOP + shaft radius
+)
+
 
 # Safety margin the shipped FR3 value carries over the rigorous physics.
 # FR3 rigorous full excursion is ~0.0156; the shipped value is 0.020 -> ~+3mm
@@ -236,6 +253,7 @@ def main():
     print("Deriving tilt_min_center_z by mirroring geometry._grasp_frame / _rotate_about\n")
     fr3_min, fr3_full = report(FR3)
     ur5_min, ur5_full = report(UR5E)
+    he_min, he_full = report(HANDE)
 
     print("--- VALIDATION (FR3) ---")
     print(f"  Frame math is confirmed against the pipeline: the minimal-term model")
@@ -254,7 +272,15 @@ def main():
     print(f"  tcp_to_fingertip ratio (~3x), but only the tcp term scales -- the lateral")
     print(f"  and tip terms do not. Excursion actually grows {ur5_full/fr3_full:.2f}x "
           f"(0.0156 -> 0.0320), not 3x.")
-    print(f"  -> proposed tilt_min_center_z = 0.035  (down from 0.042, recovers safe tilts)")
+    print(f"  -> proposed tilt_min_center_z = 0.035  (down from 0.042, recovers safe tilts)\n")
+
+    print("--- Hand-E RESULT ---")
+    print(f"  Rigorous worst-case fingertip excursion (full terms) = {he_full:.5f} m.")
+    print(f"  With the same ~{SAFETY_MARGIN*1000:.0f}mm safety margin FR3 carries -> "
+          f"{he_full + SAFETY_MARGIN:.5f} m.")
+    print(f"  Hand-E's tcp_to_fingertip (10.5mm) is within 1mm of FR3's (9.5mm), so the")
+    print(f"  excursion lands right next to FR3's {fr3_full:.4f} -- unlike the 2F-85, whose")
+    print(f"  28.5mm tip pushes it to {ur5_full:.4f}.")
 
 
 if __name__ == "__main__":

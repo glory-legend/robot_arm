@@ -1,0 +1,145 @@
+[
+  {
+    "filename": "r11-whole.png",
+    "file_upload_id": "3edbf010-5ac9-8114-af28-00b2ee58ce1c",
+    "response": {
+      "file_upload_id": "3edbf010-5ac9-8114-af28-00b2ee58ce1c",
+      "filename": "r11-whole.png",
+      "content_type": "image/png",
+      "content_length": 314264,
+      "status": "uploaded",
+      "markdown_source": "file-upload://3edbf010-5ac9-8114-af28-00b2ee58ce1c",
+      "suggested_markdown": "<image src=\"file-upload://3edbf010-5ac9-8114-af28-00b2ee58ce1c\"></image>"
+    }
+  },
+  {
+    "filename": "r11-pick.png",
+    "file_upload_id": "3edbf010-5ac9-8167-99d0-00b240745f6a",
+    "response": {
+      "file_upload_id": "3edbf010-5ac9-8167-99d0-00b240745f6a",
+      "filename": "r11-pick.png",
+      "content_type": "image/png",
+      "content_length": 428441,
+      "status": "uploaded",
+      "markdown_source": "file-upload://3edbf010-5ac9-8167-99d0-00b240745f6a",
+      "suggested_markdown": "<image src=\"file-upload://3edbf010-5ac9-8167-99d0-00b240745f6a\"></image>"
+    }
+  },
+  {
+    "filename": "r11-righting.png",
+    "file_upload_id": "3edbf010-5ac9-81ea-918a-00b2683a615d",
+    "response": {
+      "file_upload_id": "3edbf010-5ac9-81ea-918a-00b2683a615d",
+      "filename": "r11-righting.png",
+      "content_type": "image/png",
+      "content_length": 219279,
+      "status": "uploaded",
+      "markdown_source": "file-upload://3edbf010-5ac9-81ea-918a-00b2683a615d",
+      "suggested_markdown": "<image src=\"file-upload://3edbf010-5ac9-81ea-918a-00b2683a615d\"></image>"
+    }
+  },
+  {
+    "filename": "r11-handoff.png",
+    "file_upload_id": "3edbf010-5ac9-81ad-92e2-00b289287425",
+    "response": {
+      "file_upload_id": "3edbf010-5ac9-81ad-92e2-00b289287425",
+      "filename": "r11-handoff.png",
+      "content_type": "image/png",
+      "content_length": 227198,
+      "status": "uploaded",
+      "markdown_source": "file-upload://3edbf010-5ac9-81ad-92e2-00b289287425",
+      "suggested_markdown": "<image src=\"file-upload://3edbf010-5ac9-81ad-92e2-00b289287425\"></image>"
+    }
+  },
+  {
+    "filename": "r11-stowed.png",
+    "file_upload_id": "3edbf010-5ac9-810d-8979-00b24ac5ba0a",
+    "response": {
+      "file_upload_id": "3edbf010-5ac9-810d-8979-00b24ac5ba0a",
+      "filename": "r11-stowed.png",
+      "content_type": "image/png",
+      "content_length": 204311,
+      "status": "uploaded",
+      "markdown_source": "file-upload://3edbf010-5ac9-810d-8979-00b24ac5ba0a",
+      "suggested_markdown": "<image src=\"file-upload://3edbf010-5ac9-810d-8979-00b24ac5ba0a\"></image>"
+    }
+  },
+  {
+    "filename": "r11-fastening.png",
+    "file_upload_id": "3edbf010-5ac9-81a0-8740-00b27b5c5906",
+    "response": {
+      "file_upload_id": "3edbf010-5ac9-81a0-8740-00b27b5c5906",
+      "filename": "r11-fastening.png",
+      "content_type": "image/png",
+      "content_length": 242188,
+      "status": "uploaded",
+      "markdown_source": "file-upload://3edbf010-5ac9-81a0-8740-00b27b5c5906",
+      "suggested_markdown": "<image src=\"file-upload://3edbf010-5ac9-81a0-8740-00b27b5c5906\"></image>"
+    }
+  },
+  {
+    "filename": "r11-internal.png",
+    "file_upload_id": "3edbf010-5ac9-81e3-a1ee-00b26465736e",
+    "response": {
+      "file_upload_id": "3edbf010-5ac9-81e3-a1ee-00b26465736e",
+      "filename": "r11-internal.png",
+      "content_type": "image/png",
+      "content_length": 262550,
+      "status": "uploaded",
+      "markdown_source": "file-upload://3edbf010-5ac9-81e3-a1ee-00b26465736e",
+      "suggested_markdown": "<image src=\"file-upload://3edbf010-5ac9-81e3-a1ee-00b26465736e\"></image>"
+    }
+  },
+  {
+    "filename": "r11-m6-fastening.png",
+    "file_upload_id": "3edbf010-5ac9-8129-af15-00b2ecff4704",
+    "response": {
+      "file_upload_id": "3edbf010-5ac9-8129-af15-00b2ecff4704",
+      "filename": "r11-m6-fastening.png",
+      "content_type": "image/png",
+      "content_length": 236159,
+      "status": "uploaded",
+      "markdown_source": "file-upload://3edbf010-5ac9-8129-af15-00b2ecff4704",
+      "suggested_markdown": "<image src=\"file-upload://3edbf010-5ac9-8129-af15-00b2ecff4704\"></image>"
+    }
+  },
+  {
+    "filename": "r11-m10-fastening.png",
+    "file_upload_id": "3edbf010-5ac9-8158-b56c-00b293af2511",
+    "response": {
+      "file_upload_id": "3edbf010-5ac9-8158-b56c-00b293af2511",
+      "filename": "r11-m10-fastening.png",
+      "content_type": "image/png",
+      "content_length": 243455,
+      "status": "uploaded",
+      "markdown_source": "file-upload://3edbf010-5ac9-8158-b56c-00b293af2511",
+      "suggested_markdown": "<image src=\"file-upload://3edbf010-5ac9-8158-b56c-00b293af2511\"></image>"
+    }
+  },
+  {
+    "filename": "r10-reproduced-stowed.png",
+    "file_upload_id": "3edbf010-5ac9-81d7-86db-00b2011768ef",
+    "response": {
+      "file_upload_id": "3edbf010-5ac9-81d7-86db-00b2011768ef",
+      "filename": "r10-reproduced-stowed.png",
+      "content_type": "image/png",
+      "content_length": 207460,
+      "status": "uploaded",
+      "markdown_source": "file-upload://3edbf010-5ac9-81d7-86db-00b2011768ef",
+      "suggested_markdown": "<image src=\"file-upload://3edbf010-5ac9-81d7-86db-00b2011768ef\"></image>"
+    }
+  },
+  {
+    "filename": "r10-reproduced-internal.png",
+    "file_upload_id": "3edbf010-5ac9-819e-90f9-00b2c8bc93de",
+    "response": {
+      "file_upload_id": "3edbf010-5ac9-819e-90f9-00b2c8bc93de",
+      "filename": "r10-reproduced-internal.png",
+      "content_type": "image/png",
+      "content_length": 289295,
+      "status": "uploaded",
+      "markdown_source": "file-upload://3edbf010-5ac9-819e-90f9-00b2c8bc93de",
+      "suggested_markdown": "<image src=\"file-upload://3edbf010-5ac9-819e-90f9-00b2c8bc93de\"></image>"
+    }
+  }
+]

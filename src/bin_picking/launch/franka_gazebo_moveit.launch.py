@@ -101,6 +101,7 @@ def _launch_setup(context, *_args, **_kwargs):
     model_name = LaunchConfiguration('robot_model').perform(context)
     rviz = LaunchConfiguration('rviz')
     gz_args = LaunchConfiguration('gz_args')
+    vacuum = LaunchConfiguration('tool').perform(context) == 'vacuum'
 
     profile, report = _resolve_profile(model_name)
     desc = profile.description
@@ -122,6 +123,12 @@ def _launch_setup(context, *_args, **_kwargs):
             _xacro_command(desc.srdf_package, desc.srdf_path, desc.srdf_args),
             value_type=str)
     }
+    if vacuum:
+        from bin_picking.palletizing_robot import vacuum_descriptions
+        urdf, srdf = vacuum_descriptions(
+            profile, int(LaunchConfiguration('vacuum_box_count').perform(context)))
+        robot_description = {'robot_description': ParameterValue(urdf, value_type=str)}
+        robot_description_semantic = {'robot_description_semantic': ParameterValue(srdf, value_type=str)}
 
     # --- MoveIt 설정 (프로파일이 가리키는 패키지/파일) ---
     mp = desc.moveit_package
@@ -162,6 +169,12 @@ def _launch_setup(context, *_args, **_kwargs):
         'moveit_controller_manager':
             'moveit_simple_controller_manager/MoveItSimpleControllerManager',
     }
+    if vacuum:
+        controllers = moveit_controllers['moveit_simple_controller_manager']
+        controllers['controller_names'] = [profile.arm.controller]
+        for key in list(controllers):
+            if key not in ('controller_names', profile.arm.controller):
+                del controllers[key]
 
     trajectory_execution = {
         'moveit_manage_controllers': True,
@@ -195,6 +208,9 @@ def _launch_setup(context, *_args, **_kwargs):
 
     rviz_config = os.path.join(get_package_share_directory(mp),
                                desc.moveit_files['rviz'])
+    if vacuum:
+        rviz_config = os.path.join(get_package_share_directory('bin_picking'),
+                                   'config', 'palletizing.rviz')
     rviz_node = Node(
         package='rviz2', executable='rviz2', name='rviz2',
         arguments=['-d', rviz_config], output='log',
@@ -250,7 +266,7 @@ def _launch_setup(context, *_args, **_kwargs):
     after_spawn = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=spawn_entity,
-            on_exit=[spawn_jsb, spawn_arm, spawn_gripper],
+            on_exit=[spawn_jsb, spawn_arm] + ([] if vacuum else [spawn_gripper]),
         )
     )
 
@@ -276,6 +292,8 @@ def generate_launch_description():
         FindPackageShare('bin_picking'), 'worlds', 'robot_view.sdf'])
 
     return LaunchDescription([
+        DeclareLaunchArgument('tool', default_value='profile', choices=['profile', 'vacuum']),
+        DeclareLaunchArgument('vacuum_box_count', default_value='12'),
         DeclareLaunchArgument(
             'robot_model',
             default_value=robot_profiles.active_model_name(),

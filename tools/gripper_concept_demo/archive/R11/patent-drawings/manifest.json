@@ -1,0 +1,104 @@
+{
+  "date": "2026-10-02",
+  "source": "R11 browser Three.js assembly model; M8 × 35 example",
+  "pdf": {
+    "file": "R11-patent-drawing-draft.pdf",
+    "sha256": "78b23f233c8f33ba94750ac63a549d44305dee4ed6c2b372e6ec83ebaf034219",
+    "pages": 3,
+    "page_size": "A4 landscape"
+  },
+  "figures": [
+    {
+      "file": "FIG-01-assembly-isometric.png",
+      "sha256": "f180ae6f276ac769223c904e9f114ee596dd0dc9d857a22c66ae6119233863b5",
+      "pixels": [
+        1600,
+        1400
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "mode": "1-bit monochrome"
+    },
+    {
+      "file": "FIG-02-front-working-end.png",
+      "sha256": "383691834647d56e3c154cb4226667f8ddb2cf356610da7bf433017ddf900b71",
+      "pixels": [
+        1600,
+        1400
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "mode": "1-bit monochrome"
+    },
+    {
+      "file": "FIG-03-side-internal-layout.png",
+      "sha256": "94c7ab30f184512ec1e7bceee3239df2427dbe7258fb5bed893005deb0531644",
+      "pixels": [
+        1600,
+        1400
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "mode": "1-bit monochrome"
+    },
+    {
+      "file": "FIG-04A-pickup.png",
+      "sha256": "42ee1db845857dfc538ef27d1e311fc178ad20e7a4da14cd07dc2fd252aa93c8",
+      "pixels": [
+        1600,
+        1400
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "mode": "1-bit monochrome"
+    },
+    {
+      "file": "FIG-04B-righting.png",
+      "sha256": "81b313c44c740b64340b89edc1a49e70238ca689ad4adec4c44111f1aef462a7",
+      "pixels": [
+        1600,
+        1400
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "mode": "1-bit monochrome"
+    },
+    {
+      "file": "FIG-04C-stopped-handoff.png",
+      "sha256": "3877bf3773f81a91831f6ff1b46f8b752037c52739cd9e40a0a75e775f007110",
+      "pixels": [
+        1600,
+        1400
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "mode": "1-bit monochrome"
+    },
+    {
+      "file": "FIG-04D-fastening.png",
+      "sha256": "770b1b48fed220b95dcae43ff1cddecb7e74f389b0326c92e9dc7f3b74d02bc8",
+      "pixels": [
+        1600,
+        1400
+      ],
+      "dpi": [
+        300,
+        300
+      ],
+      "mode": "1-bit monochrome"
+    }
+  ],
+  "scope": "Conceptual line drawing draft. Figure 3 hides the outer housing and is not a section view. Not verified as a formal filing drawing or manufacturing CAD."
+}
