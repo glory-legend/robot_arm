@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="360" viewBox="0 0 700 360" font-family="sans-serif" font-size="13">
+  <style>
+    .b{fill:none;stroke:#000;stroke-width:1.5}
+    .box{fill:none;stroke:#000;stroke-width:1.5}
+    .lbl{font-size:12px}
+    .num{font-size:12px;font-weight:bold}
+    .cap{font-size:12px}
+  </style>
+  <text x="350" y="22" text-anchor="middle" class="num">[도 7]  배치 후보 채택/탈락 예시 (회수 순서: B → C)</text>
+
+  <!-- 후보 α -->
+  <text x="120" y="60" text-anchor="middle" class="num">후보 α</text>
+  <rect class="box" x="85" y="120" width="70" height="40"/>
+  <text x="120" y="145" text-anchor="middle" class="lbl">C</text>
+  <rect class="box" x="85" y="160" width="70" height="40"/>
+  <text x="120" y="185" text-anchor="middle" class="lbl">B</text>
+  <line class="b" x1="60" y1="200" x2="180" y2="200"/>
+  <text x="120" y="230" text-anchor="middle" class="cap">B를 먼저 꺼내야 하나</text>
+  <text x="120" y="246" text-anchor="middle" class="cap">C가 B 상면을 덮음</text>
+  <text x="120" y="272" text-anchor="middle" class="num">G1 실패 → 탈락</text>
+
+  <!-- 후보 β -->
+  <text x="350" y="60" text-anchor="middle" class="num">후보 β</text>
+  <rect class="box" x="315" y="120" width="70" height="40"/>
+  <text x="350" y="145" text-anchor="middle" class="lbl">B</text>
+  <rect class="box" x="315" y="160" width="70" height="40"/>
+  <text x="350" y="185" text-anchor="middle" class="lbl">C</text>
+  <line class="b" x1="290" y1="200" x2="410" y2="200"/>
+  <text x="350" y="230" text-anchor="middle" class="cap">B가 위 → 먼저 꺼냄</text>
+  <text x="350" y="246" text-anchor="middle" class="cap">이후 C도 꺼냄</text>
+  <text x="350" y="272" text-anchor="middle" class="num">G1·G2·G3 통과 → 채택</text>
+
+  <!-- 후보 γ -->
+  <text x="580" y="60" text-anchor="middle" class="num">후보 γ</text>
+  <rect class="box" x="530" y="160" width="45" height="40"/>
+  <text x="552" y="185" text-anchor="middle" class="lbl">B</text>
+  <rect class="box" x="585" y="160" width="45" height="40"/>
+  <text x="607" y="185" text-anchor="middle" class="lbl">C</text>
+  <line class="b" x1="510" y1="200" x2="650" y2="200"/>
+  <!-- 그리퍼 진입 간섭 표시 -->
+  <line class="b" x1="578" y1="120" x2="578" y2="158" stroke-dasharray="4 3"/>
+  <text x="580" y="230" text-anchor="middle" class="cap">나란히 배치했으나</text>
+  <text x="580" y="246" text-anchor="middle" class="cap">그리퍼 진입 간격 부족</text>
+  <text x="580" y="272" text-anchor="middle" class="num">G2 실패 → 탈락</text>
+
+  <text x="350" y="330" text-anchor="middle" class="cap">회수 순서는 외부 부여로 변경 불가 → 순서가 아닌 "배치 위치"만 바꿔 회수 가능성을 확보한다</text>
+</svg>

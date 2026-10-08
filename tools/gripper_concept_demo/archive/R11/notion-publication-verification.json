@@ -1,0 +1,41 @@
+{
+  "page_id": "3edbf010-5ac9-812d-b9d1-e965cfd79246",
+  "url": "https://app.notion.com/p/3edbf0105ac9812db9d1e965cfd79246?pvs=204",
+  "checked_at": "2026-10-02",
+  "path": "대학생 대시보드 / 영전 / 연구개발 / Bin_Picking / Bin_Picking 문서 / 볼트 그리퍼 설계·모델링 버전 기록",
+  "images": 11,
+  "captions": [
+    "R11 원본 · FR3 전체 · M8 · 2026-10-02",
+    "R11 원본 · 핀셋 파지 · M8 · 2026-10-02",
+    "R11 원본 · 엄지로 세우기 · M8 · 2026-10-02",
+    "R11 원본 · 정지 인계 · M8 · 2026-10-02",
+    "R11 원본 · 수납 · M8 · 2026-10-02",
+    "R11 원본 · 밀집 볼트 사이 체결 · M8 · 2026-10-02",
+    "R11 원본 · 구조 외피 투시 · M8 · 2026-10-02",
+    "R11 원본 · M6 체결 · 2026-10-02",
+    "R11 원본 · M10 체결 · 2026-10-02",
+    "R10 재현 · 수납 · 당시 원본 사진 아님 · 2026-10-02",
+    "R10 재현 · 내부 배치 · 당시 원본 사진 아님 · 2026-10-02"
+  ],
+  "assertions": {
+    "correct_parent": true,
+    "single_record": true,
+    "dimensions": true,
+    "structural_volume": true,
+    "unit_tests": true,
+    "browser_tests": true,
+    "physical_limits": true,
+    "all_images": true
+  },
+  "truncated": false,
+  "unknown_block_count": 0,
+  "authoring_model": "claude-sonnet-5-5",
+  "publishing_model": "claude-sonnet-5-5",
+  "humanize": {
+    "plugin": "im-not-ai/humanize-korean",
+    "version": "2.3.2",
+    "route": "light",
+    "gate": "OK"
+  },
+  "source_zip_uploaded": false
+}

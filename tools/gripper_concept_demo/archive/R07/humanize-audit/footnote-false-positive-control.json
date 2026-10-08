@@ -1,0 +1,11 @@
+{
+  "check": "official checks.check_footnotes(original, original)",
+  "same_text_control": true,
+  "failures": [
+    "[footnote_anchor] 각주 80)이 원위치를 벗어났습니다 (인접 수치 앵커 '0,100' → '100'): 인용 출처 변조 위험"
+  ],
+  "coordinate_rows": [
+    "| B 회전축              | (0, 100, -80), X축 방향, -90° → 0°                                 |",
+    "| 평행 모듈 설치 공간   | 80×45×65, 중심 (0,100,-80)                                         |"
+  ]
+}

@@ -1,0 +1,390 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  color: #263d43;
+  background: #edf0ee;
+  font:
+    14px/1.6 "Noto Sans CJK KR",
+    "Malgun Gothic",
+    system-ui,
+    sans-serif;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button,
+a,
+select,
+input {
+  accent-color: #1c6268;
+}
+button {
+  cursor: pointer;
+  border: 1px solid #bac8c9;
+  border-radius: 5px;
+  padding: 8px 13px;
+  background: #f7f9f7;
+  color: #24424a;
+}
+button:hover {
+  background: #dce8e6;
+}
+button[aria-pressed="true"],
+button.primary {
+  background: #245c63;
+  color: white;
+  border-color: #245c63;
+}
+button:focus-visible,
+a:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 3px solid #b87739;
+  outline-offset: 3px;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+a {
+  color: #28636b;
+  text-underline-offset: 4px;
+}
+.top {
+  height: 70px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #c9d3d1;
+  background: #f7f9f6;
+}
+.identity {
+  font-size: 17px;
+  font-weight: 650;
+}
+.identity small {
+  margin-left: 18px;
+  font: 11px monospace;
+  letter-spacing: 2px;
+  color: #607c7e;
+}
+.review-tag {
+  font-size: 12px;
+  color: #80501e;
+  border: 1px solid #d7bda0;
+  border-radius: 3px;
+  padding: 4px 10px;
+}
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 345px;
+  min-height: calc(100vh - 70px);
+}
+.drawing {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.heading {
+  position: absolute;
+  z-index: 2;
+  left: 28px;
+  top: 25px;
+  pointer-events: none;
+}
+.eyebrow {
+  font: 11px monospace;
+  letter-spacing: 2px;
+  color: #35656a;
+  margin: 0 0 8px;
+}
+.heading h1 {
+  font-size: 25px;
+  font-weight: 550;
+  margin: 0;
+  letter-spacing: -1px;
+}
+.heading p:last-child {
+  font-size: 12px;
+  color: #697d7f;
+}
+.canvas {
+  position: relative;
+  height: calc(100vh - 224px);
+  min-height: 480px;
+  overflow: hidden;
+}
+.canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.view-tools {
+  position: absolute;
+  z-index: 3;
+  bottom: 14px;
+  left: 22px;
+  display: flex;
+  gap: 5px;
+}
+.view-tools button {
+  font-size: 12px;
+  background: #f7f9f5ed;
+}
+.view-tools button[aria-pressed="true"] {
+  background: #245c63;
+}
+.guide {
+  position: absolute;
+  right: 20px;
+  bottom: 22px;
+  font: 11px monospace;
+  color: #526f73;
+  pointer-events: none;
+}
+.label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 4px 7px;
+  font-size: 11px;
+  background: #f7f9f5ed;
+  border-left: 2px solid #277482;
+  box-shadow: 0 2px 5px #233b4310;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.transport {
+  padding: 14px 24px;
+  border-top: 1px solid #c9d3d1;
+  background: #f7f9f6;
+}
+.transport-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.transport output {
+  font: 12px monospace;
+  color: #52757b;
+}
+.transport input {
+  width: 100%;
+  margin: 14px 0 4px;
+}
+.steps {
+  display: flex;
+  justify-content: space-between;
+}
+.steps button {
+  border: 0;
+  background: none;
+  padding: 5px;
+  font-size: 11px;
+}
+.steps button[aria-pressed="true"] {
+  color: #235d66;
+  background: #e1ece8;
+}
+.sidebar {
+  background: #f7f9f6;
+  border-left: 1px solid #c9d3d1;
+  padding: 22px;
+  height: calc(100vh - 70px);
+  overflow: auto;
+}
+.side-section {
+  padding-bottom: 21px;
+  margin-bottom: 21px;
+  border-bottom: 1px solid #d5dedb;
+}
+.side-section h2 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin: 0 0 12px;
+}
+.variants {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.variants button {
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.variants small {
+  display: block;
+  font-size: 10px;
+  opacity: 0.75;
+}
+.desc {
+  font-size: 12px;
+  color: #536d72;
+  margin-bottom: 0;
+}
+.phase-title {
+  font-size: 18px;
+  margin: 5px 0;
+}
+.part-note {
+  font-size: 12px;
+  background: #eaf0eb;
+  border-left: 2px solid #377a75;
+  padding: 10px;
+}
+.field {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #c2cfcd;
+  background: white;
+  border-radius: 4px;
+  color: #25464c;
+}
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 7px 0;
+}
+.toggle input {
+  width: 16px;
+  height: 16px;
+}
+.data-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 11px;
+}
+.data-table td {
+  padding: 7px 0;
+  border-bottom: 1px solid #e1e6e2;
+  vertical-align: top;
+}
+.data-table td:last-child {
+  text-align: right;
+  font-family: monospace;
+}
+.status-note {
+  padding: 11px;
+  background: #f3eee5;
+  border: 1px solid #ded1bc;
+  font-size: 11px;
+  color: #6c5537;
+}
+.downloads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.downloads button {
+  font-size: 11px;
+}
+.doc-links {
+  display: grid;
+  gap: 9px;
+  font-size: 11px;
+  margin-top: 16px;
+}
+.error {
+  position: absolute;
+  z-index: 5;
+  inset: 130px 20px auto;
+  background: #fff3e5;
+  padding: 25px;
+}
+.footnote {
+  font-size: 10px;
+  color: #60777a;
+  margin: 10px 0 0;
+}
+.mono {
+  font-family: monospace;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 295px;
+  }
+  .sidebar {
+    padding: 16px;
+  }
+  .heading {
+    left: 20px;
+  }
+  .heading h1 {
+    font-size: 21px;
+  }
+  .identity small {
+    display: none;
+  }
+  .guide {
+    display: none;
+  }
+}
+@media (max-width: 650px) {
+  .layout {
+    display: block;
+  }
+  .top {
+    padding: 0 16px;
+    height: 60px;
+  }
+  .identity {
+    font-size: 14px;
+  }
+  .review-tag {
+    font-size: 10px;
+  }
+  .canvas {
+    height: 520px;
+  }
+  .sidebar {
+    height: auto;
+    border-left: 0;
+    border-top: 1px solid #c9d3d1;
+  }
+  .label {
+    font-size: 9px;
+  }
+  .heading h1 {
+    font-size: 20px;
+  }
+  .steps button {
+    font-size: 10px;
+  }
+  .transport {
+    padding: 12px;
+  }
+  .view-tools {
+    left: 12px;
+  }
+  .view-tools button {
+    padding: 6px 10px;
+  }
+  .heading {
+    top: 18px;
+  }
+  .drawing {
+    min-height: 660px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto;
+  }
+}

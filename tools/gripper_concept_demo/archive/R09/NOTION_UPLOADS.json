@@ -1,0 +1,169 @@
+[
+  {
+    "path": "archive/R09/screenshots/whole.png",
+    "filename": "whole.png",
+    "bytes": 251623,
+    "sha256": "2fa0555feb30e7d61705c7bcfe6ac349ca35f2a1154e09df1c54b72a9d85e631",
+    "file_upload_id": "3ecbf010-5ac9-81c7-a804-00b253070e02",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-81c7-a804-00b253070e02"
+  },
+  {
+    "path": "archive/R09/screenshots/pick.png",
+    "filename": "pick.png",
+    "bytes": 264993,
+    "sha256": "ad79e20431701af8ca27bd7265cfaac8ccf950abff74ee99ae846d36a7093b56",
+    "file_upload_id": "3ecbf010-5ac9-8106-8793-00b2c55795ad",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-8106-8793-00b2c55795ad"
+  },
+  {
+    "path": "archive/R09/screenshots/righting.png",
+    "filename": "righting.png",
+    "bytes": 177021,
+    "sha256": "1c0d5a952f15616d7ff4b19f7f575bad2bff303bbe63eb41e8d88b5bd103313e",
+    "file_upload_id": "3ecbf010-5ac9-8128-89fc-00b2da9d1aa3",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-8128-89fc-00b2da9d1aa3"
+  },
+  {
+    "path": "archive/R09/screenshots/thumb-park.png",
+    "filename": "thumb-park.png",
+    "bytes": 174295,
+    "sha256": "8a2da5d8fb11a695f280035220cfcf6c03de92d2bfb5e9a243315d6b1b190285",
+    "file_upload_id": "3ecbf010-5ac9-81d5-a6ac-00b2ca7cbba1",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-81d5-a6ac-00b2ca7cbba1"
+  },
+  {
+    "path": "archive/R09/screenshots/draw-in.png",
+    "filename": "draw-in.png",
+    "bytes": 173300,
+    "sha256": "cb75480ac42e9a7e8910dd0908c54fa8cc8d0a4c066ae5e4b91404cb0b280054",
+    "file_upload_id": "3ecbf010-5ac9-81a9-a893-00b235b84f90",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-81a9-a893-00b235b84f90"
+  },
+  {
+    "path": "archive/R09/screenshots/release.png",
+    "filename": "release.png",
+    "bytes": 171293,
+    "sha256": "134fbcacbcb0e8ac95ae5b340b0074a70594edd882d4ea19e9e69f93f7da0b08",
+    "file_upload_id": "3ecbf010-5ac9-81d9-9c19-00b222754ade",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-81d9-9c19-00b222754ade"
+  },
+  {
+    "path": "archive/R09/screenshots/stow.png",
+    "filename": "stow.png",
+    "bytes": 167529,
+    "sha256": "abf9e008c7e51e9e1ff482cb0d0c76864eeff59315229489cdc812842f5c574d",
+    "file_upload_id": "3ecbf010-5ac9-8103-adf6-00b2554acc95",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-8103-adf6-00b2554acc95"
+  },
+  {
+    "path": "archive/R09/screenshots/dense-wall-fastening.png",
+    "filename": "dense-wall-fastening.png",
+    "bytes": 199625,
+    "sha256": "509fe46bb6a6362749c53e6ba964b4dd0674ef1090059dec721da46e7f101e57",
+    "file_upload_id": "3ecbf010-5ac9-815a-90da-00b24d3d6763",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-815a-90da-00b24d3d6763"
+  },
+  {
+    "path": "archive/R09/screenshots/internal-layout.png",
+    "filename": "internal-layout.png",
+    "bytes": 183736,
+    "sha256": "279dc1b9773e5a1d131a269f7b72b1e0fbcdb6a0ef4baa47dc613728710f7c43",
+    "file_upload_id": "3ecbf010-5ac9-8155-8e08-00b2fd98edab",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-8155-8e08-00b2fd98edab"
+  },
+  {
+    "path": "archive/R09.zip",
+    "filename": "R09.zip",
+    "bytes": 11592272,
+    "sha256": "9edca812176c5aa1b55d3c0e53b1f27ff24c9b750ef13eeec64f0e4137216d78",
+    "file_upload_id": "3ecbf010-5ac9-8156-adfe-00b2e28eaa05",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-8156-adfe-00b2e28eaa05"
+  },
+  {
+    "path": "archive/R09/validation.json",
+    "filename": "validation.json",
+    "bytes": 1904,
+    "sha256": "0d5097859dbefb85ca251bf472ca095c2af975ec4aa7d6ecbf44e5de64af8c2d",
+    "file_upload_id": "3ecbf010-5ac9-8122-876d-00b204f4e3af",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-8122-876d-00b204f4e3af"
+  },
+  {
+    "path": "archive/R09/component-review.csv",
+    "filename": "component-review.csv",
+    "bytes": 714,
+    "sha256": "64c6cc33092d1d091a9561fc343867c02cefdb0b11272653043c3cd3f00b99a7",
+    "file_upload_id": "3ecbf010-5ac9-81f6-9213-00b2842ca1e8",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-81f6-9213-00b2842ca1e8"
+  },
+  {
+    "path": "archive/R09/source/R09.md",
+    "filename": "R09.md",
+    "bytes": 4833,
+    "sha256": "839785e4b1ca9a80359afe0a1a4c9cf2771440356b8162d45960f353754cf6e4",
+    "file_upload_id": "3ecbf010-5ac9-81f2-b397-00b2208c6bef",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-81f2-b397-00b2208c6bef"
+  },
+  {
+    "path": "archive/R09/validation.json",
+    "filename": "validation.json",
+    "bytes": 2877,
+    "sha256": "643d01d856ead1c8eddb5aca7428f01f4be85765de39b2ad4fae098c2b1aba4b",
+    "file_upload_id": "3ecbf010-5ac9-8167-952d-00b2de37f2d9",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-8167-952d-00b2de37f2d9",
+    "round": 2
+  },
+  {
+    "path": "archive/R09/m6-r09-gripper.glb",
+    "filename": "m6-r09-gripper.glb",
+    "bytes": 1103116,
+    "sha256": "695201f7301e6835d2fb871cce3568b88ea0c1deaee610f6a741d3357babcb8d",
+    "file_upload_id": "3ecbf010-5ac9-819b-8609-00b223cddc31",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-819b-8609-00b223cddc31",
+    "round": 2
+  },
+  {
+    "path": "archive/R09/m8-r09-gripper.glb",
+    "filename": "m8-r09-gripper.glb",
+    "bytes": 1105044,
+    "sha256": "74ba20176792f21cfd2ead3342c3012b76289739c2a2cc9aba2d6c25344fdd49",
+    "file_upload_id": "3ecbf010-5ac9-81e4-8d2b-00b2062393d1",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-81e4-8d2b-00b2062393d1",
+    "round": 2
+  },
+  {
+    "path": "archive/R09/m10-r09-gripper.glb",
+    "filename": "m10-r09-gripper.glb",
+    "bytes": 1106316,
+    "sha256": "1a01b09515c08f65170db1a2cdc500cb94bfd9da8e5d8c70c4e57f940d3371d9",
+    "file_upload_id": "3ecbf010-5ac9-8183-8026-00b2d4f71ba4",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-8183-8026-00b2d4f71ba4",
+    "round": 2
+  },
+  {
+    "path": "archive/R09.zip",
+    "filename": "R09.zip",
+    "bytes": 12018388,
+    "sha256": "f11c50d8b11444c3261c9f081db14be7e9c5242693399e2620ae7c7b591ba6be",
+    "file_upload_id": "3ecbf010-5ac9-8172-9187-00b2017cd1a2",
+    "status": "uploaded",
+    "markdown_source": "file-upload://3ecbf010-5ac9-8172-9187-00b2017cd1a2",
+    "round": 2
+  }
+]

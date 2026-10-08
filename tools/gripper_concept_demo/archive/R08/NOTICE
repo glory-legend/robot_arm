@@ -1,0 +1,22 @@
+robotarm_main
+Copyright 2026 slfkalstks
+
+이 소프트웨어는 Apache License 2.0 하에 배포됩니다(LICENSE 참조).
+
+------------------------------------------------------------------------
+포함/기반 저작물 표기 (Apache-2.0 §4 준수)
+------------------------------------------------------------------------
+
+1) PinkWink/robotarm_tutorials
+   https://github.com/PinkWink/robotarm_tutorials
+   본 프로젝트는 이 튜토리얼 저장소를 기반으로 M8 볼트 빈피킹 데모를
+   추가·재구성한 것입니다.
+   변경점: FR3 빈피킹 파이프라인(bin_picking 패키지) 신규 작성 —
+   비전 인식(bolt_vision), 파지 계획/선택/롤아웃, MoveIt 픽앤플레이스,
+   그리고 3350줄 단일 노드를 책임별 모듈로 리팩토링.
+
+2) franka_description, franka_fr3_moveit_config, franka_gazebo_bringup
+   Franka Robotics GmbH 및 기여자
+   FR3 로봇 모델(URDF/메시)과 MoveIt/Gazebo 설정. Apache-2.0.
+   변경점: Gazebo 시뮬레이션용 조정(중력 오버라이드, gz 카메라 센서,
+   finger_joint2 mimic 등록 등).

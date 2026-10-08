@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<!--
+  [벤더링 수정본] 상류(macmacal/robotiq_hande_description, Apache-2.0)에
+  `sim_ignition` 분기를 추가했다. 수정 범위 전체는 ../NOTICE 참조.
+
+  분기 구조는 설치된 robotiq_description(2F-85)의
+  `/opt/ros/jazzy/share/robotiq_description/urdf/robotiq_gripper.ros2_control.xacro`
+  를 그대로 미러링했다. 다만 Hand-E 는 4절 링크가 아니라 단순 평행 슬라이더라
+  구동 1개(left) + 종동 1개(right) 뿐이다 — 2F-85 의 종동 4개 블록에 대응하는
+  것이 하나밖에 없다.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro
+    name="robotiq_hande_ros2_control"
+    params="name prefix
+            grip_pos_min:=0 grip_pos_max:=0.025
+            tty_port:=/tmp/ttyUR baudrate:=115200 parity:=N
+            data_bits:=8 stop_bit:=1 slave_id:=9 frequency_hz:=10
+            create_socat_tty:=false socat_ip_address:=192.168.100.10
+            socat_port:=54321
+            use_fake_hardware:=false
+            sim_ignition:=false"
+  >
+    <ros2_control name="${name}" type="system">
+      <hardware>
+        <!-- Gazebo(gz_ros2_control). 팔 쪽(ur_gz.ros2_control.xacro)과 같은
+             플러그인 이름을 쓴다. `ign_ros2_control/IgnitionSystem` 은 구버전
+             파일용 하위호환 별칭일 뿐이라 새로 쓰는 분기에서는 쓰지 않는다. -->
+        <xacro:if value="${sim_ignition}">
+          <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+        </xacro:if>
+
+        <xacro:if value="${use_fake_hardware}">
+          <plugin>mock_components/GenericSystem</plugin>
+        </xacro:if>
+
+        <xacro:unless value="${use_fake_hardware or sim_ignition}">
+          <plugin>robotiq_hande_driver/RobotiqHandeHardwareInterface</plugin>
+          <param name="grip_pos_min">${grip_pos_min}</param>
+          <param name="grip_pos_max">${grip_pos_max}</param>
+
+          <param name="tty_port">${tty_port}</param>
+          <param name="baudrate">${baudrate}</param>
+          <param name="parity">${parity}</param>
+          <param name="data_bits">${data_bits}</param>
+          <param name="stop_bit">${stop_bit}</param>
+          <param name="slave_id">${slave_id}</param>
+          <param name="frequency_hz">${frequency_hz}</param>
+
+          <param name="create_socat_tty">${create_socat_tty}</param>
+          <param name="socat_ip_address">${socat_ip_address}</param>
+          <param name="socat_port">${socat_port}</param>
+        </xacro:unless>
+      </hardware>
+
+      <!-- 구동 관절. 어느 모드에서나 이것만 지령한다. -->
+      <joint name="${prefix}robotiq_hande_left_finger_joint">
+        <command_interface name="position">
+          <param name="min">${grip_pos_min}</param>
+          <param name="max">${grip_pos_max}</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">${grip_pos_max}</param>
+        </state_interface>
+        <state_interface name="velocity">
+          <param name="initial_value">0</param>
+        </state_interface>
+      </joint>
+
+      <!-- 종동(mimic) 관절.
+           실물 드라이버는 이 관절을 아예 모른다(Modbus 지령이 하나뿐) → 선언하지
+           않는다. 시뮬/목 하드웨어에서만 필요하다.
+           ⚠ sim_ignition 일 때는 인터페이스를 **주지 않는다.** gz 가 URDF 의
+             <mimic> 을 직접 처리하므로, 여기서 command/state 인터페이스를 주면
+             같은 관절을 gz 와 ros2_control 이 이중으로 구동하게 된다.
+             (2F-85 xacro 의 xacro:unless 패턴과 동일한 이유) -->
+      <xacro:if value="${use_fake_hardware or sim_ignition}">
+        <joint name="${prefix}robotiq_hande_right_finger_joint">
+          <param name="mimic">${prefix}robotiq_hande_left_finger_joint</param>
+          <param name="multiplier">1</param>
+          <xacro:unless value="${sim_ignition}">
+            <command_interface name="position"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+          </xacro:unless>
+        </joint>
+      </xacro:if>
+    </ros2_control>
+  </xacro:macro>
+</robot>

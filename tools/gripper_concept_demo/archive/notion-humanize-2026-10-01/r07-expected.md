@@ -1,0 +1,80 @@
+기준일: 2026-10-01. 상태: **조립 검토·제작 미승인**. 대상은 M6×20, M8×35, M10×50의 노출된 외부 육각 헤드이며 체결 토크는 미정입니다.
+## 설계 목적과 이전안 판정
+R06에는 구동부·힘 전달 경로의 누락, 얇은 B 턱의 최종 토크 전달 근거 부족, 부품 관통이 남아 있어 제작 승인 기준안에서 제외했습니다. R07은 기존 로봇 시연과 분리한 브라우저 조립 검토 뷰로 실제 피벗·가이드·베어링의 배치와 A/B 운동을 비교합니다.
+A는 2R 엄지로 볼트를 세우고 별도 평행 픽업을 수납합니다. B는 작은 팁만 비트는 대신 직선 손가락과 평행 구동부를 포함한 픽업 카세트 전체를 1R 회전시킵니다. **두 안 모두 같은 내부 가변 6조 척에 헤드를 인계합니다.** R06 B의 통합 2조 헤드 카세트와는 다른 구조입니다.
+## 제어축 비교
+<table header-row="true">
+<tr>
+<td>운동</td>
+<td>A · 기능 분리형</td>
+<td>B · 카세트 전체 회전형</td>
+</tr>
+<tr>
+<td>몸통 파지</td>
+<td>평행 픽업 1축</td>
+<td>평행 픽업 1축</td>
+</tr>
+<tr>
+<td>세우기</td>
+<td>보조 엄지 2R</td>
+<td>카세트 전체 1R</td>
+</tr>
+<tr>
+<td>수납</td>
+<td>슬라이드 1축</td>
+<td>슬라이드 1축</td>
+</tr>
+<tr>
+<td>헤드 유지</td>
+<td>내부 6조 척 닫힘 1축</td>
+<td>내부 6조 척 닫힘 1축</td>
+</tr>
+<tr>
+<td>회전</td>
+<td>스핀들 1축</td>
+<td>스핀들 1축</td>
+</tr>
+<tr>
+<td>합계</td>
+<td>6제어축</td>
+<td>5제어축</td>
+</tr>
+</table>
+제어축은 독립 운동 좌표의 수이며 모터 수나 구매부품 수가 아닙니다. 로봇 관절은 제외했습니다. 잠금·클러치의 별도 구동이나 추가 정렬축이 필요해지면 합계도 늘어납니다. 척 닫힘 1축은 6조 동기화 구동이 실제로 설계된다는 전제입니다.
+## 공통 조립 치수
+조립 좌표는 mm, +Z는 나사 끝 방향, 헤드 아래면은 Z=0입니다. 다음 값은 공간 검토용 가정이며 제작 공차·구매품 정격이 아닙니다.
+- 몸통 파지점: (0, 0, 14).
+- 손가락: 중심선 약 113.1mm, 뿌리 12×10mm → 끝 3×4mm. 뿌리는 측면으로 20mm 벌어집니다.
+- 평행 모듈 설치 공간: 80×45×65mm, 중심 (0, 100, −80).
+- 픽업 수납: (0, +60, −35), 총 69.5mm. Ø10 가이드 축 2개와 중공 부시를 배치했습니다.
+- 척의 축방향 돌출 이동: 0mm. 내부 닫힘 구동용 드로바 이동과 척 자체의 이동은 구분합니다.
+- 척 외장: 외경 104mm, 내경 96mm, 뒤쪽 개구. 완전 밀폐 구조가 아닙니다.
+- 출력축 가정: Ø16mm, 지지 베어링 간격 24mm. 반력 접촉 검토 반경 65mm.
+- 스핀들 설치 공간: Ø57×322mm. 구매품과 목표 토크는 선정하지 않았습니다.
+긴 손가락은 스핀들과 회전 카세트 사이 공간을 확보한 결과입니다. 기존 소형 모듈의 허용 길이를 만족한다고 가정하지 않으며 파지력·처짐·모듈 선정 검토가 필요합니다.
+## 파지 인계와 검토 범위
+몸통 파지 확인 → 인출 → 세우기 → 축 정렬·헤드 착좌 → 척 잠금 확인 → 몸통 집게 해제 → 수납 확인 → 내부 스핀들 회전 순서입니다. 헤드 유지가 확인되기 전에 몸통 집게를 열지 않는 순서를 표현합니다.
+현재 화면은 단순 동작·조립·GLB/CSV 검토 뷰입니다. **작업물의 실제 나사 삽입, 토크 제어, 접촉 물리, 로봇 제어·경로 계획은 포함하지 않습니다.** 시간에 따른 애니메이션 전환은 실기 센서 확인을 구현한 제어기가 아닙니다.
+## 검토 결과와 미확정 항목
+A의 엄지 회전에 동일한 보간을 두 번 적용해 접촉이 어긋나던 오류를 수정했고 엄지 모터와 평행 모듈 설치 공간이 12.5mm 겹치던 배치도 분리했습니다. 렌더링 롤러의 볼트 접촉과 모터 설치 공간 분리를 자동 검사에 추가했습니다.
+구매 구동기, 척의 쐐기·잠금, 재료·강도·공차·끼워맞춤, 배선, 완성 도구의 질량·관성, 파지 안정성, 헤드 위상 탐색·착좌 검출, 반력 지그는 확정되지 않았습니다. 단면과 전체 운동 영역의 연속 충돌 검토, 토크 전달·내구·낙하 방지 시험이 필요합니다. 현재 모델로 제작 발주할 수 없습니다.
+## 개발 검증 기록
+2026-10-01 최종 확인 기록: 단위 테스트 26개, 브라우저 검사 13개 전체(약 1.8분), 타입 검사·빌드·Prettier 통과. GLB 2개는 헤더와 변환행렬 대각의 0.001 스케일을 확인해 미터 단위로 내보냈습니다.
+자동 검사 통과는 강도, 전 기구 연속 충돌, 실물 파지·체결 성능 또는 제작 승인을 뜻하지 않습니다.
+## 부품군·하중 자료
+<file src="https://prod-files-secure.s3.us-west-2.amazonaws.com/e7b440a6-94ca-478d-bec0-bb0968af7523/ddaf90de-bb7a-41fc-a869-16bbb343984a/R07-component-review.csv?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAZI2LB4664SCAHVCD%2F20261001%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20261001T004706Z&X-Amz-Expires=300&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEKf%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJGMEQCIEaHUyNbkiuXT7eP7%2Fpxu4WS20xgSrGg6muA0FSVl45sAiAzyXvKqCZ5vJmWkKfr1UVrtUvYwJPgo7bSAdW9EJdQdSr%2FAwhvEAAaDDYzNzQyMzE4MzgwNSIM%2FwydH%2FDPFxnNjoR%2BKtwDFPbPjPnss51hYOisZfKqsYT33JtBCLpaWzNZj1Bt%2BzgBxZbmdbu7ZIwh3rS1YHbVqwhhhWCm5LW%2BWxKXOARnD%2BLvczUSTcyR70PejQwkGTEamH%2BEdywxJn7105rKO5BRc1wzIofnfIDJdIfJ5NnhresO3WIC0%2FDvmtXnrCDMbFnjplHj71gkRSAKTS6Tu%2F0GxqyCfx2QjW8AxUgdeGJUXY0XCiWNjA4Y%2FAxnVKPbt94DZHsCCthdnmwxjPonVcOIsBcKW1W8KvXtPT6QFKJvESNZGYBvnhjxnQK5xzhpy1MhKNGQnfDrLIXYLj0Mo7S9l6Kn9aAv8qBAx7ob9t2tIqiFwCDywEjh4HEqazmk60ZixQYFMBlqyV2S8wjp7jSjnxHY3%2BhWdTeDqlU0v8nhByenZDIv%2FlwTA%2BPiFaOWEbrnBABLfqSHRFI8BJV6O39tCg6HcieiqT1CdKvOGNsVXvDrembAVJtHsd%2F0H90yrgftPBz2ubpMZ%2BnmkNbs4M1bXGMnY8KAmPfYo6RGZHSds%2BwG%2F6qfRlLPQ1v%2BZFB45Q%2BiPvm2jAYpov1NZrcmB5a%2BOdEl09NwmZFmlTG3YD2AQSjjHl8Cuy1MSHlPu9Zlfhk%2F4ZfcUQ727qj4A%2B8w7KH21QY6pgFvKGnHLV3iEiA11p%2FjfETI7P5Nes6H0RA%2B5o%2F8sU9s%2B3l3qaHKNp5gRN7VevWAK7VD6C83BqbHuM2OreagEwloYjHpDmjO1dnxZROO19Vl81JgxdQED1zBlUassRj2qab%2B8bFbPVHVKlAPCk%2BV%2BNw9jbh5i%2BjzIBmggR11dXwWj1%2BTwgNjIctkDkpmsHCEjyrClIaosPdiFgdgAfwE%2FWVUtaxFruHX&X-Amz-Signature=369795c0031be51d1ff529160db2800ac105992cc2a50cc554c474d8ea2e8580&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"></file>
+CSV는 구매 확정 BOM이 아닌 부품군 검토표입니다.
+<file src="https://prod-files-secure.s3.us-west-2.amazonaws.com/e7b440a6-94ca-478d-bec0-bb0968af7523/3a1a17e0-e3a1-4397-9ae6-cac498cb5f16/R07-load-sensitivity.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAZI2LB4664SCAHVCD%2F20261001%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20261001T004706Z&X-Amz-Expires=300&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEKf%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJGMEQCIEaHUyNbkiuXT7eP7%2Fpxu4WS20xgSrGg6muA0FSVl45sAiAzyXvKqCZ5vJmWkKfr1UVrtUvYwJPgo7bSAdW9EJdQdSr%2FAwhvEAAaDDYzNzQyMzE4MzgwNSIM%2FwydH%2FDPFxnNjoR%2BKtwDFPbPjPnss51hYOisZfKqsYT33JtBCLpaWzNZj1Bt%2BzgBxZbmdbu7ZIwh3rS1YHbVqwhhhWCm5LW%2BWxKXOARnD%2BLvczUSTcyR70PejQwkGTEamH%2BEdywxJn7105rKO5BRc1wzIofnfIDJdIfJ5NnhresO3WIC0%2FDvmtXnrCDMbFnjplHj71gkRSAKTS6Tu%2F0GxqyCfx2QjW8AxUgdeGJUXY0XCiWNjA4Y%2FAxnVKPbt94DZHsCCthdnmwxjPonVcOIsBcKW1W8KvXtPT6QFKJvESNZGYBvnhjxnQK5xzhpy1MhKNGQnfDrLIXYLj0Mo7S9l6Kn9aAv8qBAx7ob9t2tIqiFwCDywEjh4HEqazmk60ZixQYFMBlqyV2S8wjp7jSjnxHY3%2BhWdTeDqlU0v8nhByenZDIv%2FlwTA%2BPiFaOWEbrnBABLfqSHRFI8BJV6O39tCg6HcieiqT1CdKvOGNsVXvDrembAVJtHsd%2F0H90yrgftPBz2ubpMZ%2BnmkNbs4M1bXGMnY8KAmPfYo6RGZHSds%2BwG%2F6qfRlLPQ1v%2BZFB45Q%2BiPvm2jAYpov1NZrcmB5a%2BOdEl09NwmZFmlTG3YD2AQSjjHl8Cuy1MSHlPu9Zlfhk%2F4ZfcUQ727qj4A%2B8w7KH21QY6pgFvKGnHLV3iEiA11p%2FjfETI7P5Nes6H0RA%2B5o%2F8sU9s%2B3l3qaHKNp5gRN7VevWAK7VD6C83BqbHuM2OreagEwloYjHpDmjO1dnxZROO19Vl81JgxdQED1zBlUassRj2qab%2B8bFbPVHVKlAPCk%2BV%2BNw9jbh5i%2BjzIBmggR11dXwWj1%2BTwgNjIctkDkpmsHCEjyrClIaosPdiFgdgAfwE%2FWVUtaxFruHX&X-Amz-Signature=7702af09f490e43eb4a8bf0da49dae3f7c21d2577392171999849f951bcc1c3c&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"></file>
+하중 JSON은 가정 토크 20/40/60N·m, 헤드 대변 10/13/17mm, 중실 출력축 Ø16mm, 반력 반경 65mm의 예비 민감도 계산입니다. 토크 추천이나 정격 합격 판정이 아닙니다.
+예를 들어 40N·m에서 Ø16mm 중실축의 순수 비틀림 최대 전단응력은 약 49.7MPa, 두 반력 탭이 균등 분담할 때 탭당 힘은 약 307.7N입니다. 한 탭만 접촉하면 약 615.4N입니다. 재료·키홈·단차·굽힘·피로·안전계수는 포함하지 않았습니다.
+기계 검토 문서의 기본 예시 표는 Ø10mm 축·반경 25mm 조건이며 첨부 JSON의 Ø16mm·반경 65mm 조건과 다릅니다. 조건을 섞어 비교하지 않습니다.
+## 기계 검토 원문과 출처
+<file src="file-upload://3ecbf010-5ac9-811a-bd46-00b2b0ec0d2f"></file>
+원문에는 자유도·구속·힘 전달 경로·계산 가정·제작 전 수용 기준·제조사 참고 자료를 보존했습니다. 제조사 구조는 원리와 부품 구성의 근거이며 이 조립체의 정격이나 구매 확정을 뜻하지 않습니다.
+[Festo HGDS](https://media.festo.com/media/114116_documentation.pdf), [Zimmer SBZ](https://www.zimmer-group.com/en/products/components/handling-technology/swivel-and-rotary-modules/series-sbz), [Kolver 카탈로그](https://kolver.com/upl/EN_Catalog_KDUCER.pdf).
+## 파일 보존 상태
+A/B별 최신 사진 6장과 미터 단위 GLB는 아래 하위 페이지에 첨부합니다. GLB는 시각 조립 메시이며 STEP 솔리드·부품도·공차 설계·가공 데이터가 아닙니다. 소스·정적뷰어·검토기록 묶음은 문서 정리 후 아래에 첨부합니다.
+<file src="file-upload://3ecbf010-5ac9-8105-8ce6-00b2695fe029"></file>
+## A/B 상세 기록
+<page url="https://app.notion.com/p/3ecbf0105ac98118ba85f4a0e4a15424">R07 A · 2R 엄지·분리형 픽업 — 6제어축</page>
+<page url="https://app.notion.com/p/3ecbf0105ac9810c9938e5264b5aa442">R07 B · 카세트 전체 1R 회전 — 5제어축</page>

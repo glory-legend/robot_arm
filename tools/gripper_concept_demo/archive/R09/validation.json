@@ -1,0 +1,99 @@
+{
+  "version": "R09",
+  "date": "2026-10-01",
+  "design": {
+    "body_mm": [
+      61,
+      59,
+      81
+    ],
+    "nose_mm": {
+      "diameter": 29,
+      "length": 12
+    },
+    "tool_length_mm": 93,
+    "volume_vs_R08": 0.061,
+    "gripper": "flat plucking-tweezer blades 4.4x1.2 -> tip 1.2x0.5, parallel flat jaws",
+    "draw_in_mm": 14,
+    "stow_mm": 32,
+    "thumb_links_mm": [
+      24,
+      24
+    ],
+    "chuck_diameter_mm": 27.6,
+    "min_bolt_pitch_mm": {
+      "M6": 22,
+      "M8": 24,
+      "M10": 26
+    },
+    "actuators": 5,
+    "fixture": "none; reaction torque through the robot arm"
+  },
+  "unit_tests": {
+    "passed": 42,
+    "failed": 0,
+    "r09_tests": 10
+  },
+  "browser_tests": {
+    "passed": 16,
+    "failed": 0,
+    "duration": "2.2m"
+  },
+  "typecheck": "passed",
+  "production_build": "passed",
+  "format": "passed",
+  "checks": [
+    "no floating part (OBB contact graph, all phases/sizes) + negative control",
+    "only tweezer tips reach the bolt at pick; thumb >= 6 mm above them (measured 7.8 mm)",
+    "while fastening, every vertex within neighbour head height + 3 mm lies inside the nose radius",
+    "tweezer blades never enter nose/chuck; thumb never touches a blade; parked thumb inside ports",
+    "R08 interlocks; nothing but the bolt ahead of the face while fastening",
+    "FR3 joint limits; bolt handoff continuity; returns to start state"
+  ],
+  "screenshots": [
+    "dense-wall-fastening.png",
+    "draw-in.png",
+    "internal-layout.png",
+    "pick.png",
+    "release.png",
+    "righting.png",
+    "stow.png",
+    "thumb-park.png",
+    "whole.png"
+  ],
+  "glb_files": 3,
+  "not_verified": [
+    "FR3 wrist (~12 Nm) cannot react M8/M10 example torques",
+    "tweezer tip stiffness/wear",
+    "bolt attitude after thumb park during draw-in",
+    "collision with the bolt pile",
+    "mass, strength, tolerances"
+  ],
+  "manufacturing_release": false,
+  "glb": {
+    "m10-r09-gripper.glb": {
+      "bytes": 1106316,
+      "sha256": "1a01b09515c08f65170db1a2cdc500cb94bfd9da8e5d8c70c4e57f940d3371d9",
+      "glb_version": 2,
+      "metres_scale_verified": true,
+      "origin": "FR3 flange",
+      "pose": "t=12 s (thumb righting, all mechanisms extended), held bolt included"
+    },
+    "m6-r09-gripper.glb": {
+      "bytes": 1103116,
+      "sha256": "695201f7301e6835d2fb871cce3568b88ea0c1deaee610f6a741d3357babcb8d",
+      "glb_version": 2,
+      "metres_scale_verified": true,
+      "origin": "FR3 flange",
+      "pose": "t=12 s (thumb righting, all mechanisms extended), held bolt included"
+    },
+    "m8-r09-gripper.glb": {
+      "bytes": 1105044,
+      "sha256": "74ba20176792f21cfd2ead3342c3012b76289739c2a2cc9aba2d6c25344fdd49",
+      "glb_version": 2,
+      "metres_scale_verified": true,
+      "origin": "FR3 flange",
+      "pose": "t=12 s (thumb righting, all mechanisms extended), held bolt included"
+    }
+  }
+}

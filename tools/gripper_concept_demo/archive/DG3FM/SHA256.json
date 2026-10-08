@@ -1,0 +1,23 @@
+{
+  "finger-kinematics.ts": "12725664faddcb2f138cd963cb0f95cca058c5dc3d077995a5ca85fe6bcfd3e8",
+  "generate-fingers.py": "1f1df54cb03058537cc07daaecfc11de18b021fddb7138a6924e47b09db2483c",
+  "fingers.test.ts": "e56ec1b84239d990781d0bda71b57a49cf51e096ef0ba8e461fad3037e0bf078",
+  "dg3fm-data.json": "e6fdf36c92f90bc7454ac0d5dfa3fde60938a1df4ae759bbe898d7ddf01b5612",
+  "finger-motion.json": "f6597f7f290ec00f93c5b5bec4d716f4296e599cc1ab0b368b45f51a13eb675c",
+  "assets/dg3f_m.urdf": "6e4ade606664759bcd50e3055fde2d554739c86547d33d06cc03c4f7c6c60aef",
+  "assets/LICENSE": "11261109c76b9ea0f7f9ecdb587c893e56a578768c7667d0da833d1fb0b97052",
+  "assets/NOTICE": "0fc82a6ec865e5bf92af5a5627ebf7f8ade2de0305548ea09d0450101f4b3cd3",
+  "assets/dg3f_m.xml": "081334dc4f39acc81dfc61f70f3f02dbe4267f6327d4363f59f1e5342826d643",
+  "assets/meshes/l_dg_base.dae": "d6caa21176eeaeaa26635a1cabdd42c569d1f840b6c0aa12dba664d5e74cb306",
+  "assets/meshes/l_1_2.dae": "79804fab0387364a60795955bda0f4e15847edf397dc3072b2312bad31cb6977",
+  "assets/meshes/l_1_4.dae": "e7d02868d2fbd51c9a0d0b0f39983b9ac2a88b9b393699028801a5603f2a434d",
+  "assets/meshes/l_23_tip.dae": "c6721e24ccc844136c44904dadca827fa532c16afea12a227330c8752674a1c0",
+  "assets/meshes/l_1_1.dae": "53aaa76abed37e3aee8b5720b6331ae27a5c85275a3f1d7f08eaf96f8a622356",
+  "assets/meshes/l_1_3.dae": "1bbd8be46fd75516d2223c4908dfb2206e1a43936a14882d6d8d659b50464a63",
+  "assets/meshes/l_23_1.dae": "d2c8b4e0643dcda4cbf64b1ba988b9e305324a755444fde62b67aab0f59f07cc",
+  "assets/meshes/l_23_2.dae": "ec9b6a3b43f86c6dc33d8a38986fc5fb33693a1227f312ab6a07f4b5936ba4d4",
+  "assets/meshes/l_1_tip.dae": "99520f59ddbb2ef424289df6b90890fa66a9e8279c25513170a6c13d8380b637",
+  "assets/meshes/l_dg_mount.dae": "9db210d4a67c2e122ffe7ed9635d99e50fc533a637921f88c098d73a6ce81a71",
+  "assets/meshes/l_23_3.dae": "d96fe35b343df82e7e861817ab83cea5a93ead3ffdd7a69faef2279e4b95e5e0",
+  "assets/meshes/l_23_4.dae": "92748805551006b1fabf27068c19926be6ece71101cf6e7c976ab84e24250912"
+}

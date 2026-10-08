@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-01",
+  "unit_tests": {
+    "passed": 26,
+    "failed": 0
+  },
+  "browser_tests": {
+    "passed": 13,
+    "failed": 0
+  },
+  "typescript": "passed",
+  "production_build": "passed",
+  "prettier": "passed",
+  "glb_version": 2,
+  "glb_root_scale": 0.001,
+  "production_release": false,
+  "files": {
+    "a-assembly-review.glb": {
+      "sha256": "95d4d2650d683f395671f27eafd1fea098f3ef053e2623530e7027c6503b26f0",
+      "bytes": 3447252
+    },
+    "b-assembly-review.glb": {
+      "sha256": "73173e2fdf752ef1dce2974911c400596d01a63480e899bd6376694bd3516cae",
+      "bytes": 3554528
+    }
+  }
+}

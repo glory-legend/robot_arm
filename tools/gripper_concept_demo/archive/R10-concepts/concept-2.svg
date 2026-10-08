@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="430" viewBox="0 0 960 430" font-family="Noto Sans CJK KR, sans-serif">
+<style>.base{fill:none;stroke:#8d9aa2;stroke-width:1.5;stroke-dasharray:6 4} .new{fill:#28747a33;stroke:#185c56;stroke-width:2.2} .nose{fill:#bb591f40;stroke:#bb591f;stroke-width:2} .axis{stroke:#20313d;stroke-width:1;stroke-dasharray:2 3} text{fill:#20313d}</style>
+<rect width="960" height="430" fill="#f8fafb"/>
+<text x="24" y="34" font-size="20" text-anchor="start" font-weight="700">시안 2 · 원통 + 캠 연속 스트로크형</text><text x="24" y="58" font-size="13" text-anchor="start" font-weight="400">시안 1 + 요크 스트로크 하나로 '척 닫기 → 핀셋 벌림 → 수납'을 기계적으로 연동</text>
+<line class="axis" x1="30" y1="180" x2="560" y2="180"/>
+<polygon class="base" points="40.0,256.7 250.6,256.7 250.6,103.3 40.0,103.3"/><polygon class="base" points="250.6,217.7 281.8,217.7 281.8,142.3 250.6,142.3"/><polygon class="new" points="40.0,255.4 201.2,255.4 201.2,104.6 40.0,104.6"/><polygon class="nose" points="201.2,217.7 232.4,217.7 232.4,142.3 201.2,142.3"/><path d="M92.0,86.39999999999999 h78.0" stroke="#bb591f" stroke-width="3" marker-end="url(#a)"/><defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#bb591f"/></marker></defs><text x="92.0" y="73.4" font-size="12" text-anchor="start" font-weight="400">인입~수납 한 번에</text>
+<text x="40" y="316" font-size="12" text-anchor="start" font-weight="400">옆면 (왼쪽 = 로봇 플랜지, 오른쪽 = 체결 방향)</text>
+<line class="axis" x1="620" y1="180" x2="820" y2="180"/><line class="axis" x1="720" y1="80" x2="720" y2="280"/>
+<rect class="base" x="640.7" y="103.3" width="158.6" height="153.4" rx="23.400000000000002"/><circle class="new" cx="720" cy="180.0" r="75.4"/><circle class="nose" cx="720" cy="180.0" r="37.7"/>
+<text x="720" y="316" font-size="12" text-anchor="middle" font-weight="400">정면 (축 방향)</text>
+<text x="24" y="360" font-size="13" text-anchor="start" font-weight="400">외형: Ø58 × 62 + 노즈, 공구 길이 74 (−20%) · 척 폐쇄 구동부 제거(스프링 상시 닫힘, 요크가 앞쪽에서만 엶)</text><text x="24" y="380" font-size="13" text-anchor="start" font-weight="400">공정: 14 → 11단계, 구동부 6 → 5개 · 핀셋 벌림은 수납 첫 2 mm에서 캠이 수행</text><text x="24" y="400" font-size="13" text-anchor="start" font-weight="400">위험: 스프링 척의 파지력·해제 타이밍, 캠 마모 — 실물 검증 항목이 늘어남</text>
+<text x="936" y="422" font-size="11" text-anchor="end" font-weight="400">점선 = 현재 R09 외형 · 치수 mm · 개략 시안</text>
+</svg>

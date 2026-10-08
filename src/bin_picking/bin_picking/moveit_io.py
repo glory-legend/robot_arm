@@ -217,14 +217,15 @@ class MoveItIOMixin:
         res = result.result
         return res.error_code.val, res.planned_trajectory
 
-    def plan_to_joint_goal(self, joint_values, vel=0.3):
-        req = self._make_plan_request(vel=vel, acc=vel)
+    def plan_to_joint_goal(self, joint_values, vel=0.3, planner_id=''):
+        req = self._make_plan_request(vel=vel, acc=vel, planner_id=planner_id)
         req.goal_constraints.append(self._make_joint_constraints(joint_values))
         code_val, traj = self._send_move_goal(req)
         if code_val != MoveItErrorCodes.SUCCESS:
             self._log_failure(
                 '관절 목표 계획',
-                f'MoveIt 오류 {self.error_name(code_val)} ({code_val})',
+                f'MoveIt 오류 {self.error_name(code_val)} ({code_val})'
+                + (f' [{planner_id}]' if planner_id else ''),
                 target=joint_values)
         return code_val == MoveItErrorCodes.SUCCESS, traj
 
@@ -442,42 +443,97 @@ class MoveItIOMixin:
             return False
         return True
 
+    @staticmethod
+    def _traj_joint_length(traj):
+        """궤적의 관절공간 경로 길이(L2 누적). 짧을수록 효율적 움직임."""
+        pts = traj.joint_trajectory.points
+        if len(pts) < 2:
+            return 0.0
+        total = 0.0
+        for a, b in zip(pts[:-1], pts[1:]):
+            total += math.sqrt(sum(
+                (pa - pb) ** 2 for pa, pb in zip(a.positions, b.positions)))
+        return total
+
     def plan_viz_execute(self, pose, vel=0.3, label='', planners=None):
         """일반 계획: 여러 OMPL 플래너를 순차 시도(ex10) →
         첫 성공 채택 → FK 미리보기(주황) → execute.
-        planners=None이면 PLANNER_FALLBACK 목록을 순서대로 시도."""
+        planners=None이면 PLANNER_FALLBACK 목록을 순서대로 시도.
+        첫 플래너(RRTConnect)가 성공하면 한 번 더 시도해 짧은 쪽을 채택한다."""
         if planners is None:
             planners = self.PLANNER_FALLBACK
-        ok, traj, used = False, None, ''
+        best_traj, best_len, used = None, float('inf'), ''
         for pid in planners:
             ok, traj = self.plan_to_pose_goal(pose, vel=vel, planner_id=pid)
             if ok and traj is not None:
-                used = pid
-                break
+                tlen = self._traj_joint_length(traj)
+                if best_traj is None:
+                    best_traj, best_len, used = traj, tlen, pid
+                    if pid == planners[0]:
+                        ok2, traj2 = self.plan_to_pose_goal(
+                            pose, vel=vel, planner_id=pid)
+                        if ok2 and traj2 is not None:
+                            t2len = self._traj_joint_length(traj2)
+                            if t2len < best_len:
+                                best_traj, best_len = traj2, t2len
+                    break
+                elif tlen < best_len:
+                    best_traj, best_len, used = traj, tlen, pid
+                    break
             self.get_logger().warn(f'{label}: {pid} 계획 실패 — 다음 플래너 시도')
-        if not ok or traj is None:
+        if best_traj is None:
             self._log_failure(
                 f'{label} 자세 계획',
                 f'모든 플래너 실패 ({", ".join(planners)}) — 목표 pos='
                 f'({pose.position.x:.3f}, {pose.position.y:.3f}, '
                 f'{pose.position.z:.3f})')
             return False
-        pts = self.trajectory_to_ee_path(traj)
+        pts = self.trajectory_to_ee_path(best_traj)
         if pts:
             self.get_logger().info(
-                f'{label}: {used}로 계획, 경로 {len(pts)}점 미리보기(주황)')
+                f'{label}: {used}로 계획, 경로길이 {best_len:.2f}rad '
+                f'{len(pts)}점 미리보기(주황)')
             self.publish_ee_path(pts, self.COLOR_GENERAL)
-        return self.execute_trajectory(traj)
+        return self.execute_trajectory(best_traj)
 
-    def plan_viz_execute_joint(self, joint_values, vel=0.3, label=''):
-        ok, traj = self.plan_to_joint_goal(joint_values, vel=vel)
-        if not ok or traj is None:
-            self.get_logger().error(f'{label}: 계획 실패')
+    def plan_viz_execute_joint(self, joint_values, vel=0.3, label='',
+                               planners=None):
+        """관절 목표 계획 → 미리보기(주황) → execute.
+
+        pose 목표(plan_viz_execute)와 마찬가지로 여러 OMPL 플래너를 순차 시도한다.
+        첫 플래너 성공 시 한 번 더 계획해 짧은 쪽을 채택한다(best-of-2).
+        ready 복귀·롤아웃 접근처럼 워크스페이스를 가로지르는 관절 이동은 기본
+        RRTConnect 한 방으로는 'Unable to solve' 로 실패할 때가 있는데(특히 팔이
+        큰 UR 계열이 좁은 통 사이를 지날 때), 프로파일의 planner_fallback 이
+        바로 그 '어려운 구간용' 대안 플래너 목록이다."""
+        if planners is None:
+            planners = self.PLANNER_FALLBACK or ['']
+        best_traj, best_len = None, float('inf')
+        for pid in planners:
+            ok, traj = self.plan_to_joint_goal(joint_values, vel=vel,
+                                                planner_id=pid)
+            if ok and traj is not None:
+                tlen = self._traj_joint_length(traj)
+                if best_traj is None:
+                    best_traj, best_len = traj, tlen
+                    if pid == (planners[0] if planners else ''):
+                        ok2, traj2 = self.plan_to_joint_goal(
+                            joint_values, vel=vel, planner_id=pid)
+                        if ok2 and traj2 is not None:
+                            t2len = self._traj_joint_length(traj2)
+                            if t2len < best_len:
+                                best_traj, best_len = traj2, t2len
+                break
+            self.get_logger().warn(
+                f'{label}: 관절 계획 {pid or "기본"} 실패 — 다음 플래너 시도')
+        if best_traj is None:
+            self.get_logger().error(
+                f'{label}: 계획 실패 (모든 플래너 {", ".join(p or "기본" for p in planners)})')
             return False
-        pts = self.trajectory_to_ee_path(traj)
+        pts = self.trajectory_to_ee_path(best_traj)
         if pts:
             self.publish_ee_path(pts, self.COLOR_GENERAL)
-        return self.execute_trajectory(traj)
+        return self.execute_trajectory(best_traj)
 
     def cartesian_viz_execute(self, waypoints, label='', vel=0.3,
                               allow_fallback=True, min_fraction=None,

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  UR5e + Robotiq Hand-E 결합 SRDF (등록 입력물)
+
+  `ur5e_robotiq85.srdf.xacro` 를 베이스로 그리퍼 쪽만 Hand-E 로 바꾼 것이다.
+  벤더 SRDF 를 그대로 못 쓰는 이유(그룹 tip 이 tool0 이라 파지 깊이가 통째로
+  어긋난다)는 2F-85 판 주석과 같다.
+
+  벤더 매크로는 충돌 매트릭스와 기존 그룹을 얻기 위해 그대로 부르고, 그 위에
+  이 파일이 얹는 것:
+    - `bin_picking_arm`  : base_link → grasp_tcp 체인 (파지 기준 그룹)
+    - `bin_picking_hand` : 그리퍼 그룹 + end_effector 선언
+    - Hand-E 링크들의 자체충돌 해제
+-->
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="$(arg name)">
+
+  <xacro:arg name="name" default="ur5e_robotiq_hande"/>
+  <xacro:arg name="tf_prefix" default=""/>
+
+  <!-- 벤더 SRDF: UR 자체충돌 매트릭스 + ur_manipulator 그룹 -->
+  <xacro:include filename="$(find ur_moveit_config)/srdf/ur_macro.srdf.xacro"/>
+  <xacro:ur_srdf/>
+
+  <!-- ============ 파지 기준 그룹 ============
+    체인이 grasp_tcp 까지 이어지지만, tool0 이후는 전부 fixed 조인트라
+    가동 관절은 UR 6축 그대로다. -->
+  <group name="bin_picking_arm">
+    <chain base_link="$(arg tf_prefix)base_link"
+           tip_link="$(arg tf_prefix)grasp_tcp"/>
+  </group>
+
+  <!-- Ready 자세 — 빈피킹 워크스페이스 전용(순정 home 과 다름).
+       [출처] `ur5e_robotiq85.srdf.xacro` 의 ready 값을 그대로 가져왔다. 같은
+       UR5e 팔이고 관절값은 팔 자세만 정한다 — 바뀌는 것은 TCP 가 손목에서
+       얼마나 더 나가느냐뿐이다:
+           2F-85  : tool0 → grasp_tcp = 134.38mm
+           Hand-E : tool0 → grasp_tcp = 11.0(IO 커플러) + 136.05 = 147.05mm
+         → 같은 관절값에서 TCP 가 툴 z 방향으로 12.67mm 더 나간다.
+       원래 이 값은 TCP=(0.40, 0.00, 0.30) '아래로 향함'을 compute_ik 로 풀어
+       얻은 것이라, 엄밀히는 Hand-E 길이로 다시 풀어야 한다.
+       ⚠ [시드값 — 라이브 재유도 필요] 12.67mm 는 통 벽(25mm) 대비 작아 접근
+         계획이 깨질 값은 아니라고 보지만, 이건 계산상 판단이지 실측이 아니다.
+         Gazebo 브링업 후 `measure_workspace`/compute_ik 로 같은 방식으로 다시
+         풀어 확정할 것. -->
+  <group_state name="ready" group="bin_picking_arm">
+    <joint name="$(arg tf_prefix)shoulder_pan_joint" value="-0.340"/>
+    <joint name="$(arg tf_prefix)shoulder_lift_joint" value="-1.364"/>
+    <joint name="$(arg tf_prefix)elbow_joint" value="1.478"/>
+    <joint name="$(arg tf_prefix)wrist_1_joint" value="1.457"/>
+    <joint name="$(arg tf_prefix)wrist_2_joint" value="1.571"/>
+    <joint name="$(arg tf_prefix)wrist_3_joint" value="1.231"/>
+  </group_state>
+
+  <!-- ============ 그리퍼 ============
+    Hand-E 는 구동 관절 1개 + 종동(mimic) 1개뿐이다. 그룹에는 구동 관절만
+    넣는다(2F-85 판과 같은 이유 — 종동은 지령 대상이 아니다). -->
+  <group name="bin_picking_hand">
+    <joint name="$(arg tf_prefix)robotiq_hande_left_finger_joint"/>
+  </group>
+  <end_effector name="robotiq_hande"
+                parent_link="$(arg tf_prefix)grasp_tcp"
+                group="bin_picking_hand"
+                parent_group="bin_picking_arm"/>
+
+  <!-- ============ Hand-E 자체충돌 해제 ============
+    벤더가 안 준다. 이게 없으면 손가락끼리/손목과 늘 충돌로 잡혀 계획이 전부
+    실패한다. 인접(Adjacent)한 것과 구조상 절대 안 닿는(Never) 쌍을 푼다.
+    2F-85 판보다 목록이 짧은 것은 링크가 실제로 적기 때문이다(4절 링크 8개
+    → 평행 슬라이더 2개). -->
+  <xacro:macro name="he_nc" params="a b reason">
+    <disable_collisions link1="$(arg tf_prefix)${a}" link2="$(arg tf_prefix)${b}"
+                        reason="${reason}"/>
+  </xacro:macro>
+
+  <xacro:he_nc a="wrist_3_link" b="robotiq_hande_coupler" reason="Adjacent"/>
+  <xacro:he_nc a="wrist_3_link" b="robotiq_hande_link" reason="Never"/>
+  <xacro:he_nc a="wrist_2_link" b="robotiq_hande_coupler" reason="Never"/>
+  <xacro:he_nc a="wrist_2_link" b="robotiq_hande_link" reason="Never"/>
+  <xacro:he_nc a="robotiq_hande_coupler" b="robotiq_hande_link" reason="Adjacent"/>
+
+  <xacro:he_nc a="robotiq_hande_coupler" b="robotiq_hande_left_finger" reason="Never"/>
+  <xacro:he_nc a="robotiq_hande_coupler" b="robotiq_hande_right_finger" reason="Never"/>
+  <xacro:he_nc a="robotiq_hande_link" b="robotiq_hande_left_finger" reason="Adjacent"/>
+  <xacro:he_nc a="robotiq_hande_link" b="robotiq_hande_right_finger" reason="Adjacent"/>
+
+  <!-- 좌우 손가락은 완전히 닫혀야 닿는다(관절값 0 에서 두 패드 안쪽면이 x=0
+       에서 만난다 — finger_collision.dae 파싱값). 파지 중에는 늘 물체가 사이에
+       있으므로 충돌로 잡으면 모든 파지가 거부된다. -->
+  <xacro:he_nc a="robotiq_hande_left_finger" b="robotiq_hande_right_finger" reason="Never"/>
+
+</robot>

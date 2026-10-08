@@ -1,0 +1,18 @@
+DG3FM reference assets — Copyright (c) 2026, Tesollo
+BSD 3-Clause License: see ./LICENSE (included with these files).
+Source: https://github.com/tesollodelto/tesollo_model/tree/c49d3768900b30e6724fd2c56fe911f04cdfbf18/dg3fm
+Commit: c49d3768900b30e6724fd2c56fe911f04cdfbf18
+
+Included upstream files are unmodified DAE visual meshes, URDF and MuJoCo XML.
+This is a visual asset subset, not a standalone ROS/MuJoCo package; collision
+STL files are not included. dg3fm-data.json is derived from the upstream URDF.
+
+Demonstrator modifications:
+- Browser rendering uses studio materials; original mesh geometry is preserved.
+- Three original wide fingertips are replaced in the scene by narrow illustrative
+  bolt tips; the original fingertip mesh files remain available as references.
+- A central guide, variable three-jaw head holder and rotating spindle are added
+  concept parts. These are NOT features supplied or endorsed by Tesollo.
+- Finger motion is computed within URDF angle limits, with no contact dynamics,
+  force/torque validation, collision certification or real hardware control.
+- The custom tip and receiver dimensions are illustrative, not fabrication CAD.

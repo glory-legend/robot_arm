@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="430" viewBox="0 0 960 430" font-family="Noto Sans CJK KR, sans-serif">
+<style>.base{fill:none;stroke:#8d9aa2;stroke-width:1.5;stroke-dasharray:6 4} .new{fill:#28747a33;stroke:#185c56;stroke-width:2.2} .nose{fill:#bb591f40;stroke:#bb591f;stroke-width:2} .axis{stroke:#20313d;stroke-width:1;stroke-dasharray:2 3} text{fill:#20313d}</style>
+<rect width="960" height="430" fill="#f8fafb"/>
+<text x="24" y="34" font-size="20" text-anchor="start" font-weight="700">시안 5 · 슬림 비대칭형</text><text x="24" y="58" font-size="13" text-anchor="start" font-weight="400">시안 1의 동축 이송 + 아래쪽(가이드 쪽) 공간 제거 → 한쪽으로 납작한 몸체</text>
+<line class="axis" x1="30" y1="180" x2="560" y2="180"/>
+<polygon class="base" points="40.0,256.7 250.6,256.7 250.6,103.3 40.0,103.3"/><polygon class="base" points="250.6,217.7 281.8,217.7 281.8,142.3 250.6,142.3"/><polygon class="new" points="40.0,221.6 214.2,221.6 214.2,107.2 40.0,107.2"/><polygon class="nose" points="214.2,217.7 245.4,217.7 245.4,142.3 214.2,142.3"/>
+<text x="40" y="316" font-size="12" text-anchor="start" font-weight="400">옆면 (왼쪽 = 로봇 플랜지, 오른쪽 = 체결 방향)</text>
+<line class="axis" x1="620" y1="180" x2="820" y2="180"/><line class="axis" x1="720" y1="80" x2="720" y2="280"/>
+<rect class="base" x="640.7" y="103.3" width="158.6" height="153.4" rx="23.400000000000002"/><rect class="new" x="640.7" y="107.2" width="158.6" height="114.4" rx="6"/><circle class="nose" cx="720" cy="180.0" r="37.7"/>
+<text x="720" y="316" font-size="12" text-anchor="middle" font-weight="400">정면 (축 방향)</text>
+<text x="24" y="360" font-size="13" text-anchor="start" font-weight="400">외형: 61 × 44 × 67 + 노즈, 공구 길이 79 · 평행한 벽 사이 46 mm 틈, 벽에서 17 mm 떨어진 구멍까지 접근</text><text x="24" y="380" font-size="13" text-anchor="start" font-weight="400">공정: 그대로 14단계 · 엄지가 있는 쪽(+y)만 두껍고 반대쪽은 노즈 반경까지 얇음</text><text x="24" y="400" font-size="13" text-anchor="start" font-weight="400">위험: 무게중심이 축에서 벗어나 회전 체결 시 흔들림, 비대칭이라 접근 방향을 골라야 함</text>
+<text x="936" y="422" font-size="11" text-anchor="end" font-weight="400">점선 = 현재 R09 외형 · 치수 mm · 개략 시안</text>
+</svg>

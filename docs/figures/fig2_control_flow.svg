@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="640" viewBox="0 0 560 640" font-family="sans-serif" font-size="13">
+  <style>
+    .b{fill:none;stroke:#000;stroke-width:1.5}
+    .lbl{font-size:12px}.num{font-size:12px;font-weight:bold}
+    .arw{stroke:#000;stroke-width:1.3;fill:none;marker-end:url(#a)}
+    .no{font-size:11px}
+  </style>
+  <defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto">
+    <path d="M0,0 L8,4 L0,8 z" fill="#000"/></marker></defs>
+  <text x="280" y="22" text-anchor="middle" class="num">[도 2]  전체 제어 흐름도 (S1~S9)</text>
+
+  <rect class="b" x="150" y="40" width="260" height="32"/>
+  <text x="280" y="60" text-anchor="middle" class="lbl">S1  신규 물품 정보·회수 순서 획득</text>
+
+  <polygon class="b" points="280,90 430,118 280,146 130,118"/>
+  <text x="280" y="122" text-anchor="middle" class="lbl">S2  출고 팔레트 즉시 적재 가능?</text>
+
+  <rect class="b" x="430" y="100" width="110" height="36"/>
+  <text x="485" y="122" text-anchor="middle" class="lbl">출고 적재→S9</text>
+
+  <rect class="b" x="150" y="164" width="260" height="32"/>
+  <text x="280" y="184" text-anchor="middle" class="lbl">S3  임시 적층부 배치 후보 생성</text>
+
+  <rect class="b" x="120" y="214" width="320" height="86"/>
+  <text x="280" y="234" text-anchor="middle" class="lbl">S4~S7  각 후보에 대해</text>
+  <text x="280" y="252" text-anchor="middle" class="lbl">신규 물품 가상 배치 → 가상 회수 검증 [도 3]</text>
+  <text x="280" y="272" text-anchor="middle" class="lbl">(G1∧G2∧G3 매 단계) 통과 후보만 채택,</text>
+  <text x="280" y="290" text-anchor="middle" class="lbl">실패 후보 탈락</text>
+
+  <rect class="b" x="120" y="320" width="320" height="52"/>
+  <text x="280" y="340" text-anchor="middle" class="lbl">S8  도착시각 vs 회수소요시간 비교 →</text>
+  <text x="280" y="358" text-anchor="middle" class="lbl">적재/회수/감속/정지 선택 + 배치 위치 결정</text>
+
+  <rect class="b" x="150" y="392" width="260" height="32"/>
+  <text x="280" y="412" text-anchor="middle" class="lbl">로봇·흡착 그리퍼로 실제 적재</text>
+
+  <rect class="b" x="120" y="444" width="320" height="70"/>
+  <text x="280" y="464" text-anchor="middle" class="lbl">S9  센서로 실제 위치 확인</text>
+  <text x="280" y="482" text-anchor="middle" class="lbl">계획과 상이 → S5~S7 재검증</text>
+  <text x="280" y="500" text-anchor="middle" class="lbl">(적재 성공 확인 전 후행 선행조건 미완료)</text>
+
+  <path class="arw" d="M280,72 L280,88"/>
+  <path class="arw" d="M430,118 L428,118"/><text x="400" y="112" class="no">예</text>
+  <path class="arw" d="M280,146 L280,162"/><text x="292" y="160" class="no">아니오</text>
+  <path class="arw" d="M280,196 L280,212"/>
+  <path class="arw" d="M280,300 L280,318"/>
+  <path class="arw" d="M280,372 L280,390"/>
+  <path class="arw" d="M280,424 L280,442"/>
+  <path class="arw" d="M485,136 L485,540 L442,479"/>
+</svg>

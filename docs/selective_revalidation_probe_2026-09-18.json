@@ -1,0 +1,103 @@
+{
+  "seed": 20260918,
+  "cases_per_size": 1000,
+  "python": "3.12.3",
+  "model": "synthetic three-layer fixed-topology area-share load DAG; no physical simulation",
+  "targeted": [
+    {
+      "case": "nonlocal_overload",
+      "old_lower_load": 2.0,
+      "new_lower_load": 2.2,
+      "capacity": 2.1,
+      "decision": "revalidate"
+    },
+    {
+      "case": "share_shift_without_mass_change",
+      "bound": [
+        0.3,
+        0.3,
+        0.0
+      ],
+      "decision": "revalidate"
+    },
+    {
+      "case": "contact_loss",
+      "decision": "topology_changed"
+    },
+    {
+      "case": "contact_creation",
+      "decision": "topology_changed"
+    },
+    {
+      "case": "wide_uncertainty_conservative_fallback",
+      "decision": "revalidate"
+    },
+    {
+      "case": "cumulative_reference_drift",
+      "naive_accepts": true,
+      "cumulative_accepts": false
+    }
+  ],
+  "results": [
+    {
+      "box_count": 12,
+      "scenarios": 1000,
+      "reused": 380,
+      "fallback": 620,
+      "central_model_unsafe": 491,
+      "fallback_central_safe": 129,
+      "false_allow": 0,
+      "bound_violations": 0,
+      "dependency_mismatches": 0,
+      "matrix_oracle_mismatches": 0,
+      "envelope_samples": 3000,
+      "envelope_bound_violations": 0,
+      "envelope_false_allow": 0,
+      "median_us": {
+        "full_load": 2.17,
+        "dependency_cached_index": 4.89,
+        "bound_and_fallback": 11.27
+      }
+    },
+    {
+      "box_count": 24,
+      "scenarios": 1000,
+      "reused": 381,
+      "fallback": 619,
+      "central_model_unsafe": 514,
+      "fallback_central_safe": 105,
+      "false_allow": 0,
+      "bound_violations": 0,
+      "dependency_mismatches": 0,
+      "matrix_oracle_mismatches": 0,
+      "envelope_samples": 3000,
+      "envelope_bound_violations": 0,
+      "envelope_false_allow": 0,
+      "median_us": {
+        "full_load": 3.62,
+        "dependency_cached_index": 5.695,
+        "bound_and_fallback": 19.4905
+      }
+    },
+    {
+      "box_count": 36,
+      "scenarios": 1000,
+      "reused": 358,
+      "fallback": 642,
+      "central_model_unsafe": 538,
+      "fallback_central_safe": 104,
+      "false_allow": 0,
+      "bound_violations": 0,
+      "dependency_mismatches": 0,
+      "matrix_oracle_mismatches": 0,
+      "envelope_samples": 3000,
+      "envelope_bound_violations": 0,
+      "envelope_false_allow": 0,
+      "median_us": {
+        "full_load": 5.03,
+        "dependency_cached_index": 6.06,
+        "bound_and_fallback": 27.5955
+      }
+    }
+  ]
+}

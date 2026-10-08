@@ -1,0 +1,7 @@
+# FR3 전용 시뮬레이션 흡착 툴. 개구형 그리퍼 프로파일과 구분한다.
+robot_model: fr3
+mount_link: fr3_link8
+body_link: vacuum_tool
+tcp_frame: vacuum_tcp
+tcp_offset: 0.145
+touch_links: [fr3_link7, fr3_link8, vacuum_tool, vacuum_tcp]
