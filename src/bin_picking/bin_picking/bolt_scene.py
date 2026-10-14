@@ -38,7 +38,13 @@ from moveit_msgs.msg import CollisionObject, PlanningScene
 from moveit_msgs.srv import ApplyPlanningScene
 from shape_msgs.msg import SolidPrimitive
 
-REFERENCE_FRAME = 'fr3_link0'        # 로봇 베이스(= Gazebo 월드 원점)
+from bin_picking import robot_profiles
+
+# 로봇 베이스(= Gazebo 월드 원점). 팔마다 이름이 다르므로(fr3_link0 / base_link …)
+# 활성 프로파일에서 가져온다. 아래 함수들이 이 값을 기본 인자로 쓰므로 임포트
+# 시점에 확정돼야 한다 — 그래서 config.py 를 거치지 않고 레지스트리를 직접 읽는다
+# (config.py 가 이 모듈을 임포트하므로 반대 방향은 순환이 된다).
+REFERENCE_FRAME = robot_profiles.active_profile().arm.base_frame
 
 # ---- 통 배치/치수 (SDF 스폰과 동일해야 함) ----
 # 집는 통을 로봇 쪽으로 당겼다: x=0.50 → 0.40.

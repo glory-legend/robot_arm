@@ -1,0 +1,79 @@
+{
+  "version": "R08",
+  "date": "2026-10-01",
+  "unit_tests": {
+    "passed": 32,
+    "failed": 0
+  },
+  "browser_tests": {
+    "unique_passed": 15,
+    "initial_passed": 14,
+    "initial_interrupted": 1,
+    "rerun_passed": 3,
+    "unresolved": 0,
+    "interruption": "R06 accessibility check lost execution context during Vite build hot reload; same check and R08 checks passed after build completed"
+  },
+  "typecheck": "passed",
+  "production_build": "passed",
+  "format": "passed",
+  "screenshots": 9,
+  "glb_files": 3,
+  "manufacturing_release": false,
+  "whole_mesh_collision_verification": false,
+  "files": {
+    "m10-integrated-review.glb": {
+      "bytes": 1706048,
+      "sha256": "370dfceb3d0c8dd90f55a762dcd047bacee4f9cac0cd6732cda4347a196853f7",
+      "glb_version": 2,
+      "metres_scale_verified": true
+    },
+    "m6-integrated-review.glb": {
+      "bytes": 1702848,
+      "sha256": "04d2e6970badedfe5ba0ce5254aafba6fa9cfe04dbd5a4efc259c472c0180ea3",
+      "glb_version": 2,
+      "metres_scale_verified": true
+    },
+    "m8-integrated-review.glb": {
+      "bytes": 1704776,
+      "sha256": "de9a13b75063a233ba8e682abb37c7ec88f7cf4251ba08d8f4895402f83c6a7d",
+      "glb_version": 2,
+      "metres_scale_verified": true
+    },
+    "screenshots/draw-in.png": {
+      "bytes": 153978,
+      "sha256": "252760aca1c68e0573674c9cbd5c96295b75ed54efea35c4175b56e4867958cd"
+    },
+    "screenshots/fold.png": {
+      "bytes": 154941,
+      "sha256": "8eb220a93b43e94a7b215d0c898a71f15011a6cfbcf70ab3fbb4107167daf1fa"
+    },
+    "screenshots/handoff.png": {
+      "bytes": 152250,
+      "sha256": "5f531a2f634fe8e07384372fae7be5e9f721510762447a0119fb605e750eef57"
+    },
+    "screenshots/integrated-whole.png": {
+      "bytes": 143429,
+      "sha256": "b2bad6e8ec2504add91c9bda863b1b62d1521851716a938fe66358467c4192ad"
+    },
+    "screenshots/internal-drive.png": {
+      "bytes": 144109,
+      "sha256": "772d73a65e45ab2fd45acb39a6f0e6e47628d7e8131d77c5c5ba7c00bad52bce"
+    },
+    "screenshots/internal-layout.png": {
+      "bytes": 159762,
+      "sha256": "66a75e7b35932bb4fe8c6d31cd73eb1c9af35cf9f603a050a87610e0895151d1"
+    },
+    "screenshots/pickup.png": {
+      "bytes": 150545,
+      "sha256": "1ee41ee9fe13075d190a56fef7fa05249d3b1965a2965f18f2034ca502a11a67"
+    },
+    "screenshots/righting.png": {
+      "bytes": 155282,
+      "sha256": "9038dfa41cda56c950242d532bbec80b16596fdf748f1b12325a74e759dec84f"
+    },
+    "screenshots/stowed.png": {
+      "bytes": 136021,
+      "sha256": "2b6337f3c5a4b7312ac9f42f18332e263c3658109a5ff950fed5888f0d2f5596"
+    }
+  }
+}

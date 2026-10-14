@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="620" viewBox="0 0 640 620" font-family="sans-serif" font-size="13">
+  <style>
+    .b{fill:none;stroke:#000;stroke-width:1.5}
+    .lbl{font-size:12px}
+    .num{font-size:12px;font-weight:bold}
+    .arw{stroke:#000;stroke-width:1.3;fill:none;marker-end:url(#a)}
+    .no{font-size:11px}
+  </style>
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#000"/>
+    </marker>
+  </defs>
+  <text x="320" y="22" text-anchor="middle" class="num">[도 3]  가상 회수 검증 서브루틴 (배치 후보 1개에 대해)</text>
+
+  <!-- 입력 -->
+  <rect class="b" x="180" y="40" width="280" height="42"/>
+  <text x="320" y="58" text-anchor="middle" class="lbl">배치 후보에 신규 물품 가상 배치 +</text>
+  <text x="320" y="74" text-anchor="middle" class="lbl">부여 회수순서 [o1..ok],  j←1</text>
+
+  <!-- 대상 -->
+  <rect class="b" x="200" y="105" width="240" height="34"/>
+  <text x="320" y="126" text-anchor="middle" class="lbl">대상 = o_j (이번에 꺼낼 물품)</text>
+
+  <!-- G1 -->
+  <polygon class="b" points="320,160 470,195 320,230 170,195"/>
+  <text x="320" y="192" text-anchor="middle" class="lbl">G1: 상면 노출 ⊇</text>
+  <text x="320" y="207" text-anchor="middle" class="lbl">흡착 풋프린트?</text>
+
+  <!-- G2 -->
+  <polygon class="b" points="320,250 470,288 320,326 170,288"/>
+  <text x="320" y="283" text-anchor="middle" class="lbl">G2: 파지물 포함 스윕의</text>
+  <text x="320" y="298" text-anchor="middle" class="lbl">무충돌 경로(IK 해)?</text>
+
+  <!-- G3 -->
+  <polygon class="b" points="320,346 470,384 320,422 170,384"/>
+  <text x="320" y="379" text-anchor="middle" class="lbl">G3: 제거 후 잔여물</text>
+  <text x="320" y="394" text-anchor="middle" class="lbl">지지·전복 안정?</text>
+
+  <!-- 제거 -->
+  <rect class="b" x="200" y="442" width="240" height="34"/>
+  <text x="320" y="463" text-anchor="middle" class="lbl">o_j 가상 제거 → 상태 갱신, j←j+1</text>
+
+  <!-- 판정 j>k -->
+  <polygon class="b" points="320,496 420,521 320,546 220,521"/>
+  <text x="320" y="525" text-anchor="middle" class="lbl">j &gt; k ?</text>
+
+  <!-- 성공/탈락 -->
+  <rect class="b" x="150" y="566" width="150" height="34"/>
+  <text x="225" y="587" text-anchor="middle" class="lbl">후보 채택 가능</text>
+  <rect class="b" x="500" y="330" width="120" height="46"/>
+  <text x="560" y="350" text-anchor="middle" class="lbl">배치 후보</text>
+  <text x="560" y="366" text-anchor="middle" class="lbl">탈락 (제외)</text>
+
+  <!-- 세로 흐름 -->
+  <path class="arw" d="M320,82 L320,103"/>
+  <path class="arw" d="M320,139 L320,158"/>
+  <path class="arw" d="M320,230 L320,248"/><text x="332" y="244" class="no">예</text>
+  <path class="arw" d="M320,326 L320,344"/><text x="332" y="342" class="no">예</text>
+  <path class="arw" d="M320,422 L320,440"/><text x="332" y="438" class="no">예</text>
+  <path class="arw" d="M320,476 L320,494"/>
+  <!-- j>k 아니오 → 루프 back -->
+  <path class="arw" d="M220,521 L120,521 L120,122 L200,122"/>
+  <text x="128" y="320" class="no">아니오(다음 o_j)</text>
+  <!-- j>k 예 → 성공 -->
+  <path class="arw" d="M300,540 L225,540 L225,564"/><text x="238" y="558" class="no">예</text>
+
+  <!-- G1/G2/G3 아니오 → 탈락 -->
+  <path class="arw" d="M470,195 L560,195 L560,328"/><text x="480" y="188" class="no">아니오</text>
+  <path class="arw" d="M470,288 L560,288 L560,330"/><text x="480" y="281" class="no">아니오</text>
+  <path class="arw" d="M470,384 L500,384"/><text x="480" y="378" class="no">아니오</text>
+
+  <text x="60" y="600" class="no">G1∧G2∧G3 (AND) — 하나라도 실패 시 즉시 탈락</text>
+</svg>

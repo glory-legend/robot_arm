@@ -1,0 +1,146 @@
+{
+  "date": "2026-10-01",
+  "pages": {
+    "r07": "3ecbf010-5ac9-8126-b38c-c13e55b71d62",
+    "a": "3ecbf010-5ac9-8118-ba85-f4a0e4a15424",
+    "b": "3ecbf010-5ac9-810c-9938-e5264b5aa442"
+  },
+  "files": {
+    "a-assembly-review.glb": {
+      "filename": "R07-a-assembly-review.glb",
+      "file_upload_id": "3ecbf010-5ac9-81c1-87a7-00b2c9122fcb",
+      "bytes": 3447252,
+      "markdown_source": "file-upload://3ecbf010-5ac9-81c1-87a7-00b2c9122fcb",
+      "source_path": "archive/R07/a-assembly-review.glb",
+      "sha256": "95d4d2650d683f395671f27eafd1fea098f3ef053e2623530e7027c6503b26f0"
+    },
+    "b-assembly-review.glb": {
+      "filename": "R07-b-assembly-review.glb",
+      "file_upload_id": "3ecbf010-5ac9-812b-b98d-00b2dead314d",
+      "bytes": 3554528,
+      "markdown_source": "file-upload://3ecbf010-5ac9-812b-b98d-00b2dead314d",
+      "source_path": "archive/R07/b-assembly-review.glb",
+      "sha256": "73173e2fdf752ef1dce2974911c400596d01a63480e899bd6376694bd3516cae"
+    },
+    "component-review.csv": {
+      "filename": "R07-component-review.csv",
+      "file_upload_id": "3ecbf010-5ac9-8154-9f6f-00b253bee4ec",
+      "bytes": 1256,
+      "markdown_source": "file-upload://3ecbf010-5ac9-8154-9f6f-00b253bee4ec",
+      "source_path": "archive/R07/component-review.csv",
+      "sha256": "80bba4a8b5950a6aa2391f9db8145e220bdb4087dcc64703633440dcbdf8295b"
+    },
+    "load-sensitivity.json": {
+      "filename": "R07-load-sensitivity.json",
+      "file_upload_id": "3ecbf010-5ac9-810f-a66e-00b2f0daed78",
+      "bytes": 2801,
+      "markdown_source": "file-upload://3ecbf010-5ac9-810f-a66e-00b2f0daed78",
+      "source_path": "archive/R07/load-sensitivity.json",
+      "sha256": "0d9aa7d064f1c6b82a0ed733776b73d883ed0558d23b2e202fce257827ee14e7"
+    },
+    "MECHANICAL_REVIEW.md": {
+      "filename": "R07-MECHANICAL_REVIEW.md",
+      "file_upload_id": "3ecbf010-5ac9-817d-97bc-00b2b5d1e9a0",
+      "bytes": 20744,
+      "markdown_source": "file-upload://3ecbf010-5ac9-817d-97bc-00b2b5d1e9a0",
+      "source_path": "MECHANICAL_REVIEW.md",
+      "sha256": "0ca774b2ffe9148498493eaf38d50943fdd2b9444036efec0fd827895dae0009"
+    },
+    "a-pickup.png": {
+      "filename": "R07-a-pickup.png",
+      "file_upload_id": "3ecbf010-5ac9-817e-8f48-00b216b7f886",
+      "bytes": 179441,
+      "markdown_source": "file-upload://3ecbf010-5ac9-817e-8f48-00b216b7f886",
+      "source_path": "archive/R07/screenshots/a-pickup.png",
+      "sha256": "17150248b194d638b24707df0193a053ab1a77b65df00bb9673999bf949a1f3f"
+    },
+    "a-righting.png": {
+      "filename": "R07-a-righting.png",
+      "file_upload_id": "3ecbf010-5ac9-816a-a909-00b27cffa3e8",
+      "bytes": 183437,
+      "markdown_source": "file-upload://3ecbf010-5ac9-816a-a909-00b27cffa3e8",
+      "source_path": "archive/R07/screenshots/a-righting.png",
+      "sha256": "c46f43da774201eb89aa87235ef110846d17baa4c4417723fe22f171bf3d664e"
+    },
+    "a-handoff.png": {
+      "filename": "R07-a-handoff.png",
+      "file_upload_id": "3ecbf010-5ac9-81c4-9646-00b2cb9a247d",
+      "bytes": 180954,
+      "markdown_source": "file-upload://3ecbf010-5ac9-81c4-9646-00b2cb9a247d",
+      "source_path": "archive/R07/screenshots/a-handoff.png",
+      "sha256": "eada8d073bcf5622fae5f05ce2cd809cb4932852b512af518b05f0fd11c7e5d9"
+    },
+    "a-retracted.png": {
+      "filename": "R07-a-retracted.png",
+      "file_upload_id": "3ecbf010-5ac9-816c-a030-00b2eaf68f89",
+      "bytes": 182535,
+      "markdown_source": "file-upload://3ecbf010-5ac9-816c-a030-00b2eaf68f89",
+      "source_path": "archive/R07/screenshots/a-retracted.png",
+      "sha256": "87dc3ba193355bcf468bbf8548f5aec3ceb54abfc7f719608c0b0e31512e238c"
+    },
+    "a-drive.png": {
+      "filename": "R07-a-drive.png",
+      "file_upload_id": "3ecbf010-5ac9-8179-bb1e-00b2c7da8073",
+      "bytes": 184851,
+      "markdown_source": "file-upload://3ecbf010-5ac9-8179-bb1e-00b2c7da8073",
+      "source_path": "archive/R07/screenshots/a-drive.png",
+      "sha256": "b3184c282beee1c87cff87e1266804fb99d321beb87f7ae1c5e352f4322a59d3"
+    },
+    "a-whole.png": {
+      "filename": "R07-a-whole.png",
+      "file_upload_id": "3ecbf010-5ac9-812a-bff8-00b25164eba4",
+      "bytes": 175883,
+      "markdown_source": "file-upload://3ecbf010-5ac9-812a-bff8-00b25164eba4",
+      "source_path": "archive/R07/screenshots/a-whole.png",
+      "sha256": "22eab2db086b478127521829b75eeaa1c5fd66a392fdf8dec741d49a57cd55f1"
+    },
+    "b-pickup.png": {
+      "filename": "R07-b-pickup.png",
+      "file_upload_id": "3ecbf010-5ac9-81fe-9fa0-00b21e4d9210",
+      "bytes": 203255,
+      "markdown_source": "file-upload://3ecbf010-5ac9-81fe-9fa0-00b21e4d9210",
+      "source_path": "archive/R07/screenshots/b-pickup.png",
+      "sha256": "3a4648c57b86e2bb91e82181e8ade15dfd264c1876d4daee99a5d23b0cd2758d"
+    },
+    "b-righting.png": {
+      "filename": "R07-b-righting.png",
+      "file_upload_id": "3ecbf010-5ac9-8155-bf51-00b2bb2a7a27",
+      "bytes": 205089,
+      "markdown_source": "file-upload://3ecbf010-5ac9-8155-bf51-00b2bb2a7a27",
+      "source_path": "archive/R07/screenshots/b-righting.png",
+      "sha256": "4263e7ffa06724697b5f9483dd89d817f6a62811c8c5dce362ec066d08425d28"
+    },
+    "b-handoff.png": {
+      "filename": "R07-b-handoff.png",
+      "file_upload_id": "3ecbf010-5ac9-817d-bfe3-00b295add4bc",
+      "bytes": 188684,
+      "markdown_source": "file-upload://3ecbf010-5ac9-817d-bfe3-00b295add4bc",
+      "source_path": "archive/R07/screenshots/b-handoff.png",
+      "sha256": "5104079f130a7854cb78f47a48284f8e9c292b52e3efd432df7f4a34adac591f"
+    },
+    "b-retracted.png": {
+      "filename": "R07-b-retracted.png",
+      "file_upload_id": "3ecbf010-5ac9-8144-a401-00b2ca45f555",
+      "bytes": 190350,
+      "markdown_source": "file-upload://3ecbf010-5ac9-8144-a401-00b2ca45f555",
+      "source_path": "archive/R07/screenshots/b-retracted.png",
+      "sha256": "853fc1426ca6f0887325b8e03aae47a137747df96f35de3ad216dfd2f1323bd8"
+    },
+    "b-drive.png": {
+      "filename": "R07-b-drive.png",
+      "file_upload_id": "3ecbf010-5ac9-819f-aeee-00b2250f3b50",
+      "bytes": 193033,
+      "markdown_source": "file-upload://3ecbf010-5ac9-819f-aeee-00b2250f3b50",
+      "source_path": "archive/R07/screenshots/b-drive.png",
+      "sha256": "672f314a4d5e8edc5d76c8eaa7b9885124841c64d4b30262286ff1524b99ad2f"
+    },
+    "b-whole.png": {
+      "filename": "R07-b-whole.png",
+      "file_upload_id": "3ecbf010-5ac9-8157-8aee-00b278452200",
+      "bytes": 182206,
+      "markdown_source": "file-upload://3ecbf010-5ac9-8157-8aee-00b278452200",
+      "source_path": "archive/R07/screenshots/b-whole.png",
+      "sha256": "1c2d6a7b9ffd71738b8ba9aaf500c30a1cfa4f168ea859a33414551b0622136f"
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "run_id": "2026-10-01-001-8500",
+  "route": "heavy",
+  "change_rate": 0.0057,
+  "display_change_rate": "0.6%",
+  "grade": "B",
+  "self_check": "6/6",
+  "official_gate": {
+    "verdict": "WARN — 경고. 사용자 고지 + finalize 승급",
+    "exit_code": 1
+  },
+  "gate_false_positive_control": "footnote-false-positive-control.json",
+  "applied": [
+    {
+      "path": "/home/yg1/robotarm_main/tools/gripper_concept_demo/README.md",
+      "changed": true,
+      "sha256": "4e2265efe0cef07a3af66a97df4f78d41fa916f1e591673ee5c3dad26e73f5ea"
+    },
+    {
+      "path": "/home/yg1/robotarm_main/tools/gripper_concept_demo/DESIGN.md",
+      "changed": true,
+      "sha256": "4833d4f2337e4ef260de21b9e0da5559f635dad58d7b7e39365aa6a952111bda"
+    },
+    {
+      "path": "/home/yg1/robotarm_main/tools/gripper_concept_demo/GRIPPER_SELECTION.md",
+      "changed": true,
+      "sha256": "8ccbfba2c5627d4f07b1ba80d6af98ec20bb8c97f5c9bf6f47583324430852fc"
+    },
+    {
+      "path": "/home/yg1/robotarm_main/tools/gripper_concept_demo/IMPLEMENTATION.md",
+      "changed": true,
+      "sha256": "cb48040f168b0428192772bef5e2e1c3131d1698968385010637051a2259503c"
+    },
+    {
+      "path": "/home/yg1/robotarm_main/tools/gripper_concept_demo/MECHANICAL_REVIEW.md",
+      "changed": true,
+      "sha256": "c0296673e2f11b79ccf2503a67df675f06b9c156c1e60b4e7a47b615585535bf"
+    },
+    {
+      "path": "/home/yg1/robotarm_main/tools/gripper_concept_demo/R06.md",
+      "changed": true,
+      "sha256": "c26c7b51a5f81acce9b20f412f10a515d45ac2dddc6133dff3147d527e190656"
+    },
+    {
+      "path": "/home/yg1/robotarm_main/tools/gripper_concept_demo/REDESIGN.md",
+      "changed": true,
+      "sha256": "d9928eb29c6d7440dce1995f85bdbcb5ba8cc2e9c6da5e2f5325fce354e6a08a"
+    },
+    {
+      "path": "/home/yg1/robotarm_main/tools/gripper_concept_demo/UX-CONTRACT.md",
+      "changed": true,
+      "sha256": "7f6212e395cbd81048249c2d10183e26e6b3118a53894b9df8d20740c6360d15"
+    }
+  ],
+  "recording_preference": "_workspace/2026-10-01-001-8500/recording-preference.txt",
+  "rate_note": "Display copied verbatim from official P0 output; JSON rate was already rounded.",
+  "final_gate_path": "_workspace/2026-10-01-001-8500/11_gates_final_local_correction.txt",
+  "local_correction": "R06 요청자 표지 생략; 정정 및 미채택 사실 유지",
+  "protected_checks": "9개 블록 전부 통과; 8개 적용 파일과 final.md 본문 일치; Prettier 통과"
+}

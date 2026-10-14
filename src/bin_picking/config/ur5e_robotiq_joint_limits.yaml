@@ -1,0 +1,10 @@
+# UR5e — MoveIt 시간 파라미터화용 가속 한계
+# (위치/속도 한계는 URDF 에서 온다. UR 로봇 자체는 가속 한계가 없지만 MoveIt 이
+#  궤적 시간 계산에 필요로 하므로 보수적으로 준다 — ur_moveit_config 와 동일 값.)
+joint_limits:
+  shoulder_pan_joint:  {has_acceleration_limits: true, max_acceleration: 5.0}
+  shoulder_lift_joint: {has_acceleration_limits: true, max_acceleration: 5.0}
+  elbow_joint:         {has_acceleration_limits: true, max_acceleration: 5.0}
+  wrist_1_joint:       {has_acceleration_limits: true, max_acceleration: 5.0}
+  wrist_2_joint:       {has_acceleration_limits: true, max_acceleration: 5.0}
+  wrist_3_joint:       {has_acceleration_limits: true, max_acceleration: 5.0}

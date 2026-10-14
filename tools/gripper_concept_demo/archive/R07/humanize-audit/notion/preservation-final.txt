@@ -1,0 +1,101 @@
+{
+  "record_boundaries": true,
+  "records": {
+    "3ebbf010-5ac9-8137-9e65-c20e9e332bcb": {
+      "numbers": true,
+      "links": true,
+      "tags": true,
+      "inline_code": true,
+      "headings": true,
+      "record_url": true
+    },
+    "3ebbf010-5ac9-8150-8ae0-d879bc1cba6b": {
+      "numbers": true,
+      "links": true,
+      "tags": true,
+      "inline_code": true,
+      "headings": true,
+      "record_url": true
+    },
+    "3ebbf010-5ac9-8134-a27d-f322ffd3e53f": {
+      "numbers": true,
+      "links": true,
+      "tags": true,
+      "inline_code": true,
+      "headings": true,
+      "record_url": true
+    },
+    "3ebbf010-5ac9-81bf-8875-dea23699008d": {
+      "numbers": true,
+      "links": true,
+      "tags": true,
+      "inline_code": true,
+      "headings": true,
+      "record_url": true
+    },
+    "3ebbf010-5ac9-8188-a499-c668571ea817": {
+      "numbers": true,
+      "links": true,
+      "tags": true,
+      "inline_code": true,
+      "headings": true,
+      "record_url": true
+    },
+    "3ebbf010-5ac9-8176-9857-d32420c74e3f": {
+      "numbers": true,
+      "links": true,
+      "tags": true,
+      "inline_code": true,
+      "headings": true,
+      "record_url": true
+    },
+    "3ebbf010-5ac9-811b-88c3-d7fec5ef2b7a": {
+      "numbers": true,
+      "links": true,
+      "tags": true,
+      "inline_code": true,
+      "headings": true,
+      "record_url": true
+    },
+    "3ebbf010-5ac9-816f-9ec2-d0129c5e1161": {
+      "numbers": true,
+      "links": true,
+      "tags": true,
+      "inline_code": true,
+      "headings": true,
+      "record_url": true
+    },
+    "3ecbf010-5ac9-8126-b38c-c13e55b71d62": {
+      "numbers": true,
+      "links": true,
+      "tags": true,
+      "inline_code": true,
+      "headings": true,
+      "record_url": true
+    },
+    "3ecbf010-5ac9-8118-ba85-f4a0e4a15424": {
+      "numbers": true,
+      "links": true,
+      "tags": true,
+      "inline_code": true,
+      "headings": true,
+      "record_url": true
+    },
+    "3ecbf010-5ac9-810c-9938-e5264b5aa442": {
+      "numbers": true,
+      "links": true,
+      "tags": true,
+      "inline_code": true,
+      "headings": true,
+      "record_url": true
+    },
+    "LOCAL_NOTION_ARCHIVE": {
+      "numbers": true,
+      "links": true,
+      "tags": true,
+      "inline_code": true,
+      "headings": true,
+      "record_url": true
+    }
+  }
+}

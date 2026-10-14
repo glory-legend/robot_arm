@@ -1,0 +1,1217 @@
+{
+  "pallet_size": [
+    0.6,
+    0.4,
+    0.5
+  ],
+  "placements": [
+    {
+      "box": {
+        "box_id": "pallet_box_24",
+        "size": [
+          0.16,
+          0.1,
+          0.08
+        ],
+        "weight_kg": 0.7,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.5,
+        0.206,
+        0.0
+      ],
+      "size": [
+        0.1,
+        0.16,
+        0.08
+      ],
+      "yaw_deg": 90,
+      "support_id": null,
+      "support_shares": [],
+      "layer": 1
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_30",
+        "size": [
+          0.12,
+          0.08,
+          0.06
+        ],
+        "weight_kg": 0.4,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.48,
+        0.123,
+        0.0
+      ],
+      "size": [
+        0.12,
+        0.08,
+        0.06
+      ],
+      "yaw_deg": 0,
+      "support_id": null,
+      "support_shares": [],
+      "layer": 1
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_15",
+        "size": [
+          0.2,
+          0.12,
+          0.1
+        ],
+        "weight_kg": 1.0,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.4,
+        0.0,
+        0.0
+      ],
+      "size": [
+        0.2,
+        0.12,
+        0.1
+      ],
+      "yaw_deg": 0,
+      "support_id": null,
+      "support_shares": [],
+      "layer": 1
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_0",
+        "size": [
+          0.12,
+          0.08,
+          0.06
+        ],
+        "weight_kg": 0.4,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.377,
+        0.217,
+        0.0
+      ],
+      "size": [
+        0.12,
+        0.08,
+        0.06
+      ],
+      "yaw_deg": 0,
+      "support_id": null,
+      "support_shares": [],
+      "layer": 1
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_2",
+        "size": [
+          0.16,
+          0.1,
+          0.08
+        ],
+        "weight_kg": 0.7,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.326,
+        0.3,
+        0.0
+      ],
+      "size": [
+        0.16,
+        0.1,
+        0.08
+      ],
+      "yaw_deg": 0,
+      "support_id": null,
+      "support_shares": [],
+      "layer": 1
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_31",
+        "size": [
+          0.12,
+          0.08,
+          0.06
+        ],
+        "weight_kg": 0.4,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.246,
+        0.0,
+        0.0
+      ],
+      "size": [
+        0.12,
+        0.08,
+        0.06
+      ],
+      "yaw_deg": 0,
+      "support_id": null,
+      "support_shares": [],
+      "layer": 1
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_13",
+        "size": [
+          0.2,
+          0.12,
+          0.1
+        ],
+        "weight_kg": 1.0,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.246,
+        0.083,
+        0.0
+      ],
+      "size": [
+        0.12,
+        0.2,
+        0.1
+      ],
+      "yaw_deg": 90,
+      "support_id": null,
+      "support_shares": [],
+      "layer": 1
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_33",
+        "size": [
+          0.16,
+          0.1,
+          0.08
+        ],
+        "weight_kg": 0.7,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.163,
+        0.3,
+        0.0
+      ],
+      "size": [
+        0.16,
+        0.1,
+        0.08
+      ],
+      "yaw_deg": 0,
+      "support_id": null,
+      "support_shares": [],
+      "layer": 1
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_20",
+        "size": [
+          0.12,
+          0.08,
+          0.06
+        ],
+        "weight_kg": 0.4,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.123,
+        0.0,
+        0.0
+      ],
+      "size": [
+        0.12,
+        0.08,
+        0.06
+      ],
+      "yaw_deg": 0,
+      "support_id": null,
+      "support_shares": [],
+      "layer": 1
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_23",
+        "size": [
+          0.2,
+          0.12,
+          0.1
+        ],
+        "weight_kg": 1.0,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.123,
+        0.083,
+        0.0
+      ],
+      "size": [
+        0.12,
+        0.2,
+        0.1
+      ],
+      "yaw_deg": 90,
+      "support_id": null,
+      "support_shares": [],
+      "layer": 1
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_18",
+        "size": [
+          0.12,
+          0.08,
+          0.06
+        ],
+        "weight_kg": 0.4,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "size": [
+        0.12,
+        0.08,
+        0.06
+      ],
+      "yaw_deg": 0,
+      "support_id": null,
+      "support_shares": [],
+      "layer": 1
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_35",
+        "size": [
+          0.2,
+          0.12,
+          0.1
+        ],
+        "weight_kg": 1.0,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.0,
+        0.083,
+        0.0
+      ],
+      "size": [
+        0.12,
+        0.2,
+        0.1
+      ],
+      "yaw_deg": 90,
+      "support_id": null,
+      "support_shares": [],
+      "layer": 1
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_5",
+        "size": [
+          0.16,
+          0.1,
+          0.08
+        ],
+        "weight_kg": 0.7,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.0,
+        0.3,
+        0.0
+      ],
+      "size": [
+        0.16,
+        0.1,
+        0.08
+      ],
+      "yaw_deg": 0,
+      "support_id": null,
+      "support_shares": [],
+      "layer": 1
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_11",
+        "size": [
+          0.12,
+          0.08,
+          0.06
+        ],
+        "weight_kg": 0.4,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.48,
+        0.123,
+        0.06
+      ],
+      "size": [
+        0.12,
+        0.08,
+        0.06
+      ],
+      "yaw_deg": 0,
+      "support_id": "pallet_box_30",
+      "support_shares": [
+        [
+          "pallet_box_30",
+          1.0
+        ]
+      ],
+      "layer": 2
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_14",
+        "size": [
+          0.12,
+          0.08,
+          0.06
+        ],
+        "weight_kg": 0.4,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.377,
+        0.217,
+        0.06
+      ],
+      "size": [
+        0.12,
+        0.08,
+        0.06
+      ],
+      "yaw_deg": 0,
+      "support_id": "pallet_box_0",
+      "support_shares": [
+        [
+          "pallet_box_0",
+          1.0
+        ]
+      ],
+      "layer": 2
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_21",
+        "size": [
+          0.12,
+          0.08,
+          0.06
+        ],
+        "weight_kg": 0.4,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.246,
+        0.0,
+        0.06
+      ],
+      "size": [
+        0.12,
+        0.08,
+        0.06
+      ],
+      "yaw_deg": 0,
+      "support_id": "pallet_box_31",
+      "support_shares": [
+        [
+          "pallet_box_31",
+          1.0
+        ]
+      ],
+      "layer": 2
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_29",
+        "size": [
+          0.12,
+          0.08,
+          0.06
+        ],
+        "weight_kg": 0.4,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.123,
+        0.0,
+        0.06
+      ],
+      "size": [
+        0.12,
+        0.08,
+        0.06
+      ],
+      "yaw_deg": 0,
+      "support_id": "pallet_box_20",
+      "support_shares": [
+        [
+          "pallet_box_20",
+          1.0
+        ]
+      ],
+      "layer": 2
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_28",
+        "size": [
+          0.12,
+          0.08,
+          0.06
+        ],
+        "weight_kg": 0.4,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.0,
+        0.0,
+        0.06
+      ],
+      "size": [
+        0.12,
+        0.08,
+        0.06
+      ],
+      "yaw_deg": 0,
+      "support_id": "pallet_box_18",
+      "support_shares": [
+        [
+          "pallet_box_18",
+          1.0
+        ]
+      ],
+      "layer": 2
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_4",
+        "size": [
+          0.16,
+          0.1,
+          0.08
+        ],
+        "weight_kg": 0.7,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.5,
+        0.206,
+        0.08
+      ],
+      "size": [
+        0.1,
+        0.16,
+        0.08
+      ],
+      "yaw_deg": 90,
+      "support_id": "pallet_box_24",
+      "support_shares": [
+        [
+          "pallet_box_24",
+          1.0
+        ]
+      ],
+      "layer": 2
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_27",
+        "size": [
+          0.16,
+          0.1,
+          0.08
+        ],
+        "weight_kg": 0.7,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.326,
+        0.3,
+        0.08
+      ],
+      "size": [
+        0.16,
+        0.1,
+        0.08
+      ],
+      "yaw_deg": 0,
+      "support_id": "pallet_box_2",
+      "support_shares": [
+        [
+          "pallet_box_2",
+          1.0
+        ]
+      ],
+      "layer": 2
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_32",
+        "size": [
+          0.16,
+          0.1,
+          0.08
+        ],
+        "weight_kg": 0.7,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.163,
+        0.3,
+        0.08
+      ],
+      "size": [
+        0.16,
+        0.1,
+        0.08
+      ],
+      "yaw_deg": 0,
+      "support_id": "pallet_box_33",
+      "support_shares": [
+        [
+          "pallet_box_33",
+          1.0
+        ]
+      ],
+      "layer": 2
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_34",
+        "size": [
+          0.16,
+          0.1,
+          0.08
+        ],
+        "weight_kg": 0.7,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.0,
+        0.3,
+        0.08
+      ],
+      "size": [
+        0.16,
+        0.1,
+        0.08
+      ],
+      "yaw_deg": 0,
+      "support_id": "pallet_box_5",
+      "support_shares": [
+        [
+          "pallet_box_5",
+          1.0
+        ]
+      ],
+      "layer": 2
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_16",
+        "size": [
+          0.2,
+          0.12,
+          0.1
+        ],
+        "weight_kg": 1.0,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.4,
+        0.0,
+        0.1
+      ],
+      "size": [
+        0.2,
+        0.12,
+        0.1
+      ],
+      "yaw_deg": 0,
+      "support_id": "pallet_box_15",
+      "support_shares": [
+        [
+          "pallet_box_15",
+          1.0
+        ]
+      ],
+      "layer": 2
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_19",
+        "size": [
+          0.2,
+          0.12,
+          0.1
+        ],
+        "weight_kg": 1.0,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.246,
+        0.083,
+        0.1
+      ],
+      "size": [
+        0.12,
+        0.2,
+        0.1
+      ],
+      "yaw_deg": 90,
+      "support_id": "pallet_box_13",
+      "support_shares": [
+        [
+          "pallet_box_13",
+          1.0
+        ]
+      ],
+      "layer": 2
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_17",
+        "size": [
+          0.2,
+          0.12,
+          0.1
+        ],
+        "weight_kg": 1.0,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.123,
+        0.083,
+        0.1
+      ],
+      "size": [
+        0.12,
+        0.2,
+        0.1
+      ],
+      "yaw_deg": 90,
+      "support_id": "pallet_box_23",
+      "support_shares": [
+        [
+          "pallet_box_23",
+          1.0
+        ]
+      ],
+      "layer": 2
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_6",
+        "size": [
+          0.2,
+          0.12,
+          0.1
+        ],
+        "weight_kg": 1.0,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.0,
+        0.083,
+        0.1
+      ],
+      "size": [
+        0.12,
+        0.2,
+        0.1
+      ],
+      "yaw_deg": 90,
+      "support_id": "pallet_box_35",
+      "support_shares": [
+        [
+          "pallet_box_35",
+          1.0
+        ]
+      ],
+      "layer": 2
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_22",
+        "size": [
+          0.12,
+          0.08,
+          0.06
+        ],
+        "weight_kg": 0.4,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.123,
+        0.0,
+        0.12
+      ],
+      "size": [
+        0.12,
+        0.08,
+        0.06
+      ],
+      "yaw_deg": 0,
+      "support_id": "pallet_box_29",
+      "support_shares": [
+        [
+          "pallet_box_29",
+          1.0
+        ]
+      ],
+      "layer": 3
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_12",
+        "size": [
+          0.12,
+          0.08,
+          0.06
+        ],
+        "weight_kg": 0.4,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.0,
+        0.0,
+        0.12
+      ],
+      "size": [
+        0.12,
+        0.08,
+        0.06
+      ],
+      "yaw_deg": 0,
+      "support_id": "pallet_box_28",
+      "support_shares": [
+        [
+          "pallet_box_28",
+          1.0
+        ]
+      ],
+      "layer": 3
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_8",
+        "size": [
+          0.16,
+          0.1,
+          0.08
+        ],
+        "weight_kg": 0.7,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.5,
+        0.206,
+        0.16
+      ],
+      "size": [
+        0.1,
+        0.16,
+        0.08
+      ],
+      "yaw_deg": 90,
+      "support_id": "pallet_box_4",
+      "support_shares": [
+        [
+          "pallet_box_4",
+          1.0
+        ]
+      ],
+      "layer": 3
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_26",
+        "size": [
+          0.16,
+          0.1,
+          0.08
+        ],
+        "weight_kg": 0.7,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.326,
+        0.3,
+        0.16
+      ],
+      "size": [
+        0.16,
+        0.1,
+        0.08
+      ],
+      "yaw_deg": 0,
+      "support_id": "pallet_box_27",
+      "support_shares": [
+        [
+          "pallet_box_27",
+          1.0
+        ]
+      ],
+      "layer": 3
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_7",
+        "size": [
+          0.16,
+          0.1,
+          0.08
+        ],
+        "weight_kg": 0.7,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.163,
+        0.3,
+        0.16
+      ],
+      "size": [
+        0.16,
+        0.1,
+        0.08
+      ],
+      "yaw_deg": 0,
+      "support_id": "pallet_box_32",
+      "support_shares": [
+        [
+          "pallet_box_32",
+          1.0
+        ]
+      ],
+      "layer": 3
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_9",
+        "size": [
+          0.16,
+          0.1,
+          0.08
+        ],
+        "weight_kg": 0.7,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.0,
+        0.3,
+        0.16
+      ],
+      "size": [
+        0.16,
+        0.1,
+        0.08
+      ],
+      "yaw_deg": 0,
+      "support_id": "pallet_box_34",
+      "support_shares": [
+        [
+          "pallet_box_34",
+          1.0
+        ]
+      ],
+      "layer": 3
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_3",
+        "size": [
+          0.2,
+          0.12,
+          0.1
+        ],
+        "weight_kg": 1.0,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.4,
+        0.0,
+        0.2
+      ],
+      "size": [
+        0.2,
+        0.12,
+        0.1
+      ],
+      "yaw_deg": 0,
+      "support_id": "pallet_box_16",
+      "support_shares": [
+        [
+          "pallet_box_16",
+          1.0
+        ]
+      ],
+      "layer": 3
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_25",
+        "size": [
+          0.2,
+          0.12,
+          0.1
+        ],
+        "weight_kg": 1.0,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.246,
+        0.083,
+        0.2
+      ],
+      "size": [
+        0.12,
+        0.2,
+        0.1
+      ],
+      "yaw_deg": 90,
+      "support_id": "pallet_box_19",
+      "support_shares": [
+        [
+          "pallet_box_19",
+          1.0
+        ]
+      ],
+      "layer": 3
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_10",
+        "size": [
+          0.2,
+          0.12,
+          0.1
+        ],
+        "weight_kg": 1.0,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.123,
+        0.083,
+        0.2
+      ],
+      "size": [
+        0.12,
+        0.2,
+        0.1
+      ],
+      "yaw_deg": 90,
+      "support_id": "pallet_box_17",
+      "support_shares": [
+        [
+          "pallet_box_17",
+          1.0
+        ]
+      ],
+      "layer": 3
+    },
+    {
+      "box": {
+        "box_id": "pallet_box_1",
+        "size": [
+          0.2,
+          0.12,
+          0.1
+        ],
+        "weight_kg": 1.0,
+        "max_load_kg": 5.0,
+        "orientations": [
+          0,
+          90
+        ]
+      },
+      "origin": [
+        0.0,
+        0.083,
+        0.2
+      ],
+      "size": [
+        0.12,
+        0.2,
+        0.1
+      ],
+      "yaw_deg": 90,
+      "support_id": "pallet_box_6",
+      "support_shares": [
+        [
+          "pallet_box_6",
+          1.0
+        ]
+      ],
+      "layer": 3
+    }
+  ],
+  "rejected": [],
+  "strategy": "dense",
+  "candidate_count": 128,
+  "metrics": {
+    "placed": 36,
+    "rejected": 0,
+    "used_height_m": 0.30000000000000004,
+    "capacity_utilization": 0.4256000000000001,
+    "used_height_utilization": 0.7093333333333334,
+    "layers": 3,
+    "rotated_boxes": 12
+  },
+  "validation": "geometry_only; robot IK, execution and verification pending"
+}

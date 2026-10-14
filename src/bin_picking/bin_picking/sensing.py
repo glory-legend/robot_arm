@@ -152,6 +152,7 @@ class SensingMixin:
             q = t.transform.rotation
             self._bolt_sensed[topic_bid] = ((tr.x, tr.y, tr.z),
                                             (q.x, q.y, q.z, q.w))
+            self._sense_seq += 1
             got = True
         if got and not self._sensing_logged:
             self._sensing_logged = True

@@ -1,0 +1,12 @@
+{
+  "profile": "product-admin",
+  "locale": "ko-KR",
+  "sourceRoots": ["src"],
+  "ownership": { "Select/Listbox": "native" },
+  "requiredCommands": ["unit", "build", "browser"],
+  "commands": {
+    "unit": "npm test",
+    "build": "npm run build",
+    "browser": "npm run test:browser"
+  }
+}

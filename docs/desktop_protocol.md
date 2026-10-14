@@ -16,6 +16,12 @@
 > 없이 클린 브레이크 — 데스크톱 앱 본체가 아직 없어 안전하다. §2 데이터
 > 카탈로그(필드 스펙) 자체는 안 바뀌었다, 어느 채널로 오가는지만 바뀌었다.
 >
+> **2026-08-25 정밀 감사:** v3의 현재 계약은 이 문서가 계속 설명한다. 다만
+> clock domain, HTTP 접수/robot ACK 분리, 중요 이벤트 유실·재접속, WS query token,
+> scope/제어권에서 실물 운용 전 수정할 문제가 확인됐다. 목표 v4 계약과 Claude용
+> 작업 ID·수용 기준은 [`desktop_protocol_upgrade_plan.md`](./desktop_protocol_upgrade_plan.md)를
+> 따른다. 해당 작업이 구현되기 전까지 계획서의 v4 예시를 현재 API로 사용하면 안 된다.
+>
 > **"어떻게 접속하는가"는 이 문서가 아니라 [`desktop_connection_guide.md`](./desktop_connection_guide.md)
 > 참고** — 접속 주소(WSL2 네트워크 유의사항 포함)·실행 방법·빠른 검증·
 > 트러블슈팅·실측 검증 내역을 담았다(2026-08-04).
@@ -60,13 +66,17 @@
 
 모든 메시지 **공통 봉투(envelope):**
 
+> ⚠ **봉투는 WS 텔레메트리(로봇→데스크톱) 전용이다(v3).** 명령은 REST 로 보내고(요청 body =
+> `args` 그대로, 응답 = `{id, accepted, errors?}` — 봉투 아님), 로봇이 되돌리는 스트림만 이 봉투를 쓴다.
+
 ```
 {
-  "v": 1,                 // 스키마 major 버전
-  "type": "PICK_BOLT",    // 메시지 종류
-  "id": "s12-0043",       // correlation id (송신측 생성, 유일)
-  "corr": null,           // 응답일 때 원 명령의 id 를 echo
+  "v": 3,                 // 스키마 major 버전 (protocol.PROTOCOL_VERSION 이 단일 소스)
+  "type": "RESULT",       // 메시지 종류
+  "id": "result-1a2b3c4d",// 이 메시지의 correlation id ({type소문자}-{uuid8}, 로봇 생성)
+  "corr": "pick_bolt-9f3a1c02", // 응답일 때 원 REST 명령의 id(응답 body 의 `id`)를 echo, 아니면 null
   "prio": "NORMAL",       // SAFETY | HIGH | NORMAL | LOW
+  "seq": 1042,            // 단조증가 일련번호(순서/유실 검출)
   "t_wall": 1753305600123000000,  // 호스트 벽시계 (ns) — 연결감시용
   "t_sim":  1753305599980000000,  // ROS/sim clock (ns) — 사이클타임 계산용
   "use_sim_time": true,
@@ -93,10 +103,18 @@
 | `SET_SPEED` | 속도 스케일 | `scale(0.0–1.0)` | ACK | HIGH |
 | `GO_HOME` | 홈 복귀 | `speed` | ACK+RESULT | HIGH |
 | **`ESTOP`** | 소프트 비상정지 | `reason` | **즉시 ACK** | **SAFETY** |
-| `RESET` | fault/세이프스톱 해제 | `confirm=true` | ACK+상태 | HIGH |
+| `RESET` | fault/세이프스톱 해제 | `confirm=true` | ACK+상태 | HIGH |¹
 | `ACK_ALARM` | 알람 확인 | `alarm_id` | ACK | NORMAL |
 | `GET_STATUS` | 전체 상태 스냅샷 요청 | — | 스냅샷 | LOW |
-| `PING` | keepalive | `seq` | `PONG` | LOW |
+
+¹ **RESET `confirm` 시행됨(2026-08-27, BP-C04a):** `args.confirm` 이 불리언 `true`
+가 아니면(누락·`false`·문자열 `"true"`·`1` 포함) `ACK{accepted:false,
+errors:["RESET requires confirm=true"]}` 로 거부되고 로봇에 발행되지 않으며 세이프
+스톱도 풀리지 않는다. 검증 로직은 `protocol.validate_command()`(순수)가 단일 소스다.
+
+> **`PING`/`PONG` 은 아직 미구현**: `/api/v1/command` 의 수용 집합(`_ACK_ONLY_TYPES`)에 없어
+> 보내면 `{accepted:false, errors:["unknown command type: 'PING'"]}` 로 거부된다. keepalive 는
+> WS heartbeat(1Hz) 수신으로 대신한다.
 
 > **랭킹 전달 방식 (선택):**
 > - (기본) **1순위만** `PICK_BOLT`로 보냄 → 로봇이 거부하면 데스크톱이 2순위 전송. (사용자 결정)
@@ -121,6 +139,12 @@
 | `sensed_bolts` | 로봇이 센싱한 볼트(**예약 — 현재 미발행**) | `bolts[{id, pos[3], axis[3], status}]`, `remaining` | on-change | ≤1 Hz |
 
 > **주기 vs 이벤트:** `arm_state`(관절)만 고빈도 스트림, **나머지는 전부 이벤트/저빈도.** 총 대역폭 목표 **~5 KB/s**. 이걸 크게 넘으면 뭔가 잘못 스트리밍 중.
+>
+> ⚠ **`frame`·`q`/`joint_margin` 길이는 활성 로봇 모델 기준이다**(예시는 FR3 — `fr3_link0`, 7관절).
+> 다른 모델이면 달라진다(UR5e = `base_link`, 6관절). 현재 활성 모델은 `STATUS.robot_model`·
+> `GET /api/v1/robot_models` 로 확인하되, 관절 이름·순서·기준 프레임을 주는 capability API 는
+> 아직 없어 데스크톱 앱이 모델별로 알고 있어야 한다. `PICK_BOLT.frame` 도 활성 모델의 기준
+> 프레임과 일치해야 하며(FR3 는 `fr3_link0`) 다르면 거부된다.
 > **`cycle_id` vs `last_cycle_id`(중요, 2026-08-03 수정):** `cycle_id`는 **사이클에 종속된 메시지**(`RESULT`, `grasp_result`)에만 실린다 — 발급 주체는 로봇 파이프라인(`selection.py`의 단일 카운터) 하나뿐이고, 브릿지는 절대 스스로 지어내지 않는다. `heartbeat`/`arm_state`처럼 **타이머로 도는, 특정 사이클에 종속되지 않는 메시지**는 대신 `last_cycle_id`(nullable — "가장 최근에 관측된 사이클, 진행 중이란 뜻 아님")를 쓴다. (예전 초안은 "모든 메시지에 cycle_id를"이라고 했으나, 브릿지가 이를 만족시키려면 다음 사이클의 id를 추측해야 해 근거 없는 값을 보내게 되므로 폐기했다.)
 
 ## 2C. 비전 → 데스크톱 (F1: 인식 입력)
@@ -282,16 +306,20 @@ arm_state 스트림을 그대로 출력한다 — 이 왕복이 곧 "통신 기�
 
 ### 현재 단계에서 "진짜로" 동작하는 것 vs 골격만인 것
 
+> ⚠ **`accepted:true` 는 "적용 성공"이 아니다** — PICK_BOLT/커맨드버스 모두 "검증 후 로봇
+> 토픽에 발행됨"까지만 뜻한다(로봇 노드 부재/무시여도 true). 실제 반영은 아래 표대로 명령마다 다르다.
+
 | 명령 | 이번 단계 | 다음 단계 |
 |---|---|---|
 | `GET_STATUS`(REST) | 완전 실동작 | — |
-| `PICK_BOLT`(REST) | **완전 실동작** — 실제로 `/next_bolt_pose` 를 거쳐 파지 시도, `RESULT`(WS)도 실제 결과(`fail_reason`/`retry_suggested`/`retries`/`cycle_id`/`matched_bolt_id` 전부 부록D/F 대로 매핑, 2026-08-03), 필수필드 검증·deadline 시행도 실동작 | 부록D `REACH_FILTERED`/`COLLISION_ABORT`/`JOINT_LIMIT`/`TIMEOUT`(현재 로봇이 구분 안 하는 실패 종류) |
-| `ESTOP`(REST) | ACK + 로컬 플래그(heartbeat.state 반영)만 | 실제 정지 연동(§5 deadman) |
-| 나머지(`START`/`SET_SPEED`/`BLACKLIST_ADD`/..., `/api/v1/command`) | **ACK 골격만** — 프로토콜 형태 확인용, 로봇 동작 미반영 | 로봇측 연동 인터페이스(PROGRESS.md) |
+| `PICK_BOLT`(REST) | **완전 실동작** — 실제로 `/next_bolt_pose` 를 거쳐 파지 시도, `RESULT`(WS)도 실제 결과(`fail_reason`/`retry_suggested`/`retries`/`cycle_id`/`matched_bolt_id` 전부 부록D/F 대로 매핑). **단 `RESULT success:true` 는 리프트 성공이지 place 완료 아님**, `deadline` 은 벽시계 비교라 시뮬 시각 기준값이면 즉시 stale(v3 미사용 권장) | 부록D `REACH_FILTERED`/`COLLISION_ABORT`/`JOINT_LIMIT`/`TIMEOUT`(현재 로봇이 구분 안 하는 실패 종류) |
+| `ESTOP`(전용 REST)·`RESET`·`PAUSE`·`RESUME`·`SET_SPEED`·`BLACKLIST_ADD`·`BLACKLIST_REMOVE`·`GO_HOME`(`/api/v1/command`) | 🔶 **로봇 노드가 일부 반영** — `pick_place_node._command_cb` 가 처리(estop 플래그/일시정지/속도/블랙리스트/홈복귀). 단 완료 ACK·RESULT 는 안 옴, `ESTOP`/`PAUSE` 는 소프트라 실행 중 goal 미취소 | 완료 회신·하드웨어 안전 연동(§5 deadman) |
+| 나머지(`START`/`STOP`/`SET_MODE`/`STEP`/`SKIP_CURRENT`/`HOLD_BOLT`/`UNHOLD_BOLT`/`SET_SELECTOR`/`SET_PLACE_SLOT`/`ACK_ALARM`) | ⬜ **수락(ACK)만, 로봇 무시** — 커맨드버스로 발행돼도 `_command_cb` 가 처리하지 않음 | 로봇측 연동 인터페이스(PROGRESS.md) |
 
-이 구분을 정직하게 유지하는 이유: 이번 작업의 목표는 "통신 기능 자체 검증"이지
-전체 명령의 로봇 동작 연동이 아니다(그건 별도 팀의 데스크톱앱 완성 이후, 로드맵상
-다음 단계).
+명령별 실동작 분류의 단일 소스는 코드다: 브릿지 수용 집합 `desktop_bridge._ACK_ONLY_TYPES`,
+로봇 처리 분기 `pick_place_node._command_cb`. 데스크톱 대응 요약은
+[`desktop_connection_guide.md`](./desktop_connection_guide.md) §3, 구조적 한계(이벤트 유실·
+deadline 시계·다중 클라이언트 등)는 [`desktop_protocol_upgrade_plan.md`](./desktop_protocol_upgrade_plan.md) 참고.
 
 ## 5. (보조) 안전 — E-STOP
 
@@ -329,22 +357,33 @@ arm_state 스트림을 그대로 출력한다 — 이 왕복이 곧 "통신 기�
 
 ## 부록 A. 메시지 예시
 
+> v3 반영: 명령은 REST(봉투 없음), 로봇→데스크톱 스트림만 봉투(`v:3`/`seq`). `frame`·`q` 길이는
+> 활성 로봇 모델 기준(예시는 FR3 — `fr3_link0`, 7관절; UR5e 는 `base_link`, 6관절).
+
 ```json
-// 데스크톱 → 로봇: 1순위 볼트 지정
-{"v":1,"type":"PICK_BOLT","id":"s12-0043","prio":"NORMAL","t_wall":1753305600123000000,"t_sim":1753305599980000000,"use_sim_time":true,
- "args":{"bolt_id":"b_88","rank":1,"frame":"fr3_link0","stamp":1753305599980000000,
-         "pose":{"position":[0.412,-0.023,0.187],"orientation":[0.0,0.707,0.0,0.707]}}}
+// 데스크톱 → 로봇 (REST): POST /api/v1/pick_bolt  — body 는 args 그대로(봉투 아님)
+{"bolt_id":"b_88","rank":1,"frame":"fr3_link0","stamp":1753305599980000000,
+ "pose":{"position":[0.412,-0.023,0.187],"orientation":[0.0,0.707,0.0,0.707]}}
 
-// 로봇 → 데스크톱: 접수 → 결과(도달불가로 거부)
-{"v":1,"type":"ACK","corr":"s12-0043","args":{"accepted":true}}
-{"v":1,"type":"RESULT","corr":"s12-0043","args":{"success":false,"fail_reason":"UNREACHABLE","retry_suggested":true}}
+// 로봇 → 데스크톱 (HTTP 응답, 즉시): 접수(=토픽 발행됨, 로봇 수락 아님)
+{"id":"pick_bolt-9f3a1c02","accepted":true}
 
-// 로봇 → 데스크톱: 디지털 섀도우 연료 (10–30Hz 스트림)
-{"v":1,"type":"arm_state","t_sim":1753305600010000000,"t_wall":1753305600155000000,
- "args":{"q":[0.0,-0.78,0.0,-2.36,0.0,1.57,0.78],"tcp":[0.40,-0.02,0.25],"gripper_width":0.04,"moving":true}}
+// 로봇 → 데스크톱 (WS, 나중에): 결과(도달불가로 거부) — corr = 위 응답의 id
+{"v":3,"type":"RESULT","id":"result-1a2b3c4d","corr":"pick_bolt-9f3a1c02","prio":"NORMAL","seq":1043,
+ "t_wall":1753305600123000000,"t_sim":1753305599980000000,"use_sim_time":true,
+ "args":{"success":false,"fail_reason":"UNREACHABLE","retry_suggested":false,"retries":0,
+         "cycle_id":6,"bolt_id":"b_88","matched_bolt_id":"ext_0.4_0.1","dur_s":0.0}}
 
-// 로봇 → 데스크톱: 파지 성공 판정
-{"v":1,"type":"grasp_result","args":{"bolt_id":"b_88","success":true,"bolt_rise_m":0.235,"gripper_width_m":0.004}}
+// 로봇 → 데스크톱 (WS): 디지털 섀도우 연료 (기본 20Hz 스트림)
+{"v":3,"type":"arm_state","id":"arm_state-7c1d","corr":null,"prio":"NORMAL","seq":1042,
+ "t_sim":1753305600010000000,"t_wall":1753305600155000000,"use_sim_time":true,
+ "args":{"q":[0.0,-0.78,0.0,-2.36,0.0,1.57,0.78],"tcp":[0.40,-0.02,0.25],"tcp_quat":[0.0,1.0,0.0,0.0],
+         "gripper_width":0.04,"joint_margin":[1.2,0.9,1.5,0.8,1.1,1.3,1.0],"moving":true,"last_cycle_id":5}}
+
+// 로봇 → 데스크톱 (WS): 파지 성공 판정(로봇 자체선택 사이클)
+{"v":3,"type":"grasp_result","id":"grasp_result-9a2f","corr":null,"prio":"NORMAL","seq":1044,
+ "t_wall":1753305600200000000,"t_sim":1753305600060000000,"use_sim_time":true,
+ "args":{"bolt_id":"b_88","success":true,"fail_reason":null,"bolt_rise_m":0.235,"gripper_width_m":0.004}}
 ```
 
 ## 부록 B. 상태(state) 열거

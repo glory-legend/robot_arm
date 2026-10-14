@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-02",
+  "revision": "R11",
+  "destination_parent_id": "3ebbf0105ac981379e65c20e9e332bcb",
+  "destination_path": "Bin_Picking / Bin_Picking 문서 / 볼트 그리퍼 설계·모델링 버전 기록",
+  "baseline_revision": "R10 (design=c2)",
+  "preserved": [
+    "M6×20, M8×35, M10×50 without changing tips",
+    "picking a horizontal bolt from a pile with thin tweezers",
+    "2R thumb rights bolt by 90 degrees",
+    "14 mm draw-in, six radial jaws, spring-closed chuck",
+    "Ø29 ×12 mm nose, fixture-free dense-neighbour fastening, robot receives reaction torque",
+    "3 mm chuck-release overtravel, reset, 70-second illustrative FR3 cycle",
+    "all viewer controls and older version routes"
+  ],
+  "changed": [
+    "body Ø62×93 -> Ø60.5×89 mm",
+    "stow 32 -> 29 mm; nose and all motor/gearhead installation envelope dimensions retained",
+    "1 mm structural tube with integral guides instead of separate cover, 3 tie rods, rear bulkhead and 4 cover screws",
+    "yoke plate 6 -> 3 mm, radial-slide slots deleted; slide plane +3 mm, ring nut -4 mm; front bore/slide ports combined",
+    "thumb column x -14.5 -> -13.8 mm and rear mount extended; link positioned to clear front plate",
+    "existing grip actuator spreads at an axial dwell: no 0.6 mm steep spreading cam, still 5 commanded axes and 11 UI stages",
+    "new FR3 paths generated at tool length89mm; max position residual0.0003mm per generation command; closeup centre adjusted"
+  ],
+  "metrics_source": "geometry-comparison.json",
+  "mass_scope": "Aluminium-equivalent estimate for exactly the named frame/housing/yoke solids at2.70g/cm³. Not total mass, not a weighed assembly; actuators, gearhead, jaws, transmission, cables, fasteners excluded. Mesh count63->53 is rendered mesh count, not BOM or actual part count.",
+  "baseline_correction": "R10 yoke cap has nonmanifold edges; compare declared 2D section areas x depth (256 arc subdivisions), not bad cap signed volume. Archived R10 is unchanged.",
+  "unverified": [
+    "no FEA or physical strength/stiffness validation for thin shell/yoke",
+    "motors/gearing still unselected; some legacy actuator installation envelopes overlap around feed/grip interfaces, so dimensions are an illustrative packaging target, not proven physical fit",
+    "spring force, one-way latch/trigger, release rod force path and bearing selection not validated",
+    "whole-machine/pile collisions, friction/contact/slip, torque/current/cable routing and manufacturing tolerances not verified",
+    "FR3 demonstration does not certify M8/M10 example torque or real fastening",
+    "not a global numerical optimum or manufacturing release"
+  ],
+  "checks": {
+    "unit": "86 passed in unit-tests.log",
+    "build": "passed including TypeScript in build.log",
+    "format": "passed in format.log",
+    "browser": "see browser-tests.log for final count/status",
+    "geometry": "geometry-check.log",
+    "static_audit": "same18 pre-existing actionless-button reports in engineering.ts/integrated.ts as premium-audit.json; none in changed main.ts; never claim whole static audit passed"
+  },
+  "source_files": [
+    "src/compact-kinematics.ts",
+    "src/compact-model.ts",
+    "src/compact-motion-data-r11.json",
+    "src/main.ts",
+    "index.html",
+    "tests/compact.test.ts",
+    "tests/compact.e2e.ts",
+    "scripts/review-compact.mjs",
+    "scripts/capture-compact.mjs"
+  ],
+  "provenance": "R11 captures are original captures from current implementation on2026-10-02; r10-reproduced captures are current re-execution of preserved design, not original historical images. See screenshot-manifest.json. No AI-generated images."
+}

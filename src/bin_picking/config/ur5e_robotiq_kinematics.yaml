@@ -1,0 +1,7 @@
+# UR5e + Robotiq — MoveIt IK 설정
+# 그룹 이름이 벤더의 `ur_manipulator` 가 아니라 우리가 정의한 `bin_picking_arm`
+# (tip 이 grasp_tcp 인 그룹)이므로 벤더 kinematics.yaml 을 그대로 못 쓴다.
+bin_picking_arm:
+  kinematics_solver: kdl_kinematics_plugin/KDLKinematicsPlugin
+  kinematics_solver_search_resolution: 0.005
+  kinematics_solver_timeout: 0.02

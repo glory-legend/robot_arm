@@ -1,0 +1,219 @@
+{
+  "date": "2026-10-02",
+  "scope": "Declared section area x extrusion depth for extrusions (256 curve subdivisions); signed tetrahedra for closed primitives. R10 legacy yoke cap is invalid, so cap-volume is not used. Aluminium-equivalent estimate at 2.70 g/cm3 for named housing/frame/yoke solids only. Excludes other parts, motors, transmission, cables, fasteners. No measured mass or strength claim.",
+  "rows": [
+    {
+      "id": "c2",
+      "body": {
+        "width": 62,
+        "height": 62,
+        "length": 93
+      },
+      "nose_mm": 12,
+      "stow_mm": 32,
+      "envelope_mm3": 280773.5602292806,
+      "structural_material_mm3": 57796.92710511026,
+      "aluminium_equivalent_g": 156.0517031837977,
+      "mesh_count": 63,
+      "structure_meshes": [
+        {
+          "name": "slim-nose-tube",
+          "volume_mm3": 514.8155741624441
+        },
+        {
+          "name": "front-plate-with-ports",
+          "volume_mm3": 6209.064173626227
+        },
+        {
+          "name": "rear-bulkhead",
+          "volume_mm3": 9056.984288699083
+        },
+        {
+          "name": "tie-rod",
+          "volume_mm3": 1346.1232236532799
+        },
+        {
+          "name": "tie-rod",
+          "volume_mm3": 1346.1232236532799
+        },
+        {
+          "name": "tie-rod",
+          "volume_mm3": 1346.1232236532799
+        },
+        {
+          "name": "robot-adapter-ring",
+          "volume_mm3": 12892.772639896262
+        },
+        {
+          "name": "cover-sleeve",
+          "volume_mm3": 16359.572192138061
+        },
+        {
+          "name": "feed-yoke",
+          "volume_mm3": 8725.348565628337
+        }
+      ],
+      "all_mesh_names": [
+        "slim-nose-tube",
+        "front-plate-with-ports",
+        "rear-bulkhead",
+        "tie-rod",
+        "tie-rod",
+        "tie-rod",
+        "robot-adapter-ring",
+        "spindle-motor-envelope",
+        "spindle-gearhead-envelope",
+        "chuck-spring-pack",
+        "chuck-release-rod",
+        "chuck-release-rod",
+        "chuck-release-rod",
+        "tweezer-spread-cam",
+        "tweezer-spread-cam",
+        "feed-screw-sleeve",
+        "feed-ring-motor",
+        "cover-sleeve",
+        "cover-screw",
+        "cover-screw",
+        "cover-screw",
+        "cover-screw",
+        "output-shaft",
+        "chuck-back-disc",
+        "chuck-web-0",
+        "chuck-web-1",
+        "chuck-web-2",
+        "chuck-web-3",
+        "chuck-web-4",
+        "chuck-web-5",
+        "head-jaw-1",
+        "radial-slider-1",
+        "head-jaw-2",
+        "radial-slider-2",
+        "head-jaw-3",
+        "radial-slider-3",
+        "head-jaw-4",
+        "radial-slider-4",
+        "head-jaw-5",
+        "radial-slider-5",
+        "head-jaw-6",
+        "radial-slider-6",
+        "feed-yoke",
+        "feed-ring-nut",
+        "grip-drive-envelope",
+        "grip-slide-block",
+        "slide-to-drive-link",
+        "tweezer-blade",
+        "passive-pad",
+        "grip-drive-envelope",
+        "grip-slide-block",
+        "slide-to-drive-link",
+        "tweezer-blade",
+        "passive-pad",
+        "thumb-drive-envelope",
+        "thumb-column",
+        "thumb-base-axle",
+        "thumb-joint-2",
+        "thumb-distal",
+        "roller-shaft",
+        "bolt-roller",
+        "thumb-joint-1",
+        "thumb-proximal"
+      ]
+    },
+    {
+      "id": "r11",
+      "body": {
+        "width": 60.5,
+        "height": 60.5,
+        "length": 89
+      },
+      "nose_mm": 12,
+      "stow_mm": 29,
+      "envelope_mm3": 255853.0728542204,
+      "structural_material_mm3": 41794.855105886396,
+      "aluminium_equivalent_g": 112.84610878589328,
+      "mesh_count": 53,
+      "structure_meshes": [
+        {
+          "name": "slim-nose-tube",
+          "volume_mm3": 514.8155741624441
+        },
+        {
+          "name": "front-plate-with-ports",
+          "volume_mm3": 5609.966606496947
+        },
+        {
+          "name": "robot-adapter-ring",
+          "volume_mm3": 12802.650462725944
+        },
+        {
+          "name": "structural-guide-housing",
+          "volume_mm3": 18639.235843221453
+        },
+        {
+          "name": "feed-yoke",
+          "volume_mm3": 4228.186619279604
+        }
+      ],
+      "all_mesh_names": [
+        "slim-nose-tube",
+        "front-plate-with-ports",
+        "robot-adapter-ring",
+        "spindle-motor-envelope",
+        "spindle-gearhead-envelope",
+        "chuck-spring-pack",
+        "chuck-release-rod",
+        "chuck-release-rod",
+        "chuck-release-rod",
+        "feed-screw-sleeve",
+        "feed-ring-motor",
+        "structural-guide-housing",
+        "output-shaft",
+        "chuck-back-disc",
+        "chuck-web-0",
+        "chuck-web-1",
+        "chuck-web-2",
+        "chuck-web-3",
+        "chuck-web-4",
+        "chuck-web-5",
+        "head-jaw-1",
+        "radial-slider-1",
+        "head-jaw-2",
+        "radial-slider-2",
+        "head-jaw-3",
+        "radial-slider-3",
+        "head-jaw-4",
+        "radial-slider-4",
+        "head-jaw-5",
+        "radial-slider-5",
+        "head-jaw-6",
+        "radial-slider-6",
+        "feed-yoke",
+        "feed-ring-nut",
+        "grip-drive-envelope",
+        "grip-slide-block",
+        "slide-to-drive-link",
+        "tweezer-blade",
+        "passive-pad",
+        "grip-drive-envelope",
+        "grip-slide-block",
+        "slide-to-drive-link",
+        "tweezer-blade",
+        "passive-pad",
+        "thumb-drive-envelope",
+        "thumb-column",
+        "thumb-base-axle",
+        "thumb-joint-2",
+        "thumb-distal",
+        "roller-shaft",
+        "bolt-roller",
+        "thumb-joint-1",
+        "thumb-proximal"
+      ]
+    }
+  ],
+  "reduction_percent": {
+    "envelope": 8.875653161469355,
+    "selected_material": 27.686717617568636,
+    "mesh_count": 15.873015873015872
+  }
+}

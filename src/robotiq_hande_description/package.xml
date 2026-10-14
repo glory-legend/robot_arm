@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>robotiq_hande_description</name>
+  <version>0.1.1</version>
+  <description>Robotiq Hand-E 그리퍼의 URDF/메시 기술(記述).
+    macmacal/robotiq_hande_description(Apache-2.0)을 벤더링해 Gazebo
+    (gz_ros2_control) 분기를 더한 것 — 수정 내역은 NOTICE 참조.</description>
+  <maintainer email="mac.aleksandrowicz@gmail.com">Maciej Aleksandrowicz</maintainer>
+  <author email="mac.aleksandrowicz@gmail.com">Maciej Aleksandrowicz</author>
+  <license>Apache-2.0</license>
+  <url type="repository">https://github.com/macmacal/robotiq_hande_description</url>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>xacro</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

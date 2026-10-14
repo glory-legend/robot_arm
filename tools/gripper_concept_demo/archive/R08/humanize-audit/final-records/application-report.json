@@ -1,0 +1,21 @@
+{
+  "run_id": "2026-10-01-005-7dc2",
+  "route": "light",
+  "change_rate_percent": 0.0,
+  "gate_exit_code": 0,
+  "grade": "B",
+  "self_check": "6/6",
+  "format": "Prettier pass",
+  "README_historical_body_unchanged": true,
+  "applied": [
+    {
+      "path": "tools/gripper_concept_demo/README.md",
+      "sha256": "04287375ce1fcb962eed84cb9df74f806c5a6fd8c072d9c2c718354e0cad4e80"
+    },
+    {
+      "path": "tools/gripper_concept_demo/archive/R08/notion-body.md",
+      "sha256": "e00f767689b145b00a9aa6753ec1c0a77e9c69a5ee68f41a79078fa9ae865ab3"
+    }
+  ],
+  "published_to_notion": false
+}

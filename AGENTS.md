@@ -70,3 +70,15 @@ done/next, then `docs/desktop_protocol.md` if touching `desktop_bridge.py`/`prot
   REST+WebSocket server), `websockets` (mock desktop client's WS reference only)
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->
+
+- 프로젝트 전반의 결함 수정이나 빈피킹 성능 업그레이드를 시작할 때는
+  `docs/bin_picking_analysis_and_upgrade_plan.md`를 실행 백로그로 먼저 읽는다.
+  작업 ID별 선행조건·수용 기준·검증 명령이 정리돼 있다.
+- `desktop_bridge.py`, `protocol.py`, `tools/desktop_sdk/`의 신뢰성·인증·명령 상태를
+  업그레이드할 때는 `docs/desktop_protocol_upgrade_plan.md`의 CP 작업 ID와 v3→v4
+  마이그레이션 규칙을 먼저 읽는다.
+- 셀 상태기계, ROS Action, `_pick()`/`_drop()` 실행 경계, 취소·복구를 구현할 때는
+  `docs/ros_supervisor_design.md`의 SUP 작업 순서와 불변조건을 먼저 읽는다.
+
+<!-- Recording preference: 2026-10-01 -->
+- 기록·문서·노션 페이지는 초안을 작성한 뒤 im-not-ai의 humanize-korean 플러그인으로 윤문한다. 수치·수식·링크·검증 결과와 미확정 상태는 보존한다. 설계 기록은 요청자나 대화 경위를 서술하지 않고 설계 목적·판단·변경 이유·검토 결과 중심으로 작성하며 모델링 기록에는 버전별 사진을 첨부하고 당시 원본과 재현 사진을 구분한다.

@@ -14,9 +14,9 @@ Gazebo world definition for the simulation.
 ## For AI Agents
 
 ### Working In This Directory
-- If bolt/vision sensing is misbehaving and geometry constants (`bolt_scene.py`,
-  `spawn_bolts.launch.py`) already check out, verify the `Sensors` system plugin is still
-  present in this world file — its absence was a real, previously-hit root cause of the
-  camera silently not publishing (see `PROGRESS.md`, 2026-07-23~24 vision pipeline entry).
+- No robot-side camera/vision sensing lives in this repo — bolt pose estimation is owned by
+  the desktop app, which delivers poses to the robot via `/next_bolt_pose`
+  (`EXT_POSE_TOPIC`, see `sensing.py`). This world file only needs ground plane, lighting,
+  and physics for the robot/bin/bolts.
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->

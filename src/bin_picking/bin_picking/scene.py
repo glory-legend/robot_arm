@@ -240,8 +240,10 @@ class SceneMixin:
 
         aco = AttachedCollisionObject()
         aco.link_name = self.END_EFFECTOR_LINK
-        aco.touch_links = ['fr3_hand', 'fr3_leftfinger', 'fr3_rightfinger',
-                           self.END_EFFECTOR_LINK]
+        # 부착한 볼트와의 충돌을 허용할 링크들(손/손가락/TCP). 링크 이름이
+        # 그리퍼마다 다르므로 프로파일이 준다 — 이 목록이 실제 URDF 와 어긋나면
+        # 파지 직후 모든 계획이 자기충돌로 실패한다(`binpick_model verify` 가 대조).
+        aco.touch_links = list(self.GRIPPER_TOUCH_LINKS)
         aco.object = co
         aco.weight = 0.025
         ok = self._apply_attached(aco)

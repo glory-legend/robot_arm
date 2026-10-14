@@ -1,0 +1,90 @@
+{
+  "verdict": "corrected",
+  "fidelity": {
+    "pass": true,
+    "review_method": "원문과 윤문본 전체 509줄을 순서대로 직접 대조했다. 동일 문단도 생략 판정하지 않았으며 보호 앵커를 별도로 기계 대조했다.",
+    "checks_passed": 15,
+    "violations": [
+      {
+        "item": 9,
+        "span": "볼트는 헤드 가까운 몸통을 잡고 작은 2R 엄지(25+25mm)로 세운다.",
+        "action": "헤드 가까운 몸통을 잡은 상태에서 작은 2R 엄지(25+25mm)로 볼트를 세운다.",
+        "status": "corrected",
+        "note": "볼트가 몸통을 잡는 주체처럼 읽힐 수 있는 모호함을 제거했다. 파지 위치·작은 2R 엄지·링크 길이·세우기 동작은 유지했다."
+      }
+    ],
+    "unresolved_violations": [],
+    "protected_anchor_checks": {
+      "boundaries": "PASS",
+      "headings": "PASS",
+      "tables": "PASS",
+      "code": "PASS",
+      "inline": "PASS",
+      "urls": "PASS",
+      "links": "PASS",
+      "numbers": "PASS",
+      "quotes": "PASS",
+      "footnotes": "PASS",
+      "numbered_lines": "PASS"
+    },
+    "document_count": 9,
+    "facts_and_verification_status": "실측/예시/가정/미검증/미선정/미승인 구별, 과거 테스트 결과, 버전별 A/B 차이와 인과·조건·시간 순서 보존."
+  },
+  "naturalness": {
+    "grade": "B",
+    "residual": [
+      {
+        "id": "A-13",
+        "severity": "S2",
+        "note": "표의 셀에 붙여 쓴 문구가 남아 있으나 표 원형 보존 지시에 따라 유지했다."
+      },
+      {
+        "id": "A-18",
+        "severity": "S2",
+        "note": "기술적 조건과 검증 범위를 담은 긴 수식절 일부를 보존했다. 모호한 R06 파지 문장만 국소 수정했다."
+      }
+    ],
+    "over_polish": [],
+    "s1_confirmed_residual": 0,
+    "technical_negation_note": "미검증·제작 미승인·정격 아님 등의 부정문은 의미를 구성하는 기술적 한계다. AI 수사 반복으로 분류하지 않았다.",
+    "grade_reason": "필요한 산문과 띄어쓰기를 보수적으로 개선했고 사실·격식을 보존했다. 표의 압축 문구와 일부 긴 기술 수식절은 남겨 B로 판정한다. 변경률을 높이기 위한 과윤문은 하지 않았다."
+  },
+  "corrections_applied": 1,
+  "corrections": [
+    {
+      "file": "R06.md",
+      "before": "볼트는 헤드 가까운 몸통을 잡고 작은 2R 엄지(25+25mm)로 세운다.",
+      "after": "헤드 가까운 몸통을 잡은 상태에서 작은 2R 엄지(25+25mm)로 볼트를 세운다."
+    }
+  ],
+  "gate_review": {
+    "official_gate": "WARN retained; not overridden",
+    "pre_finalize_change_rate": 0.0056,
+    "pre_finalize_sentence_touch_rate": 0.1228,
+    "modality_losses": 0,
+    "footnote_anchor": {
+      "classification": "confirmed_false_positive",
+      "message": "[footnote_anchor] 각주 80)이 원위치를 벗어났습니다 (인접 수치 앵커 '0,100' → '100'): 인용 출처 변조 위험",
+      "same_text_control": "official checks.check_footnotes(original, original) reproduces the same failure",
+      "control_artifact": "/home/yg1/robotarm_main/_workspace/2026-10-01-001-8500/footnote-false-positive-control.json",
+      "coordinate_rows_unchanged": [
+        "| B 회전축              | (0, 100, -80), X축 방향, -90° → 0°                                 |",
+        "| 평행 모듈 설치 공간   | 80×45×65, 중심 (0,100,-80)                                         |"
+      ],
+      "explanation": "표의 서로 다른 좌표 (0, 100, -80)와 (0,100,-80)의 끝 -80)을 같은 각주번호 80)으로 오인했다. 좌표 두 행과 순서가 원문·윤문본에서 동일하며 실제 각주 이동·정의 변경은 없다.",
+      "action": "표·수치·공식 스크립트를 변경하지 않고 원래 WARN과 독립적인 fidelity PASS를 함께 기록한다."
+    },
+    "post_finalize_change_rate": 0.0057,
+    "final_gate_path": "_workspace/2026-10-01-001-8500/11_gates_final_local_correction.txt"
+  },
+  "held_edits": [],
+  "note": "전체 대조 후 주어·객체 모호함 1건만 보정했다. 원본 8문서에 반영하지 않았다. 공식 각주 WARN은 재현되는 오탐이며 문서 fidelity 판정과 분리한다.",
+  "post_finalize_authorized_local_edit": {
+    "file": "R06.md",
+    "before": "B를 단순 절첩형으로 해석한 제안은 사용자가 정정했으므로 채택하지 않았다.",
+    "after": "B를 단순 절첩형으로 해석한 제안은 정정했으며 해당 제안은 채택하지 않았다.",
+    "reason": "명시된 요청자·대화 경위 생략 지시를 적용. 정정과 미채택 결과를 유지하며 기술적 원인을 추가하지 않음.",
+    "verification": "post-edit official gates and protected-anchor checks rerun",
+    "comma_cleanup": "공식 strip_injected_commas가 새 연결어미 뒤 쉼표 제거"
+  }
+}

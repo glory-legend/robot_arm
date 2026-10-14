@@ -1,0 +1,60 @@
+{
+  "verdict": "corrected",
+  "fidelity": {
+    "pass": true,
+    "violations": [],
+    "items_checked": 15,
+    "records_reviewed": 12,
+    "method": "원문과 윤문본의 12개 레코드 전체를 직접 대조. 잘린 도구 출력의 레코드는 다시 읽어 확인. 기존 윤문가의 diff에 의존하지 않음."
+  },
+  "naturalness": {
+    "residual": [
+      {
+        "id": "E-2",
+        "note": "독립 버전 기록의 합쇼체와 미검증 한계 반복은 보존. 문체 수정을 위한 추가 개작 불필요."
+      },
+      {
+        "id": "A-18",
+        "note": "길어진 관형절 두 구간의 분리는 의미·당시 검증이라는 범위를 유지함."
+      }
+    ],
+    "over_polish": []
+  },
+  "corrections_applied": 1,
+  "body_corrections_applied": 0,
+  "metadata_corrections": [
+    {
+      "span": "HUMANIZE-SUMMARY / highlights / C-11 / before",
+      "before": "손가락을 열고 바깥쪽으로 펴며 안내부를 후퇴시킨 후 체결합니다.",
+      "after": "손가락을 열고 바깥쪽으로 펴며, 안내부를 후퇴시킨 후 체결합니다.",
+      "reason": "윤문 전 예시에서 누락된 원문 쉼표 복원. 본문 변경 없음."
+    }
+  ],
+  "preservation": {
+    "record_boundaries": true,
+    "records": 12,
+    "attachments": 36,
+    "numbers_urls_tags_inline_code_headings_record_urls": true,
+    "unverified_and_unapproved_status": true,
+    "original_vs_reproduction_photos": true,
+    "historical_vs_current_checks": true,
+    "r06_vs_r07_mechanisms": true,
+    "new_claims_in_body": false
+  },
+  "gate_observation": {
+    "official_result": "WARN",
+    "footnote_anchor_warnings": 8,
+    "identical_original_control_result": "WARN",
+    "identical_original_control_warning_count": 8,
+    "control_evidence": "gate-identical-input-control.txt",
+    "assessment": "원문 동일 입력 대조에서도 좌표 80) 1건과 URL pvs=204) 7건을 각주로 오인한 경고가 재현됨. 실제 각주 이동이나 수치·URL 변경이 아님. 공식 게이트 결과를 PASS로 덮어쓰지 않음.",
+    "scripts_or_original_tokens_modified": false,
+    "final_gate_rerun": "오케스트레이터가 보정본으로 재실행"
+  },
+  "note": "본문은 무보정 통과. SUMMARY의 변경 예시 기록 1곳만 국소 보정. 전체 재작성·Notion 게시·소스 코드 수정 없음. 최종 검증 주석을 SUMMARY에 덧붙임.",
+  "sha256": {
+    "original": "8be0aa5735649094b58dd051fad4d3adcc4e9439d87d5a902c0ca3c07cd01ac1",
+    "pre_finalize": "9f5c9a812c0712b032644885a1c3bc05484e043d503b82723812e7ed3e6b3aca",
+    "final": "019faae5261b0ad21fe53bed38d9fa23777bc733a8b2f39b5b874519971b5976"
+  }
+}

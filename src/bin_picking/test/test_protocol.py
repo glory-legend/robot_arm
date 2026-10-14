@@ -220,6 +220,33 @@ def test_joint_margins_joint_present_in_q_but_missing_limits():
     assert out[1] is None
 
 
+def test_robot_phases_contains_appendix_b_states():
+    expected = {
+        'IDLE', 'HOMING', 'WAITING_TARGET', 'PLANNING', 'APPROACHING',
+        'DESCENDING', 'GRASPING', 'LIFTING', 'PLACING', 'RECOVERING',
+        'SAFE_STOP', 'ERROR',
+    }
+    assert set(protocol.ROBOT_PHASES) == expected
+    assert len(protocol.ROBOT_PHASES) == len(expected)
+
+
+def test_robot_phases_are_all_uppercase_strings():
+    for phase in protocol.ROBOT_PHASES:
+        assert isinstance(phase, str)
+        assert phase == phase.upper()
+
+
+def test_is_valid_phase_accepts_all_registered():
+    for phase in protocol.ROBOT_PHASES:
+        assert protocol.is_valid_phase(phase)
+
+
+def test_is_valid_phase_rejects_unknown():
+    assert not protocol.is_valid_phase('GRAPSING')
+    assert not protocol.is_valid_phase('')
+    assert not protocol.is_valid_phase('idle')
+
+
 def test_joint_margins_and_joint_margin_agree_on_minimum():
     # 두 함수는 같은 로직의 스칼라/리스트 버전이어야 한다(구현 중복 없이
     # protocol.py 가 유일한 소스) — 리스트의 최솟값이 스칼라와 같아야 함.
@@ -230,3 +257,32 @@ def test_joint_margins_and_joint_margin_agree_on_minimum():
     scalar = protocol.joint_margin(q, limits)
     per_joint = protocol.joint_margins(q, limits, order)
     assert math.isclose(scalar, min(v for v in per_joint if v is not None))
+
+
+# --- BP-C04a: RESET confirm 검증 (validate_command) ---
+
+def test_reset_requires_confirm_true():
+    """RESET 은 confirm=true 없이는 거부돼야 한다(안전 정지 오해제 방지)."""
+    assert protocol.validate_command('RESET', {}) == ['RESET requires confirm=true']
+    assert protocol.validate_command('RESET', {'confirm': False}) \
+        == ['RESET requires confirm=true']
+    # 문자열/정수 truthy 값은 엄격히 거부 — 타입을 정확히 맞추게 한다.
+    assert protocol.validate_command('RESET', {'confirm': 'true'}) \
+        == ['RESET requires confirm=true']
+    assert protocol.validate_command('RESET', {'confirm': 1}) \
+        == ['RESET requires confirm=true']
+
+
+def test_reset_accepted_with_confirm_true():
+    assert protocol.validate_command('RESET', {'confirm': True}) == []
+
+
+def test_validate_command_none_args_safe():
+    # args 가 아예 없어도(None) 크래시 없이 검증한다.
+    assert protocol.validate_command('RESET', None) == ['RESET requires confirm=true']
+    assert protocol.validate_command('START', None) == []
+
+
+def test_other_commands_have_no_extra_constraints():
+    for mtype in ('START', 'STOP', 'PAUSE', 'RESUME', 'GO_HOME', 'SET_SPEED'):
+        assert protocol.validate_command(mtype, {}) == []

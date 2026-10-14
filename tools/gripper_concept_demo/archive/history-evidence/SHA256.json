@@ -1,0 +1,16 @@
+{
+  "README.md": "db7b0e1445c0007167ab1c8394a60f58a13102ad6b8dfecec2bbbd32bd68c39a",
+  "GRIPPER_SELECTION.md": "ada7e9f8b1735fa2a7e6d0c4a5996f129085d36eccee093da5b4ff7774d7df6f",
+  "IMPLEMENTATION.md": "c2824f8b0d12a8dc9f461b6e51285da6867ee4ff67bc7b83abb545bdbd1fcce7",
+  "robotiq-2f85/LICENSE": "a47544ef0ad645c587e46348dc10e68b89c3e74732bd124c005cfcd8ede3b3b8",
+  "robotiq-2f85/package.xml": "2aeec9bf57544a94aee8ffa1da0d51235c4102876748579bcff744b9ad7abadc",
+  "robotiq-2f85/NOTICE": "084934979d6b7b3ca9d72f6219cfc0bc2178c4eba3ee3c888235e85dbd818b85",
+  "robotiq-2f85/robotiq_2f_85_macro.urdf.xacro": "d54dbe14ce325e80b40a6a2b6c194929268bc51bb25470bcb85eb29fd7ba7fcd",
+  "robotiq-2f85/meshes/left_knuckle.dae": "1b82214363d9548f3562be70e25cd23217a304c72ccd37bc1551cf1a3a64029d",
+  "robotiq-2f85/meshes/right_finger.dae": "3b2245b5537eb596d7f8a4c64b12e3aedea46e365fc589019184d3b4200e664f",
+  "robotiq-2f85/meshes/left_finger.dae": "5fb9e5659c735e48eb55269da431cf61b3b7a6745922c1932a7adefb1db86dc3",
+  "robotiq-2f85/meshes/robotiq_base.dae": "761a79d586a48d367d60f146ca77ef7d2821ad790f7b1b1c93b061ac59799267",
+  "robotiq-2f85/meshes/left_inner_knuckle.dae": "2df009ef28868c90a4904370f5f4995c74ec84e0b8ca1371044e0ea669edcd71",
+  "robotiq-2f85/meshes/right_knuckle.dae": "532b6f6f8794883ff34995701036ca392461f26127757f92003db127693bc57c",
+  "robotiq-2f85/meshes/right_inner_knuckle.dae": "4cc6de99e177773ba755805b58b67537c3af24b2fd8f3a1bf4bbced87d6240a5"
+}

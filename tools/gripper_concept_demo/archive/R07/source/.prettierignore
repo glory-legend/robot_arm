@@ -1,0 +1,13 @@
+node_modules
+dist
+public
+src/motion-data.json
+src/robot-data.json
+package-lock.json
+test-results
+playwright-report
+
+assets/
+
+archive/
+NOTION_ARCHIVE.md

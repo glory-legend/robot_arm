@@ -1,0 +1,72 @@
+{
+  "seed": 20260909,
+  "cases_per_count": 30,
+  "results": [
+    {
+      "box_count": 12,
+      "compact_strictly_better_cases": 14,
+      "means": {
+        "greedy": {
+          "placed": 12,
+          "rejected": 0,
+          "used_height_m": 0.136,
+          "capacity_utilization": 0.14186666666666667,
+          "used_height_utilization": 0.5674666666666667,
+          "planning_ms": 10.355402266698851
+        },
+        "compact": {
+          "placed": 12,
+          "rejected": 0,
+          "used_height_m": 0.1,
+          "capacity_utilization": 0.14186666666666667,
+          "used_height_utilization": 0.7093333333333334,
+          "planning_ms": 24.804223066894338
+        }
+      }
+    },
+    {
+      "box_count": 24,
+      "compact_strictly_better_cases": 20,
+      "means": {
+        "greedy": {
+          "placed": 24,
+          "rejected": 0,
+          "used_height_m": 0.2833333333333334,
+          "capacity_utilization": 0.28373333333333334,
+          "used_height_utilization": 0.5368501424501425,
+          "planning_ms": 66.07420796644874
+        },
+        "compact": {
+          "placed": 24,
+          "rejected": 0,
+          "used_height_m": 0.21333333333333335,
+          "capacity_utilization": 0.28373333333333334,
+          "used_height_utilization": 0.6663434343434343,
+          "planning_ms": 121.69150743296389
+        }
+      }
+    },
+    {
+      "box_count": 36,
+      "compact_strictly_better_cases": 23,
+      "means": {
+        "greedy": {
+          "placed": 35.233333333333334,
+          "rejected": 0.7666666666666667,
+          "used_height_m": 0.396,
+          "capacity_utilization": 0.4102666666666667,
+          "used_height_utilization": 0.5383044910644911,
+          "planning_ms": 175.08616756689057
+        },
+        "compact": {
+          "placed": 36,
+          "rejected": 0,
+          "used_height_m": 0.31533333333333335,
+          "capacity_utilization": 0.4256000000000001,
+          "used_height_utilization": 0.6753444444444445,
+          "planning_ms": 308.96243263341603
+        }
+      }
+    }
+  ]
+}

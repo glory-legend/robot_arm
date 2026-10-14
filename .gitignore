@@ -30,3 +30,7 @@ bolt_layout.json
 # 로컬 에이전트 도구 상태 (머신별 설정/세션 상태 — 커밋 금지)
 .claude/
 .omc/
+_workspace/
+
+# KIPRIS API key (절대 커밋 금지)
+tools/.kipris_key

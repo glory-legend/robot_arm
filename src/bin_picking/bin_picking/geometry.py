@@ -178,6 +178,14 @@ class GeometryMixin:
         m[0:3, 0] = x_tool
         m[0:3, 1] = y_tool
         m[0:3, 2] = z_tool
+        # [툴 프레임 규약 보정] 위 행렬은 'z=접근방향, y=손가락 닫힘축' 규약의
+        # 파지 프레임이다. 그런데 목표 자세는 END_EFFECTOR_LINK(TCP 링크) 기준으로
+        # 나가므로, 그 링크의 축 배치가 이 규약과 다르면 손목이 그만큼 틀어진다.
+        # 차이를 프로파일이 tool_frame_rpy 로 주면 여기서 흡수한다.
+        # 프랑카 핸드는 규약이 일치해 [0,0,0] → 행렬이 그대로다(수치 완전 보존).
+        rpy = self.ROBOT_PROFILE.gripper.tool_frame_rpy
+        if any(rpy):
+            m = m @ tf_transformations.euler_matrix(*rpy)
         q = tf_transformations.quaternion_from_matrix(m)
         return Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
 
@@ -335,13 +343,30 @@ class GeometryMixin:
         return str(code_val)
 
     @classmethod
-    def _finger_width_is_grasp(cls, width):
-        """[순수 판정] 손가락 실측 위치 → 물체를 물었는가.
+    def _finger_halfwidth(cls, joint_value):
+        """[순수 변환] 그리퍼 구동 관절 실측값 → 손가락 하나의 중심 이격(m).
 
-        허공이면 지령값(GRIPPER_CLOSED=0.002)까지 그대로 닫히고, M8 샤프트를
-        물면 그 반경(0.004) 부근에서 멈춘다 → 중점 0.003 을 경계로 가른다.
-        상한(0.009)은 '아예 닫히지 않음'(pre-grasp 개구에 그대로 머묾)을 거른다.
+        프랑카 핸드처럼 관절값이 곧 이격인 그리퍼는 항등 변환이라 값이 그대로
+        나온다. 각도 구동 그리퍼(Robotiq 2F 등)는 관절값이 rad 이므로 이 변환을
+        거치지 않으면 rad 를 m 로 착각해 판정이 통째로 무의미해진다.
+        변환 계수는 등록된 프로파일이 준다(`gripper.halfwidth_scale/offset`).
+        """
+        return cls.ROBOT_PROFILE.gripper.halfwidth_of(joint_value)
+
+    @classmethod
+    def _finger_width_is_grasp(cls, width):
+        """[순수 판정] 그리퍼 구동 관절 실측값 → 물체를 물었는가.
+
+        허공이면 지령값(GRIPPER_CLOSED)까지 그대로 닫히고, M8 샤프트를 물면 그
+        반경(0.004) 부근에서 멈춘다 → 두 모집단의 중점(GRASP_DETECT_MIN)을 경계로
+        가른다. 상한(GRASP_DETECT_MAX)은 '아예 닫히지 않음'(pre-grasp 개구에
+        그대로 머묾)을 거른다.
+
+        ⚠ 경계값은 **물리 개구(m)** 단위이므로 실측 관절값을 먼저 변환한다.
+          그래야 관절 단위가 다른 그리퍼에서도 같은 판정 논리가 성립한다.
+          (프랑카 핸드는 항등 변환이라 이전과 완전히 같은 수치로 동작한다.)
         """
         if width is None:
             return False          # 관측 불가 → 보수적으로 실패 처리
-        return cls.GRASP_DETECT_MIN <= width <= cls.GRASP_DETECT_MAX
+        hw = cls._finger_halfwidth(width)
+        return cls.GRASP_DETECT_MIN <= hw <= cls.GRASP_DETECT_MAX

@@ -1,0 +1,38 @@
+{
+  "run_id": "2026-10-01-003-5c44",
+  "route": "light",
+  "display_change_rate": "3.0%",
+  "change_rate": 0.0301,
+  "grade": "B",
+  "self_check": "6/6",
+  "gate": {
+    "verdict": "OK — 수렴",
+    "exit_code": 0
+  },
+  "gate_path": "_workspace/2026-10-01-003-5c44/08_gates_final.txt",
+  "applied": [
+    {
+      "path": "/home/yg1/robotarm_main/tools/gripper_concept_demo/R08.md",
+      "humanization_changed": true,
+      "sha256": "e8a787a97ff3b601dc48f36a78ee1a037e540ac5d930a4fb23bb3b0ebc59aa35"
+    },
+    {
+      "path": "/home/yg1/robotarm_main/tools/gripper_concept_demo/R08-PLAN.md",
+      "humanization_changed": true,
+      "sha256": "6b7dd3878dbfe2f3b433826635b9cce90992ae4d7aa2d88a6c1a51a7034ae509"
+    },
+    {
+      "path": "/home/yg1/robotarm_main/tools/gripper_concept_demo/DESIGN.md",
+      "humanization_changed": false,
+      "sha256": "250d9efa9be9c6fae4ffb8493b72ab70a8230caa752a36a8a238ccc2a37900a8"
+    },
+    {
+      "path": "/home/yg1/robotarm_main/tools/gripper_concept_demo/archive/R08/notion-body.md",
+      "humanization_changed": true,
+      "sha256": "429f64487e32a53a0f66999791d1f4bb0e6d95ccf65f7cffa904c698635e136a"
+    }
+  ],
+  "pre_shim_document_work": "DESIGN.md R08 항목 및 Notion 초안 작성, 엄지16mm 이격/롤러/커버수납/실제빈슬롯과예정사진9파일추가",
+  "verification": "수치·표셀·파일경계·경로·코드·제목 보존; 서법 복원0/보류0; 새 쉼표 제거 실행",
+  "notion_status": "local draft only; photo captions planned; no published page or validation results"
+}

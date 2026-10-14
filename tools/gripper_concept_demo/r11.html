@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#dbe1e4" />
+    <meta
+      name="description"
+      content="FR3 로봇팔용 볼트 그리퍼 R11. 핀셋으로 집고, 몸체 안에서 세우고, 이웃 볼트 사이에서 체결합니다."
+    />
+    <title>R11 볼트 그리퍼</title>
+    <script type="module" src="/src/r11-showcase.ts"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">본문으로 건너뛰기</a>
+    <canvas id="stage" aria-hidden="true"></canvas>
+    <svg id="annot" aria-hidden="true"></svg>
+    <div id="tags" aria-hidden="true"></div>
+    <p id="trace-status" aria-hidden="true"></p>
+
+    <header class="topbar">
+      <a class="mark" href="#top" aria-label="R11 볼트 그리퍼, 맨 위로">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="10.5" />
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 1.5v5M12 17.5v5M1.5 12h5M17.5 12h5" />
+        </svg>
+        <span>R11 볼트 그리퍼</span>
+      </a>
+      <nav aria-label="페이지 목차">
+        <a href="#anatomy">구조</a>
+        <a href="#cycle">동작</a>
+        <a href="#diet">R10 대비</a>
+        <a href="#numbers">수치</a>
+        <a href="#cell">로봇 셀</a>
+        <a href="#limits">한계</a>
+      </nav>
+      <a class="btn small" href="./index.html">시뮬레이터 열기</a>
+    </header>
+
+    <main id="main">
+      <section id="top" class="hero" data-chapter="hero">
+        <div class="hero-copy">
+          <h1>볼트를 집어 세우고,<br />그 자리에서 조입니다.</h1>
+          <p class="lede">
+            통 안에 엉킨 볼트 하나를 핀셋으로 집어 몸체 안에서 세운 뒤, 이웃
+            볼트와 간격이 26mm만 돼도 그 사이에서 체결합니다. 지그는 쓰지
+            않습니다.
+          </p>
+          <div class="actions">
+            <a class="btn" href="#cycle">동작 따라가기</a>
+            <a class="btn ghost" href="./index.html">시뮬레이터 열기</a>
+          </div>
+        </div>
+        <table class="titleblock" aria-label="표제란">
+          <tbody>
+            <tr>
+              <th scope="row">품명</th>
+              <td colspan="3">볼트 빈피킹·체결 그리퍼</td>
+            </tr>
+            <tr>
+              <th scope="row">개정</th>
+              <td class="rev">R11</td>
+              <th scope="row">기준</th>
+              <td>R10</td>
+            </tr>
+            <tr>
+              <th scope="row">외형</th>
+              <td>Ø60.5 × 89 mm</td>
+              <th scope="row">구동 축</th>
+              <td>5개</td>
+            </tr>
+            <tr>
+              <th scope="row">대상</th>
+              <td colspan="3">M6 × 20, M8 × 35, M10 × 50</td>
+            </tr>
+            <tr>
+              <th scope="row">작성일</th>
+              <td>2026-10-02</td>
+              <th scope="row">상태</th>
+              <td>검토용 모델</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="hero-note">
+          R11 기구학 모델을 실물처럼 렌더링했습니다. 나사, 커넥터, 배선, 각인은
+          실물 느낌을 위한 예시이며 선정한 부품이 아닙니다. 화면을 멈추면 광선
+          추적으로 점점 선명해집니다.
+        </p>
+        <p class="no-gl-note">
+          이 브라우저에서는 3D 화면을 표시할 수 없습니다. WebGL을 켠
+          브라우저에서 열면 모델과 동작을 볼 수 있습니다. 아래 설명과 수치는
+          그대로 읽을 수 있습니다.
+        </p>
+      </section>
+
+      <section id="anatomy" class="scrolly" data-chapter="anatomy">
+        <div class="pin">
+          <div class="panel">
+            <h2>원통 하나에 모은 구조</h2>
+            <p>
+              덮개와 뼈대를 1mm 구조 튜브 하나로 합쳤습니다. 모든 구동부가 체결
+              축 둘레에 모여 있습니다. 목록에서 부품을 고르면 3D 모델에
+              표시됩니다.
+            </p>
+            <ol class="parts" id="parts"></ol>
+          </div>
+        </div>
+      </section>
+
+      <section id="cycle" class="scrolly" data-chapter="cycle">
+        <div class="pin">
+          <div class="panel cycle-panel">
+            <h2>한 사이클, 11단계</h2>
+            <p class="stage-count">
+              <span id="stage-no">01</span> / 11
+              <span class="clock" id="clock">0.0초</span>
+            </p>
+            <div aria-live="polite">
+              <h3 id="stage-name">볼트 접근</h3>
+              <p id="stage-text"></p>
+              <p class="chip" id="stage-part"></p>
+            </div>
+          </div>
+          <ol class="rail" id="rail" aria-label="단계로 이동"></ol>
+        </div>
+      </section>
+
+      <section id="diet" class="scrolly" data-chapter="diet">
+        <div class="pin">
+          <div class="panel">
+            <h2>R10에서 덜어낸 것</h2>
+            <ol class="steps" id="steps">
+              <li data-at="0">
+                <b>R10에서 출발합니다.</b> Ø62 × 93mm. 커버와 뼈대가 따로
+                있었습니다.
+              </li>
+              <li data-at="0.12">
+                <b>커버 나사 4개와 커버 슬리브를 뺐습니다.</b> 덮개가 하중을
+                받지 않던 구조입니다.
+              </li>
+              <li data-at="0.36">
+                <b>타이로드 3개와 후방 격벽도 뺐습니다.</b> 1mm 구조 튜브가
+                가이드를 품고 하중을 받습니다.
+              </li>
+              <li data-at="0.56">
+                <b>핀셋 벌림 캠 2개를 없앴습니다.</b> 요크가 멈춘 동안 기존 개폐
+                구동부가 핀셋을 벌립니다.
+              </li>
+              <li data-at="0.74">
+                <b>Ø60.5 × 89mm가 됐습니다.</b> 수납 행정은 32mm에서 29mm로
+                줄었고, 모터 설치 공간은 그대로입니다.
+              </li>
+            </ol>
+            <p class="legend">
+              <span class="key r10"></span>R10 치수
+              <span class="key r11"></span>R11 치수
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="numbers" class="sheet" data-chapter="numbers">
+        <div class="wrap">
+          <h2>얼마나 줄었나</h2>
+          <p class="sub">
+            같은 계산 방식으로 잰 R10과 R11의 차이입니다. 막대 길이는 각 항목의
+            R10 값을 기준으로 합니다.
+          </p>
+          <p class="legend solid">
+            <span class="key r10"></span>R10 <span class="key r11"></span>R11
+          </p>
+          <div class="bars" id="bars"></div>
+          <p class="foot">
+            재료 체적과 질량은 외피, 프레임, 요크로 지정한 솔리드만 계산한
+            값입니다. 밀도 2.70 g/cm³ 알루미늄 환산 추정이며 모터, 감속기, 척
+            조, 케이블, 체결구는 빠져 있습니다. 실측 질량이 아닙니다. R10 요크
+            캡 메시에 비다양체 모서리가 있어 두 버전 모두 단면적 × 깊이로
+            계산했습니다.
+          </p>
+        </div>
+      </section>
+
+      <section id="cell" class="sheet cell" data-chapter="cell">
+        <div class="wrap">
+          <h2>FR3에 달고 70초</h2>
+          <p class="sub">
+            통에서 볼트를 꺼내 작업물에 체결하고 돌아오기까지의 경로입니다. 로봇
+            경로는 R11 공구 길이 89mm에 맞춰 다시 만들었습니다. 화면을 끌어 돌려
+            볼 수 있습니다.
+          </p>
+          <div class="cell-frame">
+            <div class="cell-view" id="cell-view">
+              <p class="cell-loading" id="cell-loading">
+                FR3 모델을 불러오는 중입니다.
+              </p>
+              <div class="inset-label" id="inset-label" hidden>
+                <span>그리퍼 확대</span>
+              </div>
+            </div>
+            <div class="cell-controls">
+              <button class="btn" id="cell-play" disabled>재생</button>
+              <label class="scrub">
+                <span class="sr">사이클 시각</span>
+                <input
+                  type="range"
+                  id="cell-time"
+                  min="0"
+                  max="70"
+                  step="0.1"
+                  value="0"
+                  disabled
+                />
+              </label>
+              <span id="cell-clock">0.0초</span>
+              <label class="speed">
+                <span class="sr">재생 속도</span>
+                <select id="cell-speed" disabled>
+                  <option value="1">1배속</option>
+                  <option value="2" selected>2배속</option>
+                  <option value="4">4배속</option>
+                </select>
+              </label>
+              <fieldset class="seg" id="cell-spec">
+                <legend class="sr">대상 볼트</legend>
+              </fieldset>
+              <fieldset class="seg" id="cell-views">
+                <legend class="sr">시점</legend>
+                <button data-view="whole" aria-pressed="true" disabled>
+                  전체
+                </button>
+                <button data-view="detail" aria-pressed="false" disabled>
+                  그리퍼 확대
+                </button>
+                <button data-view="side" aria-pressed="false" disabled>
+                  측면
+                </button>
+              </fieldset>
+            </div>
+            <p class="cell-stage" id="cell-stage" aria-live="off"></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="kept" class="sheet" data-chapter="kept">
+        <div class="wrap two">
+          <div>
+            <h2>바꾸지 않은 것</h2>
+            <ul class="ticks">
+              <li>핀셋 날 형상과 끝 치수 1.2 × 0.5mm</li>
+              <li>2관절 엄지(24 + 24mm)로 볼트를 90° 세우기</li>
+              <li>14mm 인입, 6조 반경 척, 스프링 상시 닫힘</li>
+              <li>Ø29 × 12mm 노즈와 지그 없는 밀집 체결</li>
+              <li>척 해제용 요크 초과행정 3mm, 70초 FR3 사이클</li>
+              <li>모터와 감속기 설치 공간</li>
+            </ul>
+          </div>
+          <div>
+            <h3>이웃 볼트와의 최소 간격</h3>
+            <table class="pitch">
+              <thead>
+                <tr>
+                  <th scope="col">볼트</th>
+                  <th scope="col">최소 간격</th>
+                  <th scope="col">시연 토크</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">M6 × 20</th>
+                  <td>22 mm</td>
+                  <td>8 Nm</td>
+                </tr>
+                <tr>
+                  <th scope="row">M8 × 35</th>
+                  <td>24 mm</td>
+                  <td>20 Nm</td>
+                </tr>
+                <tr>
+                  <th scope="row">M10 × 50</th>
+                  <td>26 mm</td>
+                  <td>40 Nm</td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="foot">
+              간격은 노즈 반경, 육각 헤드 외접원, 여유 1mm를 더한 계산값을 1mm
+              단위로 올린 값입니다(M8 계산값 23.0mm). 토크는 시연용 목표값이며
+              측정값이 아닙니다.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="limits" class="sheet dark" data-chapter="limits">
+        <div class="wrap two">
+          <div>
+            <h2>아직 확인하지 않은 것</h2>
+            <p class="sub">
+              이 페이지의 모든 동작은 기구학과 배치 모델입니다. 아래 항목은
+              실물이나 해석으로 확인해야 합니다.
+            </p>
+          </div>
+          <ul class="open">
+            <li>
+              얇은 외피와 요크의 강도와 강성. 유한요소해석이나 실물 시험이
+              없습니다.
+            </li>
+            <li>
+              모터와 감속기를 아직 고르지 않았습니다. 이송부와 파지부 주변에서
+              구동부 설치 공간 일부가 겹칩니다.
+            </li>
+            <li>
+              스프링 힘, 단방향 래치와 트리거, 해제 로드의 힘 전달, 베어링 선정.
+            </li>
+            <li>무더기와의 충돌, 마찰과 미끄러짐, 케이블 배선, 제조 공차.</li>
+            <li>
+              체결 반력은 로봇팔이 받습니다. FR3의 5~7축 관절 토크 한계는
+              12Nm(Franka 사양)라서 M8, M10 시연 토크(20, 40Nm)를 받을 수
+              없습니다.
+            </li>
+            <li>
+              R11 기록 시점 검사: 단위 검사 86개, 브라우저 검사 18개, 타입
+              검사와 빌드 통과. 이 페이지용 브라우저 검사 1개를 더했습니다. 이전
+              화면 코드의 정적 검사 지적 18건은 남아 있습니다.
+            </li>
+            <li>
+              이 페이지의 나사, M8 커넥터, 배선, 각인, 모터 외형은 렌더링용
+              예시입니다. 실제 부품 선정과 배선 경로 설계는 하지 않았습니다.
+            </li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="end">
+      <p>R11 볼트 그리퍼, 2026년 10월 2일 기록</p>
+      <nav aria-label="관련 기록">
+        <a href="./index.html">R11 시뮬레이터</a>
+        <a href="./index.html?design=c2">R10 시뮬레이터</a>
+      </nav>
+    </footer>
+  </body>
+</html>

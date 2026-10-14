@@ -11,7 +11,7 @@
     `GET /api/v1/status` — 명령/조회. 아무 언어의 흔한 HTTP 클라이언트(curl 포함)로
     바로 붙을 수 있다.
   - `GET /ws/telemetry` — 접속 직후 STATUS 스냅샷 1회 + 이후 arm_state(20Hz)·
-    heartbeat(1Hz)·RESULT·grasp_result·ALERT 를 순수 서버→클라이언트로 스트림.
+    heartbeat(1Hz)·RESULT·grasp_result·alert 를 순수 서버→클라이언트로 스트림.
     클라이언트가 보내는 메시지는 더 이상 명령으로 처리하지 않는다(v2까지는 명령도
     이 WS 연결로 받았다 — REST 로 분리한 이유는 desktop_protocol.md §4 참고).
   - **인증**: 모든 `/api/*` 는 `Authorization: Bearer <token>` 필수. WS 는 핸드셰이크에
@@ -43,10 +43,16 @@ rosbridge 대신 직접 구현한 이유는 desktop_protocol.md §4 참고 — �
     항상 WS 텔레메트리로 나간다(상관관계는 `_pending_pick['id']`, REST 응답의
     `id` 와 동일).
 
-현재 단계에서 "진짜로" 로봇에 반영되는 명령은 PICK_BOLT 뿐이다. 나머지
-제어 명령(ESTOP/START/SET_SPEED 등)은 ACK 까지만 진짜고 실제 로봇 동작
-연동은 다음 단계(로봇측 연동 인터페이스, PROGRESS.md 참고)로 남겨 둔다 —
-이번 목표는 "통신 기능 자체 검증"이라 프로토콜 골격을 정직하게 완성하는 데 집중했다.
+명령 실동작 반영 정도는 명령마다 다르다(커맨드버스 도입 이후):
+  - 완전 실동작: PICK_BOLT, GET_STATUS.
+  - 로봇 노드(pick_place_node._command_cb)가 일부 처리: ESTOP/RESET/PAUSE/RESUME/
+    SET_SPEED/BLACKLIST_ADD/BLACKLIST_REMOVE/GO_HOME. 단 브릿지는 발행+ACK 만 하고
+    로봇의 완료 ACK/RESULT 는 아직 되돌려주지 않는다(ESTOP/PAUSE 도 소프트 플래그라
+    실행 중 MoveIt goal 을 취소하지 않는다 — 하드웨어 안전정지가 아니다).
+  - 수락(ACK)만 되고 로봇 노드가 무시: 그 외 _ACK_ONLY_TYPES(START/STOP/SET_MODE/
+    STEP/SKIP_CURRENT/HOLD_BOLT/UNHOLD_BOLT/SET_SELECTOR/SET_PLACE_SLOT/ACK_ALARM).
+정확한 분류·데스크톱 대응은 docs/desktop_connection_guide.md §3, 구조적 한계(이벤트
+유실·deadline 시계 등)는 docs/desktop_protocol_upgrade_plan.md 참고.
 """
 import asyncio
 import hmac
@@ -70,6 +76,7 @@ from tf2_ros import LookupException, ConnectivityException, ExtrapolationExcepti
 
 from bin_picking.config import PickPlaceConfig
 from bin_picking import protocol
+from bin_picking import robot_profiles
 
 try:
     from aiohttp import web
@@ -85,17 +92,31 @@ PROTOCOL_VERSION = protocol.PROTOCOL_VERSION
 # pick_place_node 의 "외부 비전 6D 자세" 입력 토픽을 그대로 재사용한다
 # (config.py 단일 소스 — 여기서 문자열을 따로 하드코딩하지 않는다).
 EXT_POSE_TOPIC = PickPlaceConfig.EXT_POSE_TOPIC
+# ⚠ 아래는 전부 '활성 로봇 모델'에 딸린 값이다. config.py 가 임포트 시점에 등록된
+#   프로파일(robot_profiles/)에서 꽂아 주므로 여기서 다시 하드코딩하지 않는다.
+#   즉 이 브릿지는 모델을 바꿔도 코드 변경 없이 새 관절 이름/프레임을 그대로 쓴다.
 REFERENCE_FRAME = PickPlaceConfig.REFERENCE_FRAME
 ARM_JOINTS = PickPlaceConfig.ARM_JOINTS
 GRIPPER_JOINT = PickPlaceConfig.GRIPPER_JOINT
 TCP_LINK = PickPlaceConfig.END_EFFECTOR_LINK
 JOINT_LIMITS = PickPlaceConfig.JOINT_LIMITS
+ROBOT_MODEL = PickPlaceConfig.ROBOT_MODEL
+# 관절 실측값 → 총 개구폭(m) 변환. 프랑카 핸드처럼 관절값이 곧 반개구인 그리퍼는
+# 2배가 맞지만, 각도 구동 그리퍼(Robotiq 2F 등)는 그렇지 않다 → 프로파일에 등록된
+# 변환을 쓴다. 여기서 `2.0 * finger` 를 직접 쓰면 그리퍼를 바꾸는 순간 텔레메트리의
+# gripper_width 가 조용히 엉뚱한 값이 된다.
+_GRIPPER_SPEC = PickPlaceConfig.ROBOT_PROFILE.gripper
 # selection.py `_log_attempt` 훅이 사이클 결과를 얹어 발행하는 토픽.
 CYCLE_RESULT_TOPIC = PickPlaceConfig.CYCLE_RESULT_TOPIC
+COMMAND_TOPIC = PickPlaceConfig.COMMAND_TOPIC
+ROBOT_PHASE_TOPIC = PickPlaceConfig.ROBOT_PHASE_TOPIC
 
-# 실제 로봇 동작 연동 없이 ACK 만 돌려주는 "골격만" 명령 — §2A 전체 명령 표 중
-# PICK_BOLT/GET_STATUS/ESTOP 을 뺀 나머지. `POST /api/v1/command` 하나로 받는다.
-# 다음 단계에서 하나씩 실동작에 연결.
+# `POST /api/v1/command` 하나로 받는 제어 명령 집합 — §2A 전체 명령 표 중
+# PICK_BOLT/GET_STATUS/ESTOP(전용 엔드포인트)을 뺀 나머지. 브릿지는 이들을 검증 후
+# ACK 하고 커맨드버스(COMMAND_TOPIC)로 발행한다. 로봇 노드(pick_place_node._command_cb)가
+# 실제로 처리하는 건 이 중 일부(RESET/PAUSE/RESUME/SET_SPEED/BLACKLIST_ADD/
+# BLACKLIST_REMOVE/GO_HOME)뿐이고, 나머지는 발행돼도 로봇이 무시한다 — 어느 명령이
+# 어디까지 반영되는지는 docs/desktop_connection_guide.md §3 표가 단일 소스.
 _ACK_ONLY_TYPES = frozenset([
     'START', 'STOP', 'PAUSE', 'RESUME', 'SET_MODE', 'STEP', 'SKIP_CURRENT',
     'BLACKLIST_ADD', 'BLACKLIST_REMOVE', 'HOLD_BOLT', 'UNHOLD_BOLT',
@@ -197,6 +218,13 @@ class DesktopBridgeNode(Node):
         # --- 사이클 결과 구독 (selection.py `_log_attempt` 훅 → RESULT) ---
         self.create_subscription(String, CYCLE_RESULT_TOPIC, self._cycle_result_cb, 10)
 
+        # --- 커맨드 버스: desktop_bridge → pick_place_node ---
+        self._command_pub = self.create_publisher(String, COMMAND_TOPIC, 10)
+
+        # --- 로봇 단계 구독: pick_place_node → desktop_bridge ---
+        self._robot_phase = 'IDLE'
+        self.create_subscription(String, ROBOT_PHASE_TOPIC, self._robot_phase_cb, 10)
+
         # --- PICK_BOLT → 기존 외부비전 입력 경로로 재발행 ---
         self._pose_pub = self.create_publisher(PoseStamped, EXT_POSE_TOPIC, 10)
 
@@ -288,6 +316,9 @@ class DesktopBridgeNode(Node):
         app.router.add_post('/api/v1/estop', self._http_estop)
         app.router.add_post('/api/v1/command', self._http_command)
         app.router.add_get('/api/v1/status', self._http_status)
+        # 로봇 모델 등록 조회 / 전환 (원클릭 전환 조작면 #2 — 데스크톱앱 버튼)
+        app.router.add_get('/api/v1/robot_models', self._http_robot_models)
+        app.router.add_post('/api/v1/robot_model', self._http_set_robot_model)
         app.router.add_get('/ws/telemetry', self._ws_telemetry)
 
         # access_log=None: aiohttp 기본 액세스 로그는 요청 URL 을 통째로 찍어
@@ -365,9 +396,9 @@ class DesktopBridgeNode(Node):
     async def _http_estop(self, request):
         with self._estop_lock:
             self._estop = True
+        self._publish_command({'cmd': 'ESTOP'})
         self.get_logger().warn(
-            '[desktop_bridge] ESTOP 수신 — 소프트 플래그만 설정됨. '
-            '실제 정지는 물리 E-STOP/로봇 안전컨트롤러가 담당(§5).')
+            '[desktop_bridge] ESTOP 수신 → pick_place_node 전달 완료.')
         return web.json_response({'accepted': True})
 
     async def _http_command(self, request):
@@ -378,8 +409,99 @@ class DesktopBridgeNode(Node):
         if mtype not in _ACK_ONLY_TYPES:
             return web.json_response(
                 {'accepted': False, 'errors': [f'unknown command type: {mtype!r}']})
-        self._cmd_state[mtype] = body.get('args') or {}
+        args = body.get('args') or {}
+        # 명령별 인자 검증(순수, protocol). RESET 은 confirm=true 없으면 거부 —
+        # 검증 실패 시 로봇에 발행하지도, estop 을 풀지도 않는다(BP-C04a).
+        errors = protocol.validate_command(mtype, args)
+        if errors:
+            return web.json_response({'accepted': False, 'errors': errors})
+        self._cmd_state[mtype] = args
+        self._publish_command({'cmd': mtype, **args})
+        if mtype == 'RESET':
+            with self._estop_lock:
+                self._estop = False
         return web.json_response({'accepted': True})
+
+    # ---------- 로봇 모델 등록 조회 / 전환 ----------
+    async def _http_robot_models(self, request):
+        """등록된 로봇 모델 목록 — 데스크톱앱이 전환 UI 를 그릴 재료.
+
+        `switchable` 이 false 인 모델은 앱에서 비활성으로 그려야 한다. 등록만
+        돼 있고 아직 검증되지 않은(status: draft) 모델이라 전환이 거부된다.
+        """
+        found = robot_profiles.discover()
+        return web.json_response({
+            'active': robot_profiles.active_model_name(),
+            # 지금 이 프로세스가 실제로 쓰고 있는 모델. `active` 와 다르면 누군가
+            # 전환은 했는데 재기동을 안 한 것이다 — 앱이 그 차이를 보여줘야 한다.
+            'running': ROBOT_MODEL,
+            'models': [{
+                'name': p.name,
+                'display_name': p.display_name,
+                'vendor': p.vendor,
+                'status': p.status,
+                'switchable': p.is_verified,
+                'notes': p.notes,
+            } for _, p in sorted(found.items())],
+            'errors': [{'path': path, 'message': msg}
+                       for path, msg in robot_profiles.discover_errors()],
+        })
+
+    async def _http_set_robot_model(self, request):
+        """SET_ROBOT_MODEL — 활성 로봇 모델을 바꾼다.
+
+        ⚠ **이 호출은 이미 떠 있는 로봇을 갈아끼우지 않는다.** Gazebo/MoveIt/
+          컨트롤러는 URDF 를 기동 시점에 읽으므로 프로세스를 다시 띄워야 실제로
+          바뀐다. 그래서 여기서는 '다음 기동에 쓸 모델'만 저장하고
+          `restart_required: true` 를 돌려준다.
+
+        의도적으로 런치 재기동을 여기서 실행하지 않는다 — 이 브릿지는 네트워크에
+          노출된 엔드포인트이고(그래서 토큰 인증이 붙어 있다), 거기에 프로세스
+          기동 권한까지 주는 것은 별개의 보안 결정이다. 재기동은 상위 운용 도구나
+          사람이 맡는다.
+        """
+        body = await self._read_json(request)
+        if body is None:
+            return web.json_response({'error': 'invalid json'}, status=400)
+        name = (body.get('args') or body).get('model')
+        if not isinstance(name, str) or not name.strip():
+            return web.json_response(
+                {'accepted': False, 'errors': ['args.model (문자열) 이 필요합니다']},
+                status=400)
+
+        try:
+            profile = robot_profiles.set_active(name.strip())
+        except robot_profiles.ProfileNotFound as exc:
+            return web.json_response(
+                {'accepted': False, 'code': 'MODEL_NOT_REGISTERED',
+                 'errors': [str(exc)]}, status=404)
+        except robot_profiles.ProfileError as exc:
+            # 미검증 모델로의 전환 거부. 앱이 사용자에게 "먼저 검증하라"고
+            # 안내할 수 있게 코드를 따로 준다.
+            return web.json_response(
+                {'accepted': False, 'code': 'MODEL_NOT_VERIFIED',
+                 'errors': [str(exc)]}, status=409)
+
+        self.get_logger().warn(
+            f'[desktop_bridge] SET_ROBOT_MODEL → {profile.name} '
+            f'(현재 실행 중인 모델은 {ROBOT_MODEL} — 재기동해야 적용됩니다)')
+        # 텔레메트리로도 알린다. 이 브릿지에 붙은 다른 클라이언트가 "왜 갑자기
+        # 모델이 바뀌었나"를 모른 채 지나가면 안 된다(§4 "침묵은 버그다").
+        self._send(self._envelope('alert', {
+            'severity': 'warn',
+            'code': 'ROBOT_MODEL_CHANGED',
+            'msg': (f'활성 로봇 모델이 {profile.name} 로 바뀌었습니다. '
+                    f'실행 중인 스택은 여전히 {ROBOT_MODEL} 입니다 — '
+                    f'재기동해야 적용됩니다.'),
+        }))
+        return web.json_response({
+            'accepted': True,
+            'active': profile.name,
+            'running': ROBOT_MODEL,
+            'restart_required': profile.name != ROBOT_MODEL,
+            'restart_hint': ('ros2 launch bin_picking '
+                             'desktop_integration_demo.launch.py'),
+        })
 
     async def _http_pick_bolt(self, request):
         args = await self._read_json(request)
@@ -416,7 +538,7 @@ class DesktopBridgeNode(Node):
         if errors:
             # deadline 초과는 조용히 흘려보내지 않고 ALERT 까지 띄운다.
             if errors == ['stale: deadline exceeded']:
-                self._send(self._envelope('ALERT', {
+                self._send(self._envelope('alert', {
                     'severity': 'warn', 'code': 'STALE_COMMAND',
                     'msg': f'PICK_BOLT {cmd_id} deadline exceeded',
                     'context': {'bolt_id': args.get('bolt_id')},
@@ -479,7 +601,7 @@ class DesktopBridgeNode(Node):
                 self.get_logger().warn(
                     '[desktop_bridge] WS 로 들어온 메시지를 무시했습니다 — v3부터 명령은 '
                     'REST(/api/v1/*) 전용입니다.')
-                await ws.send_str(json.dumps(self._envelope('ALERT', {
+                await ws.send_str(json.dumps(self._envelope('alert', {
                     'severity': 'warn', 'code': 'WS_COMMANDS_DEPRECATED',
                     'msg': 'v3부터 WS로 명령을 보낼 수 없습니다. REST API를 사용하세요.',
                 })))
@@ -496,6 +618,18 @@ class DesktopBridgeNode(Node):
     # =========================================================
     def _joint_state_cb(self, msg):
         self._joint_state = msg
+
+    def _robot_phase_cb(self, msg):
+        try:
+            data = json.loads(msg.data)
+            self._robot_phase = data.get('phase', 'IDLE')
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    def _publish_command(self, cmd_dict):
+        msg = String()
+        msg.data = json.dumps(cmd_dict)
+        self._command_pub.publish(msg)
 
     def _cycle_result_cb(self, msg):
         """selection.py `_log_attempt` 훅이 보낸 사이클 결과 → RESULT/grasp_result 로 변환."""
@@ -603,7 +737,7 @@ class DesktopBridgeNode(Node):
         finger = lookup.get(GRIPPER_JOINT)
         args = {
             'q': q, 'tcp': tcp, 'tcp_quat': tcp_quat,
-            'gripper_width': (2.0 * finger) if finger is not None else None,
+            'gripper_width': _GRIPPER_SPEC.full_width_of(finger),
             'joint_margin': joint_margin_vals,
             'moving': moving,
             'last_cycle_id': self._last_cycle_id,   # heartbeat 와 동일 정의(§2B)
@@ -620,7 +754,7 @@ class DesktopBridgeNode(Node):
         self._arm_state_stall_count += 1
         if self._arm_state_stall_count >= 3 and not self._arm_state_stall_alerted:
             self._arm_state_stall_alerted = True
-            self._send(self._envelope('ALERT', {
+            self._send(self._envelope('alert', {
                 'severity': 'warn', 'code': code, 'msg': detail,
                 'context': {'consecutive_ticks': self._arm_state_stall_count},
             }))
@@ -628,8 +762,9 @@ class DesktopBridgeNode(Node):
     def _tick_heartbeat(self):
         with self._estop_lock:
             estop = self._estop
+        state = 'SAFE_STOP' if estop else self._robot_phase
         self._send(self._envelope('heartbeat', {
-            'state': 'SAFE_STOP' if estop else 'IDLE',
+            'state': state,
             'moveit_ok': self._joint_state is not None,
             # 사이클에 종속된 값이 아니라 "가장 최근에 관측된 cycle_id"다(nullable
             # — 아직 사이클이 한 번도 안 돌았으면 None). 실시간 진행 중인 사이클을
@@ -643,9 +778,12 @@ class DesktopBridgeNode(Node):
             estop = self._estop
         return {
             'estop': estop,
+            'robot_phase': self._robot_phase,
             'connected_clients': self._connected,
             'joint_state_recv': self._joint_state is not None,
             'cmd_state': self._cmd_state,
+            'robot_model': ROBOT_MODEL,
+            'robot_model_pending': robot_profiles.active_model_name(),
         }
 
     def _status_envelope(self, corr=None):

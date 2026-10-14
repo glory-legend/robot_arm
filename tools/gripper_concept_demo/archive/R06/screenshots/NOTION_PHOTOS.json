@@ -1,0 +1,48 @@
+{
+  "capture_date": "2026-10-01",
+  "provenance": "보존된 R06 구현 재실행 촬영. 초기 제작 당시 원본 사진 아님.",
+  "notion_page": "https://app.notion.com/p/3ebbf0105ac9816f9ec2d0129c5e1161",
+  "approval": "구동 미정·간섭 미해결: 제작용 승인 불가",
+  "files": {
+    "a-pickup.png": {
+      "sha256": "265b1e61c4b981a8a9d26b45f4259a001e6fe08285b8cca9f5fd95f68a727c67",
+      "bytes": 146837,
+      "file_upload_id": "3ecbf010-5ac9-8104-9e24-00b28f2e1c65"
+    },
+    "a-righting.png": {
+      "sha256": "01552c4bd79b72f1a57fee15b7e47af057bbd3509e13b7dd7ca4faa8c120892e",
+      "bytes": 163202,
+      "file_upload_id": "3ecbf010-5ac9-81db-ade3-00b2a8ae78d2"
+    },
+    "a-handoff.png": {
+      "sha256": "c4fe7374ba1299d7e14e3e0eec821c3c14d021169407147f786b82cc79ac5d0c",
+      "bytes": 159661,
+      "file_upload_id": "3ecbf010-5ac9-81de-94f0-00b2d7b72962"
+    },
+    "a-drive.png": {
+      "sha256": "cce543fecb66146bfb528fef545f092470f1992ab47416ddf13f811d42ccfdea",
+      "bytes": 191233,
+      "file_upload_id": "3ecbf010-5ac9-8114-a2d2-00b2135962a9"
+    },
+    "b-pickup.png": {
+      "sha256": "daef46df9c3aebb1af5a88fd88ec30e3c365f964269c80f71037f4e1686da045",
+      "bytes": 137500,
+      "file_upload_id": "3ecbf010-5ac9-8138-bd4d-00b2702c1faa"
+    },
+    "b-righting.png": {
+      "sha256": "9f7036e7163c18ab2a3971ab9908704c2e7db6749f4111a678466705adee1e06",
+      "bytes": 145605,
+      "file_upload_id": "3ecbf010-5ac9-8130-8574-00b2bbde33c1"
+    },
+    "b-handoff.png": {
+      "sha256": "f0b4046c798b80e0450e3ac8147fd57e2dc75a63f8887cd34bd8b30bcedf407f",
+      "bytes": 139496,
+      "file_upload_id": "3ecbf010-5ac9-81ff-9538-00b22ec7a48e"
+    },
+    "b-drive.png": {
+      "sha256": "8999fa1a52f267efffb4548c44bd0df39fc305374008aaf681a0f90e6b69d34a",
+      "bytes": 173829,
+      "file_upload_id": "3ecbf010-5ac9-8124-a8cd-00b2bded35b5"
+    }
+  }
+}

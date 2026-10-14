@@ -1,0 +1,118 @@
+{
+  "date": "2026-10-01",
+  "records": [
+    {
+      "id": "3ebbf010-5ac9-8137-9e65-c20e9e332bcb",
+      "url": "https://app.notion.com/p/3ebbf0105ac981379e65c20e9e332bcb?pvs=204",
+      "title": "볼트 그리퍼 설계·모델링 버전 기록",
+      "start_marker": "<!-- RECORD_START 3ebbf010-5ac9-8137-9e65-c20e9e332bcb -->",
+      "end_marker": "<!-- RECORD_END 3ebbf010-5ac9-8137-9e65-c20e9e332bcb -->",
+      "content_sha256": "9994d1c7d9df2f37851ccb3d15b5658fc7955090e075b608c2d842b6b8b199c4",
+      "target_type": "notion_page"
+    },
+    {
+      "id": "3ebbf010-5ac9-8150-8ae0-d879bc1cba6b",
+      "url": "https://app.notion.com/p/3ebbf0105ac981508ae0d879bc1cba6b?pvs=204",
+      "title": "R00 · 초기 절차적 집게·슬라이드 개념",
+      "start_marker": "<!-- RECORD_START 3ebbf010-5ac9-8150-8ae0-d879bc1cba6b -->",
+      "end_marker": "<!-- RECORD_END 3ebbf010-5ac9-8150-8ae0-d879bc1cba6b -->",
+      "content_sha256": "36987fc20af817029c2461aaf8bc7006f84a4a36ca6f5ab736b2a88b8724d977",
+      "target_type": "notion_page"
+    },
+    {
+      "id": "3ebbf010-5ac9-8134-a27d-f322ffd3e53f",
+      "url": "https://app.notion.com/p/3ebbf0105ac98134a27df322ffd3e53f?pvs=204",
+      "title": "R01 · Tesollo DG3FM 12관절·손바닥 인입",
+      "start_marker": "<!-- RECORD_START 3ebbf010-5ac9-8134-a27d-f322ffd3e53f -->",
+      "end_marker": "<!-- RECORD_END 3ebbf010-5ac9-8134-a27d-f322ffd3e53f -->",
+      "content_sha256": "a59354631551525c046965b39afe60deabc3c9a2120813687fe017fac4a27d77",
+      "target_type": "notion_page"
+    },
+    {
+      "id": "3ebbf010-5ac9-81bf-8875-dea23699008d",
+      "url": "https://app.notion.com/p/3ebbf0105ac981bf8875dea23699008d?pvs=204",
+      "title": "R02 · Hand-E + 직선 보조 막대",
+      "start_marker": "<!-- RECORD_START 3ebbf010-5ac9-81bf-8875-dea23699008d -->",
+      "end_marker": "<!-- RECORD_END 3ebbf010-5ac9-81bf-8875-dea23699008d -->",
+      "content_sha256": "44bb04a1e1ae97f990e0dcc548a4bb58dc05967e1156fa76fa58e5b1cf2a36dd",
+      "target_type": "notion_page"
+    },
+    {
+      "id": "3ebbf010-5ac9-8188-a499-c668571ea817",
+      "url": "https://app.notion.com/p/3ebbf0105ac98188a499c668571ea817?pvs=204",
+      "title": "R03 · 생체모방 3관절 주집게 + 2관절 엄지",
+      "start_marker": "<!-- RECORD_START 3ebbf010-5ac9-8188-a499-c668571ea817 -->",
+      "end_marker": "<!-- RECORD_END 3ebbf010-5ac9-8188-a499-c668571ea817 -->",
+      "content_sha256": "d59ae569e0be818b6dcc3a47ac9c9b859902b9ecc906bdbf6b2a719e4406f4d3",
+      "target_type": "notion_page"
+    },
+    {
+      "id": "3ebbf010-5ac9-8176-9857-d32420c74e3f",
+      "url": "https://app.notion.com/p/3ebbf0105ac981769857d32420c74e3f?pvs=204",
+      "title": "R04 · Robotiq 2F-85 + 슬림 손끝·보조 엄지",
+      "start_marker": "<!-- RECORD_START 3ebbf010-5ac9-8176-9857-d32420c74e3f -->",
+      "end_marker": "<!-- RECORD_END 3ebbf010-5ac9-8176-9857-d32420c74e3f -->",
+      "content_sha256": "efef821f0e82565cf8f9540c1298dfe0c70ec73731414c7c856f9617ed4e42c7",
+      "target_type": "notion_page"
+    },
+    {
+      "id": "3ebbf010-5ac9-811b-88c3-d7fec5ef2b7a",
+      "url": "https://app.notion.com/p/3ebbf0105ac9811b88c3d7fec5ef2b7a?pvs=204",
+      "title": "R05 · 일자형 테이퍼 팁·50mm 엄지·6조 척",
+      "start_marker": "<!-- RECORD_START 3ebbf010-5ac9-811b-88c3-d7fec5ef2b7a -->",
+      "end_marker": "<!-- RECORD_END 3ebbf010-5ac9-811b-88c3-d7fec5ef2b7a -->",
+      "content_sha256": "dd12a9d810209f4ad3f05b36af6b5ebd7f0f351ce5f38925721f87fc98f51787",
+      "target_type": "notion_page"
+    },
+    {
+      "id": "3ebbf010-5ac9-816f-9ec2-d0129c5e1161",
+      "url": "https://app.notion.com/p/3ebbf0105ac9816f9ec2d0129c5e1161?pvs=204",
+      "title": "R06 · 내부 체결·최소 이동 구조 비교 — 진행 중",
+      "start_marker": "<!-- RECORD_START 3ebbf010-5ac9-816f-9ec2-d0129c5e1161 -->",
+      "end_marker": "<!-- RECORD_END 3ebbf010-5ac9-816f-9ec2-d0129c5e1161 -->",
+      "content_sha256": "af81e0525782f6184fb9f849441ea28ff7b72aed9cab865de3cdd00ccd483cb7",
+      "target_type": "notion_page"
+    },
+    {
+      "id": "3ecbf010-5ac9-8126-b38c-c13e55b71d62",
+      "url": "https://app.notion.com/p/3ecbf0105ac98126b38cc13e55b71d62?pvs=204",
+      "title": "R07 · 기계 조립 검토 — A/B 구조·모델·검증",
+      "start_marker": "<!-- RECORD_START 3ecbf010-5ac9-8126-b38c-c13e55b71d62 -->",
+      "end_marker": "<!-- RECORD_END 3ecbf010-5ac9-8126-b38c-c13e55b71d62 -->",
+      "content_sha256": "bcd81fd933f461ebf556e888c33912af6c9322b7e94ae227f8b1391b2e881c62",
+      "target_type": "notion_page"
+    },
+    {
+      "id": "3ecbf010-5ac9-8118-ba85-f4a0e4a15424",
+      "url": "https://app.notion.com/p/3ecbf0105ac98118ba85f4a0e4a15424?pvs=204",
+      "title": "R07 A · 2R 엄지·분리형 픽업 — 6제어축",
+      "start_marker": "<!-- RECORD_START 3ecbf010-5ac9-8118-ba85-f4a0e4a15424 -->",
+      "end_marker": "<!-- RECORD_END 3ecbf010-5ac9-8118-ba85-f4a0e4a15424 -->",
+      "content_sha256": "de704f49deef272446340183f18180f5ef0e147020d5212a9754d9fc41935713",
+      "target_type": "notion_page"
+    },
+    {
+      "id": "3ecbf010-5ac9-810c-9938-e5264b5aa442",
+      "url": "https://app.notion.com/p/3ecbf0105ac9810c9938e5264b5aa442?pvs=204",
+      "title": "R07 B · 카세트 전체 1R 회전 — 5제어축",
+      "start_marker": "<!-- RECORD_START 3ecbf010-5ac9-810c-9938-e5264b5aa442 -->",
+      "end_marker": "<!-- RECORD_END 3ecbf010-5ac9-810c-9938-e5264b5aa442 -->",
+      "content_sha256": "209333b4adb771248a5eee5f9453b628ea65b3a823c80061916be2a80a1706d6",
+      "target_type": "notion_page"
+    },
+    {
+      "id": "LOCAL_NOTION_ARCHIVE",
+      "url": "/home/yg1/robotarm_main/tools/gripper_concept_demo/NOTION_ARCHIVE.md",
+      "title": "NOTION_ARCHIVE.md",
+      "start_marker": "<!-- RECORD_START LOCAL_NOTION_ARCHIVE -->",
+      "end_marker": "<!-- RECORD_END LOCAL_NOTION_ARCHIVE -->",
+      "content_sha256": "642db50483448c6e3453b1ecde38b1943df551cf611266c284af2f3acfac0692",
+      "target_type": "local"
+    }
+  ],
+  "raw_input": "combined-original.md",
+  "compact_input": "combined-protected.md",
+  "protected_urls": "protected-attachment-urls.json",
+  "restore_instruction": "compact 입력으로 윤문했으면 placeholder를 JSON 원문 URL로 치환하여 태그와 URL을 완전히 복원한다. 첨부/자식페이지 블록은 변경하지 않고 본문 텍스트를 targeted update_content로 반영한다.",
+  "r07_zip_placeholder": "R07_ZIP_ATTACHMENT_PENDING"
+}

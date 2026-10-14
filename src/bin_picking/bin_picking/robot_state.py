@@ -148,7 +148,7 @@ class RobotStateMixin:
         #   기본(만개) 폭으로 판단한다 → 무더기 하강이 이웃과 충돌해 fraction 이
         #   99.5% 게이트에 못 미쳐 잘린다. 하강 전 move_gripper 로 좁힌 개구가
         #   여기 실측값으로 반영돼야 MoveIt 이 '좁으니 내려갈 수 있다'고 판단한다.
-        allowed_joints = self.ARM_JOINTS + ['fr3_finger_joint1', 'fr3_finger_joint2']
+        allowed_joints = self.ARM_JOINTS + self.GRIPPER_STATE_JOINTS
 
         for n, p in zip(self._joint_state.name, self._joint_state.position):
             if n in allowed_joints:
@@ -172,7 +172,7 @@ class RobotStateMixin:
         # 손가락 실측도 함께 실어 좁힌 개구가 충돌검사에 반영되게 한다
         if self._joint_state is not None:
             for n, p in zip(self._joint_state.name, self._joint_state.position):
-                if n in ('fr3_finger_joint1', 'fr3_finger_joint2'):
+                if n in self.GRIPPER_STATE_JOINTS:
                     names.append(n)
                     positions.append(float(p))
         js.name = names

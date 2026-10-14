@@ -1,0 +1,59 @@
+robotiq_hande_description (vendored)
+====================================
+
+이 패키지는 아래 상류(upstream) 리포지터리를 그대로 가져와(vendoring) 이 저장소의
+Gazebo 시뮬레이션 스택에 맞게 **최소한으로 수정한** 것이다.
+
+  upstream : https://github.com/macmacal/robotiq_hande_description
+  branch   : humble-devel
+  commit   : 5ae8b97068f8a1136d37dd476b72bafc2b1cdfb0 (2025-08-25)
+  license  : Apache License 2.0 (원문 그대로 ./LICENSE 에 보존)
+  원저작자 : Maciej Aleksandrowicz <mac.aleksandrowicz@gmail.com>
+             (URDF 원본은 Cristian C. Beltran-Hernandez, 상류 xacro 주석에 명시)
+
+[왜 벤더링했나]
+  상류는 실물 그리퍼(Modbus RTU/TCP 드라이버)와 `mock_components/GenericSystem`
+  (가짜 에코) 두 모드만 제공한다. 리포 전체에 `<gazebo>` 태그가 하나도 없어
+  Gazebo(gz_ros2_control)로는 그리퍼가 아예 움직이지 않는다. 그 분기를 직접
+  추가해야 해서 소스 수정이 불가피했다.
+
+[이 저장소에서 가한 수정 — 이것이 전부다]
+  1. urdf/robotiq_hande_gripper.ros2_control.xacro
+     - `sim_ignition` 인자와 그 분기를 추가했다. 참이면 하드웨어 플러그인을
+       `gz_ros2_control/GazeboSimSystem` 으로 내보내고, 종동(mimic) 관절
+       `robotiq_hande_right_finger_joint` 를 인터페이스 없는 bare `<joint>` +
+       `<param name="mimic">` 로 선언한다(gz 가 URDF `<mimic>` 을 직접 처리한다).
+     - 이 분기 구조는 설치된 robotiq_description(2F-85)의
+       `robotiq_gripper.ros2_control.xacro` 패턴을 그대로 미러링한 것이다. 단
+       Hand-E 는 구동 1 + 종동 1 관절뿐이라 2F-85 의 종동 4개 블록은 없다.
+     - 구동 관절의 command_interface min/max 와 state_interface initial_value 에
+       박혀 있던 리터럴(0 / 0.025)을 `${grip_pos_min}` / `${grip_pos_max}` 로
+       바꿨다. 기본값이 같은 값이라 동작은 완전히 동일하고, 파라미터를 바꿨을 때
+       인터페이스 한계만 따로 안 따라오는 모순을 없앤 것이다.
+     - 실물 드라이버 전용 파라미터에 기본값을 줬다(상류는 전부 필수였다).
+  2. urdf/robotiq_hande_gripper.xacro
+     - 위 인자를 매크로 파라미터로 받아 ros2_control 매크로에 넘긴다.
+       (`sim_ignition:=false` 기본값이라 상류 사용법은 그대로 유지된다.)
+     - 실물 드라이버 전용 파라미터(tty_port/baudrate/…)에 기본값을 주어
+       시뮬레이션에서 호출할 때 전부 나열하지 않아도 되게 했다.
+     - 메시 URI 를 `package://robotiq_hande_description/meshes/...` 에서
+       `file://$(find robotiq_hande_description)/meshes/...` 로 바꿨다.
+       [이유] 런치가 `GZ_SIM_RESOURCE_PATH` 를 **하나의 디렉터리로 덮어쓰기**
+       하는데(launch/franka_gazebo_moveit.launch.py), UR 팔은 /opt/ros 아래,
+       이 패키지는 워크스페이스 install/ 아래라 한 경로로는 둘 다 못 덮는다.
+       설치된 robotiq_description(2F-85)도 같은 이유로 `file://$(find …)` 를
+       쓴다 — 그쪽 관례를 그대로 따랐다.
+  3. 미사용 자산 제외
+     - cad_models/, docs/, rviz/, launch/, .github/, CHANGELOG.md, CITATION.cff,
+       .pre-commit-config.yaml 은 가져오지 않았다(상류 데모 전용).
+     - urdf/robotiq_hande_gripper.urdf.xacro(단독 표시용 최상위 파일)도 제외했다.
+       이 저장소는 bin_picking/urdf/ur5e_robotiq_hande_gazebo.urdf.xacro 가
+       그 역할(팔+그리퍼 결합)을 대신한다.
+  4. package.xml / CMakeLists.txt
+     - 설치 대상 디렉터리를 실제로 가져온 것(urdf, meshes)만으로 줄이고,
+       `<depend>xacro</depend>` 를 명시했다.
+
+  ※ meshes/*.dae 4개와 urdf/cylinder_inertial.xacro 는 **한 바이트도 고치지
+    않았다.** 프로파일(bin_picking/robot_profiles/data/ur5e_robotiq_hande.yaml)의
+    손끝 기하 값은 이 원본 메시를 파싱해 유도한 것이라, 메시를 손대면 그 유도가
+    무효가 된다.

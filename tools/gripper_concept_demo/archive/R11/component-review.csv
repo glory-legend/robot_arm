@@ -1,0 +1,15 @@
+design,mesh,volume_mm3
+c2,slim-nose-tube,514.816
+c2,front-plate-with-ports,6209.064
+c2,rear-bulkhead,9056.984
+c2,tie-rod,1346.123
+c2,tie-rod,1346.123
+c2,tie-rod,1346.123
+c2,robot-adapter-ring,12892.773
+c2,cover-sleeve,16359.572
+c2,feed-yoke,8725.349
+r11,slim-nose-tube,514.816
+r11,front-plate-with-ports,5609.967
+r11,robot-adapter-ring,12802.650
+r11,structural-guide-housing,18639.236
+r11,feed-yoke,4228.187

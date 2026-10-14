@@ -26,8 +26,12 @@
   <depend>franka_description</depend>
   <depend>franka_fr3_moveit_config</depend>
   <depend>franka_gazebo_bringup</depend>
+  <!-- ur5e_robotiq_hande 모델의 결합 xacro 가 참조한다. 워크스페이스 안에 있는
+       패키지라 빌드 순서를 위해 명시한다(UR/robotiq 벤더 패키지는 시스템 설치본). -->
+  <depend>robotiq_hande_description</depend>
   <depend>ros_gz_sim</depend>
   <depend>ros_gz_bridge</depend>
+  <depend>ros_gz_interfaces</depend>
   <depend>controller_manager</depend>
   <depend>robot_state_publisher</depend>
   <depend>moveit_ros_move_group</depend>

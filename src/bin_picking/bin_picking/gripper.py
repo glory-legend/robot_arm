@@ -88,20 +88,24 @@ class GripperMixin:
     # 그리퍼 (ex07)
     # =========================================================
     def move_gripper(self, position, duration_sec=None):
+        """그리퍼를 지령 위치로 보낸다.
+
+        goal 을 어떻게 만들고 결과를 어떻게 읽는지는 그리퍼 액션 타입마다 달라서
+        `gripper_adapters.py` 의 어댑터가 맡는다(FollowJointTrajectory /
+        GripperCommand). 여기 남는 것은 어느 그리퍼에서나 같은 부분 —
+        지령값 클램프, goal 수락 대기, 결과 대기, 로깅 — 뿐이다.
+        """
         # duration 미지정 시 모드별 기본값(자동 학습 모드에서는 더 빠르게)
         if duration_sec is None:
             duration_sec = self._grip_dur
-        pos = float(max(0.0, min(self.GRIPPER_OPEN, position)))
-        g = FollowJointTrajectory.Goal()
-        g.trajectory = JointTrajectory()
-        g.trajectory.joint_names = [self.GRIPPER_JOINT]
-        pt = JointTrajectoryPoint()
-        pt.positions = [pos]
-        pt.time_from_start = Duration(
-            sec=int(duration_sec),
-            nanosec=int((duration_sec - int(duration_sec)) * 1e9),
-        )
-        g.trajectory.points.append(pt)
+        # ⚠ 클램프 범위를 open/closed 두 지령값에서 직접 구한다.
+        #   예전엔 max(0.0, min(GRIPPER_OPEN, pos)) 였는데, 이는 '열림 지령이 더
+        #   크고 0 이 유효 하한'이라는 프랑카 핸드의 관습을 가정한 것이다.
+        #   관절값이 커질수록 닫히는 그리퍼(Robotiq 2F 계열: 0=만개, 0.79=닫힘)
+        #   에서는 모든 지령이 뭉개져 그리퍼가 사실상 한 자세로 굳는다.
+        lo, hi = self.ROBOT_PROFILE.gripper.command_range()
+        pos = float(max(lo, min(hi, position)))
+        g = self._gripper_adapter.build_goal(pos, duration_sec)
         sf = self._gripper_client.send_goal_async(g)
         handle = self._spin_future(sf, self.ACCEPT_TIMEOUT)
         if handle is None or not handle.accepted:
@@ -112,11 +116,16 @@ class GripperMixin:
         if result is None:
             self.get_logger().error('gripper 결과 타임아웃 — 컨트롤러 무응답')
             return False
-        code_val = result.result.error_code
-        # 주의: 실물/실제 물체 파지 시에는 GOAL_TOLERANCE_VIOLATED가
-        # "물체 두께에서 멈춤 = 파지 성공"일 수 있으므로 판정을 뒤집어야 함.
-        self.get_logger().info(f'gripper {pos * 1000:.1f}mm (code={code_val})')
-        return code_val == 0
+        ok, detail = self._gripper_adapter.interpret(result)
+        # ⚠ 지령값(pos)에 1000 을 곱해 'mm' 로 찍으면 안 된다. 그건 관절 단위가
+        #   미터인 프랑카 핸드에서만 맞고, 각도 그리퍼에서는 rad×1000 이라는
+        #   무의미한 숫자가 된다(Robotiq 실행에서 '완전 개방'이 "0.0mm" 로 찍혔다).
+        #   사람이 읽는 값은 항상 **물리 개구**로 통일한다.
+        hw = self._finger_halfwidth(pos)
+        self.get_logger().info(
+            f'gripper 개구 {2.0 * hw * 1000:.1f}mm '
+            f'(지령 {pos:.4f}, {detail})')
+        return ok
 
     def gripper_open(self):
         return self.move_gripper(self.GRIPPER_OPEN)
@@ -125,7 +134,7 @@ class GripperMixin:
         return self.move_gripper(self.GRIPPER_CLOSED)
 
     def _sample_finger(self, settle_sec=None, timeout=2.0):
-        """닫힘이 '안정된 뒤'의 fr3_finger_joint1 실측 위치를 읽는다.
+        """닫힘이 '안정된 뒤'의 그리퍼 구동 관절(GRIPPER_JOINT) 실측 위치를 읽는다.
 
         닫히는 도중 값을 읽으면 아직 크게 벌어져 있어 무조건 '파지 성공'으로
         오판한다 → (1) settle 만큼 스핀하며 기다리고, (2) 그 이후에 새로 도착한
@@ -152,10 +161,14 @@ class GripperMixin:
                 f'판정 불가, 실패로 처리합니다')
             return False
         ok = self._finger_width_is_grasp(w)
-        detail = (f'손가락 {w * 1000:.2f}mm '
+        # 판정과 같은 단위(물리 개구 m)로 찍는다 — 관절 단위가 다른 그리퍼에서
+        # 로그와 판정 기준이 어긋나 "왜 실패로 봤는지" 못 읽는 일을 막는다.
+        hw = self._finger_halfwidth(w)
+        detail = (f'손가락 {hw * 1000:.2f}mm '
                   f'(성공 범위 {self.GRASP_DETECT_MIN * 1000:.1f}~'
                   f'{self.GRASP_DETECT_MAX * 1000:.1f}mm, '
-                  f'허공 기준 {self.GRIPPER_CLOSED * 1000:.1f}mm)')
+                  f'허공 기준 '
+                  f'{self._finger_halfwidth(self.GRIPPER_CLOSED) * 1000:.1f}mm)')
         if ok:
             self.get_logger().info(f'[파지 판정] 성공 — {detail}')
         else:

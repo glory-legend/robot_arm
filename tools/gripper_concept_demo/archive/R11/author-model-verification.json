@@ -1,0 +1,21 @@
+{
+  "draft_model": [
+    "claude-sonnet-5-5"
+  ],
+  "humanize_model": [
+    "claude-sonnet-5-5"
+  ],
+  "humanize_run": "/home/yg1/robotarm_main/tools/gripper_concept_demo/_workspace/2026-10-02-001-366d",
+  "gate": "OK",
+  "protected_numbers_links_modality": "PASS",
+  "source_zip_uploaded": false,
+  "publish_model": [
+    "claude-sonnet-5-5"
+  ],
+  "publish_result": "success",
+  "publish_permission_denials": [
+    {
+      "tool_name": "mcp__notion__API-retrieve-page-markdown"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+Robotiq 2F-85 reference meshes and joint description
+
+Source: ROS 2 Jazzy robotiq_description 0.0.1 installed at
+/opt/ros/jazzy/share/robotiq_description
+Upstream: https://github.com/PickNikRobotics/ros2_robotiq_gripper
+Author in package.xml: Cory Crean
+Maintainers: Alex Moriarty, Marq Rasmussen (PickNik Robotics)
+License: BSD; upstream BSD-3-Clause text is included in LICENSE.
+Upstream LICENSE blob: 4cff3dc4ae1bd9aa6cdcd2e530de850ad3a3ce11
+The asset byte hashes in SHA256.json identify the local package snapshot.
+
+Seven visual meshes and the joint description are copied unchanged.
+The browser replaces stock wide fingertip meshes with custom narrow tips,
+and adds an auxiliary two-joint thumb and a separate head chuck/spindle.
+These additions are conceptual, not Robotiq products or approved accessories.
+The animation shows the URDF parallel-link mimic motion, not independently
+actuated human fingers. Rendering materials differ from source materials.
+No assertion of manufacturer endorsement or bolt-bin performance validation.

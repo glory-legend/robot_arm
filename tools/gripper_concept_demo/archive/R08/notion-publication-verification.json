@@ -1,0 +1,145 @@
+{
+  "page_id": "3ecbf010-5ac9-818c-970d-d335a86c5a12",
+  "url": "https://app.notion.com/p/3ecbf0105ac9818c970dd335a86c5a12?pvs=204",
+  "title": "R08 · 공통 몸체 통합형 그리퍼",
+  "body_matches_approved": true,
+  "captions_from_approved_body": true,
+  "photos": 9,
+  "files": 7,
+  "hub_existing_content_preserved": true,
+  "hub_child_link": true,
+  "no_unknown_blocks": true,
+  "no_humanize_metadata": true,
+  "attachments": [
+    {
+      "filename": "integrated-whole.png",
+      "bytes": 143429,
+      "sha256": "b2bad6e8ec2504add91c9bda863b1b62d1521851716a938fe66358467c4192ad",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    },
+    {
+      "filename": "pickup.png",
+      "bytes": 150545,
+      "sha256": "1ee41ee9fe13075d190a56fef7fa05249d3b1965a2965f18f2034ca502a11a67",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    },
+    {
+      "filename": "righting.png",
+      "bytes": 155282,
+      "sha256": "9038dfa41cda56c950242d532bbec80b16596fdf748f1b12325a74e759dec84f",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    },
+    {
+      "filename": "draw-in.png",
+      "bytes": 153978,
+      "sha256": "252760aca1c68e0573674c9cbd5c96295b75ed54efea35c4175b56e4867958cd",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    },
+    {
+      "filename": "handoff.png",
+      "bytes": 152250,
+      "sha256": "5f531a2f634fe8e07384372fae7be5e9f721510762447a0119fb605e750eef57",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    },
+    {
+      "filename": "fold.png",
+      "bytes": 154941,
+      "sha256": "8eb220a93b43e94a7b215d0c898a71f15011a6cfbcf70ab3fbb4107167daf1fa",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    },
+    {
+      "filename": "stowed.png",
+      "bytes": 136021,
+      "sha256": "2b6337f3c5a4b7312ac9f42f18332e263c3658109a5ff950fed5888f0d2f5596",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    },
+    {
+      "filename": "internal-drive.png",
+      "bytes": 144109,
+      "sha256": "772d73a65e45ab2fd45acb39a6f0e6e47628d7e8131d77c5c5ba7c00bad52bce",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    },
+    {
+      "filename": "internal-layout.png",
+      "bytes": 159762,
+      "sha256": "66a75e7b35932bb4fe8c6d31cd73eb1c9af35cf9f603a050a87610e0895151d1",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    },
+    {
+      "filename": "m6-integrated-review.glb",
+      "bytes": 1702848,
+      "sha256": "04d2e6970badedfe5ba0ce5254aafba6fa9cfe04dbd5a4efc259c472c0180ea3",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    },
+    {
+      "filename": "m8-integrated-review.glb",
+      "bytes": 1704776,
+      "sha256": "de9a13b75063a233ba8e682abb37c7ec88f7cf4251ba08d8f4895402f83c6a7d",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    },
+    {
+      "filename": "m10-integrated-review.glb",
+      "bytes": 1706048,
+      "sha256": "370dfceb3d0c8dd90f55a762dcd047bacee4f9cac0cd6732cda4347a196853f7",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    },
+    {
+      "filename": "component-review.csv",
+      "bytes": 701,
+      "sha256": "957047552ebce8f5b7a145cd56316586bccbf3a75b12ea3a1cbb409b0e9500ab",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    },
+    {
+      "filename": "validation.json",
+      "bytes": 2585,
+      "sha256": "a07acbbadb8feaba821fe451613e1fe059d0ee5082343d753f01ff83f43b7b7b",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    },
+    {
+      "filename": "R08.md",
+      "bytes": 3603,
+      "sha256": "e8a787a97ff3b601dc48f36a78ee1a037e540ac5d930a4fb23bb3b0ebc59aa35",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    },
+    {
+      "filename": "R08.zip",
+      "bytes": 11452497,
+      "sha256": "8acd5b78e0b9e6434a0d51d30238b4bb3f967831d99643322e062b88e93e0b41",
+      "uploaded": true,
+      "in_fetched_page": true,
+      "local_hash_matches": true
+    }
+  ],
+  "r08_zip_sha256": "8acd5b78e0b9e6434a0d51d30238b4bb3f967831d99643322e062b88e93e0b41",
+  "passed": true
+}
